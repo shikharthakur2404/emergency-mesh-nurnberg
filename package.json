@@ -1,0 +1,31 @@
+{
+  "name": "emergency-mesh-nurnberg",
+  "version": "1.0.0",
+  "description": "Decentralized P2P Offline Emergency Coordination Mesh for Nürnberg Katastrophenschutz",
+  "main": "src/index.ts",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc"
+  },
+  "keywords": [
+    "p2p",
+    "mesh",
+    "emergency",
+    "katastrophenschutz",
+    "nurnberg",
+    "offline-first",
+    "ble"
+  ],
+  "author": "Shikhar Thakur",
+  "license": "MIT",
+  "dependencies": {
+    "zustand": "^5.0.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.9",
+    "typescript": "^5.8.2",
+    "vitest": "^3.0.7"
+  }
+}
