@@ -1,6 +1,26 @@
 pluginManagement { includeBuild("../node_modules/@react-native/gradle-plugin") }
 plugins { id("com.facebook.react.settings") }
-extensions.configure(com.facebook.react.ReactSettingsExtension){ ex -> ex.autolinkLibrariesFromCommand() }
+def findNodeBinary() {
+    def candidates = [
+        "/opt/homebrew/bin/node",
+        "/usr/local/bin/node",
+        System.getenv("NODE_BINARY"),
+        "node"
+    ]
+    for (candidate in candidates) {
+        if (candidate && new File(candidate).canExecute()) {
+            return candidate
+        }
+    }
+    return "node"
+}
+
+def nodeBin = findNodeBinary()
+def cliBin = file("../node_modules/@react-native-community/cli/build/bin.js").absolutePath
+
+extensions.configure(com.facebook.react.ReactSettingsExtension){ ex -> 
+    ex.autolinkLibrariesFromCommand([nodeBin, cliBin, "config"]) 
+}
 rootProject.name = 'EmergencyMeshApp'
 include ':app'
 includeBuild('../node_modules/@react-native/gradle-plugin')

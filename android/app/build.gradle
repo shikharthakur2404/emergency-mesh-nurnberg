@@ -2,6 +2,21 @@ apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
 
+def findNodeBinary() {
+    def candidates = [
+        "/opt/homebrew/bin/node",
+        "/usr/local/bin/node",
+        System.getenv("NODE_BINARY"),
+        "node"
+    ]
+    for (candidate in candidates) {
+        if (candidate && new File(candidate).canExecute()) {
+            return candidate
+        }
+    }
+    return "node"
+}
+
 /**
  * This is the configuration block to customize your React Native Android app.
  * By default you don't need to apply any configuration, just uncomment the lines you need.
@@ -24,8 +39,7 @@ react {
     // debuggableVariants = ["liteDebug", "prodDebug"]
 
     /* Bundling */
-    //   A list containing the node command and its flags. Default is just 'node'.
-    // nodeExecutableAndArgs = ["node"]
+    nodeExecutableAndArgs = [findNodeBinary()]
     //
     //   The command to run when bundling. By default is 'bundle'
     // bundleCommand = "ram-bundle"
