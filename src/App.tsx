@@ -102,18 +102,23 @@ export default function App() {
   }, [familySecretInput, setFamilySecret]);
 
   const handleBroadcastSafe = useCallback(async () => {
-    if (!activeFamilySecret) {
-      Alert.alert('Schlüssel fehlt', 'Bitte zuerst unter "Familie" das gemeinsame Notfall-Passwort hinterlegen.');
-      return;
+    try {
+      if (!activeFamilySecret) {
+        Alert.alert('Schlüssel fehlt', 'Bitte zuerst unter "Familie" das gemeinsame Notfall-Passwort hinterlegen.');
+        return;
+      }
+      if (!safeStatusText.trim()) {
+        Alert.alert('Meldung fehlt', 'Bitte kurz schreiben, wo Sie sind und wie es Ihnen geht.');
+        return;
+      }
+      await sendSafeStatus(safeStatusText.trim(), senderAlias.trim() || undefined);
+      setSafeStatusText('');
+      Alert.alert('Gesendet', 'SAFE-Status verschlüsselt im Mesh-Netzwerk ausgestrahlt.');
+      setActiveTab('FEED');
+    } catch (err) {
+      console.error('[handleBroadcastSafe] Error:', err);
+      Alert.alert('Fehler', 'SAFE-Status konnte nicht gesendet werden.');
     }
-    if (!safeStatusText.trim()) {
-      Alert.alert('Meldung fehlt', 'Bitte kurz schreiben, wo Sie sind und wie es Ihnen geht.');
-      return;
-    }
-    await sendSafeStatus(safeStatusText.trim(), senderAlias.trim() || undefined);
-    setSafeStatusText('');
-    Alert.alert('Gesendet', 'SAFE-Status verschlüsselt im Mesh-Netzwerk ausgestrahlt.');
-    setActiveTab('FEED');
   }, [activeFamilySecret, safeStatusText, senderAlias, sendSafeStatus]);
 
   const handleTriggerSos = useCallback(async (category: SosCategory) => {
@@ -232,14 +237,15 @@ export default function App() {
                 data={packets}
                 keyExtractor={(item) => item.msg_id}
                 renderItem={({ item }) => <PacketCard packet={item} />}
+                keyboardShouldPersistTaps="handled"
               />
             )}
           </View>
         )}
 
-        {/* TAB 2: SOS TRIGGER MATRIX */}
+        {/* TAB 2: PUBLIC SOS BEACON */}
         {activeTab === 'SOS' && (
-          <ScrollView style={styles.formContainer}>
+          <ScrollView style={styles.formContainer} keyboardShouldPersistTaps="handled">
             <Text style={styles.formTitle}>ÖFFENTLICHER NOTRUF (SOS)</Text>
             <Text style={styles.formSubtitle}>
               Sendet einen unverschlüsselten Notruf mit GPS-Koordinaten über alle Nachbargeräte an Einsatzkräfte und Helfer.
@@ -297,7 +303,7 @@ export default function App() {
 
         {/* TAB 3: FAMILY PRIVATE ENCRYPTION */}
         {activeTab === 'FAMILY' && (
-          <ScrollView style={styles.formContainer}>
+          <ScrollView style={styles.formContainer} keyboardShouldPersistTaps="handled">
             <Text style={styles.formTitle}>VERSCHLÜSSELTER FAMILIEN-STATUS</Text>
             <Text style={styles.formSubtitle}>
               Meldungen werden mit AES-256 verschlüsselt. Fremde Knoten leiten Ihr Paket weiter, können es aber nicht lesen.
@@ -367,6 +373,7 @@ export default function App() {
               data={filteredPois}
               keyExtractor={(item) => item.id}
               renderItem={({ item }) => <PoiCard poi={item} />}
+              keyboardShouldPersistTaps="handled"
             />
           </View>
         )}
