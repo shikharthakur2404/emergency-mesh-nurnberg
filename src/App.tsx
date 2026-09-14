@@ -25,7 +25,9 @@ import {
 } from './ui/responsive';
 import { useMeshStore, DecryptedSafeEntry } from './state/meshStore';
 import { MeshRouter } from './core/router';
+import { HybridMeshTransport } from './core/transport/HybridMeshTransport';
 import { VirtualMeshTransport, VirtualNetworkBus } from './core/transport/VirtualMeshTransport';
+import { requestMeshPermissions } from './utils/permissions';
 import {
   MeshPacket,
   SosCategory,
@@ -43,6 +45,7 @@ export default function App() {
   const [safeStatusText, setSafeStatusText] = useState('');
   const [senderAlias, setSenderAlias] = useState('');
   const [poiQuery, setPoiQuery] = useState('');
+  const [isRadioActive, setIsRadioActive] = useState(false);
 
   const {
     nodeId,
@@ -64,9 +67,12 @@ export default function App() {
 
   const t = useMemo(() => getTranslations(language), [language]);
 
-  // Initialize Mesh Engine with Virtual Multi-Node RF Simulator on startup
+  // Initialize Mesh Engine with Physical Hardware UDP Radio & Virtual Multi-Node RF Simulator
   useEffect(() => {
-    const transport = new VirtualMeshTransport(nodeId);
+    // Request Android runtime permissions for wireless discovery
+    requestMeshPermissions();
+
+    const hybridTransport = new HybridMeshTransport(nodeId);
     const meshRouter = new MeshRouter(
       {
         nodeId,
@@ -74,11 +80,12 @@ export default function App() {
         dedupCacheSize: 500,
         familySecrets: ['Nbg-Familie-2026'] // Default test pairing
       },
-      transport
+      hybridTransport
     );
 
     meshRouter.start().then(() => {
       attachRouter(meshRouter);
+      setIsRadioActive(hybridTransport.isHardwareRadioActive());
 
       // Link mock virtual neighbors across Nürnberg for demo simulation
       const bus = VirtualNetworkBus.getInstance();
@@ -173,6 +180,14 @@ export default function App() {
           </View>
         </View>
         <Text style={styles.headerSubtitle}>{t.header.subtitle}</Text>
+
+        {/* Hardware OTA Radio Indicator */}
+        <View style={styles.radioStatusBar}>
+          <View style={[styles.radioStatusDot, isRadioActive ? styles.radioDotGreen : styles.radioDotAmber]} />
+          <Text style={styles.radioStatusText}>
+            {isRadioActive ? t.header.radioOta : t.header.radioSim}
+          </Text>
+        </View>
 
         {/* Telemetry Metrics Strip */}
         <View style={styles.telemetryStrip}>
@@ -558,6 +573,29 @@ const styles = StyleSheet.create({
     color: OLED_PALETTE.textMuted,
     fontSize: respFontSize(11),
     marginTop: respHeight(4)
+  },
+  radioStatusBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: respHeight(6)
+  },
+  radioStatusDot: {
+    width: respWidth(7),
+    height: respWidth(7),
+    borderRadius: respWidth(4),
+    marginRight: respWidth(6)
+  },
+  radioDotGreen: {
+    backgroundColor: OLED_PALETTE.safeGreen
+  },
+  radioDotAmber: {
+    backgroundColor: OLED_PALETTE.warningAmber
+  },
+  radioStatusText: {
+    color: OLED_PALETTE.textMuted,
+    fontSize: respFontSize(10),
+    fontWeight: '700',
+    letterSpacing: 0.5
   },
   telemetryStrip: {
     flexDirection: 'row',

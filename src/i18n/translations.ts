@@ -15,6 +15,8 @@ export const TRANSLATIONS = {
       relayed: 'WEITERGELEITET',
       hops: 'Hops',
       packets: 'PAKETE',
+      radioOta: 'OTA-HARDWARE-FUNK AKTIV (UDP 8888)',
+      radioSim: 'SIMULATIONS-MODUS AKTIV',
     },
     tabs: {
       radar: 'RADAR',
@@ -99,6 +101,8 @@ export const TRANSLATIONS = {
       relayed: 'RELAYED',
       hops: 'Hops',
       packets: 'PACKETS',
+      radioOta: 'OTA HARDWARE RADIO ACTIVE (UDP 8888)',
+      radioSim: 'SIMULATION MODE ACTIVE',
     },
     tabs: {
       radar: 'RADAR',
