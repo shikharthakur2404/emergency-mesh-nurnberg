@@ -3,8 +3,8 @@
  * Simulates real-world RF topology, adjacent neighbors, packet latency, and drop rates.
  */
 
-import { MeshPacket, PeerNode } from '../types.js';
-import { MeshTransport, PacketCallback, PeerCallback } from './MeshTransport.js';
+import { MeshPacket, PeerNode } from '../types';
+import { MeshTransport, PacketCallback, PeerCallback } from './MeshTransport';
 
 export class VirtualNetworkBus {
   private static instance: VirtualNetworkBus;

@@ -3,7 +3,7 @@
  * Enables seamless switching between BLE GATT, Nearby Connections, and Virtual Simulator.
  */
 
-import { MeshPacket, PeerNode } from '../types.js';
+import { MeshPacket, PeerNode } from '../types';
 
 export type PacketCallback = (packet: MeshPacket, fromPeerId?: string) => void;
 export type PeerCallback = (peers: PeerNode[]) => void;

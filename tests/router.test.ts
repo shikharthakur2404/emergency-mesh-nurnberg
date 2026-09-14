@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { MeshRouter } from '../src/core/router.js';
-import { VirtualMeshTransport, VirtualNetworkBus } from '../src/core/transport/VirtualMeshTransport.js';
-import { SosPacket, SafePacket, HazardPacket } from '../src/core/types.js';
+import { MeshRouter } from '../src/core/router';
+import { VirtualMeshTransport, VirtualNetworkBus } from '../src/core/transport/VirtualMeshTransport';
+import { SosPacket, SafePacket, HazardPacket } from '../src/core/types';
 
 describe('Mesh Router & Relay Engine', () => {
   beforeEach(() => {

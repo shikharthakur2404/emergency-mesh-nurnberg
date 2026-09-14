@@ -4,7 +4,7 @@
  * Zero-cloud access during total cellular / ISP blackout (Situation A).
  */
 
-import { NurnbergEmergencyPoi } from '../core/types.js';
+import { NurnbergEmergencyPoi } from '../core/types';
 
 export const NURNBERG_EMERGENCY_POIS: NurnbergEmergencyPoi[] = [
   // ── KLINIKEN & NOTAUFNAHMEN (Hospitals & Trauma Centers) ──

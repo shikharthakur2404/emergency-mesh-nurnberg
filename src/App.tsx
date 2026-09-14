@@ -22,17 +22,17 @@ import {
   respWidth,
   respHeight,
   respFontSize
-} from './ui/responsive.js';
-import { useMeshStore, DecryptedSafeEntry } from './state/meshStore.js';
-import { MeshRouter } from './core/router.js';
-import { VirtualMeshTransport, VirtualNetworkBus } from './core/transport/VirtualMeshTransport.js';
+} from './ui/responsive';
+import { useMeshStore, DecryptedSafeEntry } from './state/meshStore';
+import { MeshRouter } from './core/router';
+import { VirtualMeshTransport, VirtualNetworkBus } from './core/transport/VirtualMeshTransport';
 import {
   MeshPacket,
   SosCategory,
   HazardType,
   NurnbergEmergencyPoi
-} from './core/types.js';
-import { searchPois } from './data/nurnberg-emergency-data.js';
+} from './core/types';
+import { searchPois } from './data/nurnberg-emergency-data';
 
 type Tab = 'FEED' | 'SOS' | 'FAMILY' | 'POIS';
 

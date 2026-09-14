@@ -12,15 +12,15 @@ import {
   HazardType,
   RouterConfig,
   PeerNode
-} from './types.js';
-import { DeduplicationCache } from './deduplication.js';
+} from './types';
+import { DeduplicationCache } from './deduplication';
 import {
   generateMsgId,
   hashFamilySecret,
   encryptFamilyPayload,
   decryptFamilyPayload
-} from './crypto.js';
-import { MeshTransport } from './transport/MeshTransport.js';
+} from './crypto';
+import { MeshTransport } from './transport/MeshTransport';
 
 export type MeshEventListener = (packet: MeshPacket, meta: { isDirect: boolean; decryptedText?: string }) => void;
 

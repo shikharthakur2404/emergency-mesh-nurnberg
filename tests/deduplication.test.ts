@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { DeduplicationCache } from '../src/core/deduplication.js';
+import { DeduplicationCache } from '../src/core/deduplication';
 
 describe('Seen-Message Deduplication Engine', () => {
   it('records seen message IDs and reports true on duplicates', () => {

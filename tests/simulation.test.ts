@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { MeshRouter } from '../src/core/router.js';
-import { VirtualMeshTransport, VirtualNetworkBus } from '../src/core/transport/VirtualMeshTransport.js';
-import { MeshPacket } from '../src/core/types.js';
+import { MeshRouter } from '../src/core/router';
+import { VirtualMeshTransport, VirtualNetworkBus } from '../src/core/transport/VirtualMeshTransport';
+import { MeshPacket } from '../src/core/types';
 
 describe('Multi-Hop Virtual Mesh Simulation (3-Node Relay)', () => {
   let bus: VirtualNetworkBus;

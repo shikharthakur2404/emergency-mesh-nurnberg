@@ -13,10 +13,10 @@ import {
   NurnbergEmergencyPoi,
   SosCategory,
   HazardType
-} from '../core/types.js';
-import { MeshRouter } from '../core/router.js';
-import { generateNodeId } from '../core/crypto.js';
-import { NURNBERG_EMERGENCY_POIS } from '../data/nurnberg-emergency-data.js';
+} from '../core/types';
+import { MeshRouter } from '../core/router';
+import { generateNodeId } from '../core/crypto';
+import { NURNBERG_EMERGENCY_POIS } from '../data/nurnberg-emergency-data';
 
 export interface DecryptedSafeEntry {
   msgId: string;
