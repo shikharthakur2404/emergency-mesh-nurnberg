@@ -33,6 +33,7 @@ import {
   NurnbergEmergencyPoi
 } from './core/types';
 import { searchPois } from './data/nurnberg-emergency-data';
+import { getTranslations } from './i18n/translations';
 
 type Tab = 'FEED' | 'SOS' | 'FAMILY' | 'POIS';
 
@@ -56,8 +57,12 @@ export default function App() {
     sendSosBeacon,
     sendHazardAlert,
     offlinePois,
+    language,
+    setLanguage,
     stats
   } = useMeshStore();
+
+  const t = useMemo(() => getTranslations(language), [language]);
 
   // Initialize Mesh Engine with Virtual Multi-Node RF Simulator on startup
   useEffect(() => {
@@ -94,45 +99,45 @@ export default function App() {
   // Handlers
   const handleSetFamilySecret = useCallback(() => {
     if (!familySecretInput.trim()) {
-      Alert.alert('Fehler', 'Bitte geben Sie ein Familien-Passwort ein.');
+      Alert.alert(t.family.errorTitle, t.family.secretMissingMsg);
       return;
     }
     setFamilySecret(familySecretInput.trim());
-    Alert.alert('Erfolg', 'Familien-Schlüssel gekoppelt. Eingehende SAFE-Meldungen werden nun automatisch entschlüsselt.');
-  }, [familySecretInput, setFamilySecret]);
+    Alert.alert(t.family.saveSuccessTitle, t.family.saveSuccessMsg);
+  }, [familySecretInput, setFamilySecret, t]);
 
   const handleBroadcastSafe = useCallback(async () => {
     try {
       if (!activeFamilySecret) {
-        Alert.alert('Schlüssel fehlt', 'Bitte zuerst unter "Familie" das gemeinsame Notfall-Passwort hinterlegen.');
+        Alert.alert(t.family.secretMissingTitle, t.family.secretMissingMsg);
         return;
       }
       if (!safeStatusText.trim()) {
-        Alert.alert('Meldung fehlt', 'Bitte kurz schreiben, wo Sie sind und wie es Ihnen geht.');
+        Alert.alert(t.family.statusMissingTitle, t.family.statusMissingMsg);
         return;
       }
       await sendSafeStatus(safeStatusText.trim(), senderAlias.trim() || undefined);
       setSafeStatusText('');
-      Alert.alert('Gesendet', 'SAFE-Status verschlüsselt im Mesh-Netzwerk ausgestrahlt.');
+      Alert.alert(t.family.sentAlertTitle, t.family.sentAlertMsg);
       setActiveTab('FEED');
     } catch (err) {
       console.error('[handleBroadcastSafe] Error:', err);
-      Alert.alert('Fehler', 'SAFE-Status konnte nicht gesendet werden.');
+      Alert.alert(t.family.errorTitle, t.family.errorMsg);
     }
-  }, [activeFamilySecret, safeStatusText, senderAlias, sendSafeStatus]);
+  }, [activeFamilySecret, safeStatusText, senderAlias, sendSafeStatus, t]);
 
   const handleTriggerSos = useCallback(async (category: SosCategory) => {
     // Default coordinates: Nürnberg Hauptmarkt (49.4539, 11.0775)
-    await sendSosBeacon(category, 49.4539, 11.0775, `Notfallhilfe angefordert (${category})`);
-    Alert.alert('🚨 SOS GESENDET', `Öffentlicher ${category}-Notruf wurde an alle erreichbaren Geräte in Nürnberg gefunkt!`);
+    await sendSosBeacon(category, 49.4539, 11.0775, `Emergency assistance requested (${category})`);
+    Alert.alert(t.sos.alertTitle, t.sos.alertMessage(category));
     setActiveTab('FEED');
-  }, [sendSosBeacon]);
+  }, [sendSosBeacon, t]);
 
   const handleTriggerHazard = useCallback(async (type: HazardType) => {
-    await sendHazardAlert(type, 49.4526, 11.0658, `Gefahrenmeldung: ${type} gemeldet.`);
-    Alert.alert('Gefahr gemeldet', `${type} wurde in den Mesh-Feed eingespeist.`);
+    await sendHazardAlert(type, 49.4526, 11.0658, `Hazard alert: ${type}`);
+    Alert.alert(t.sos.hazardAlertTitle, t.sos.hazardAlertMessage(type));
     setActiveTab('FEED');
-  }, [sendHazardAlert]);
+  }, [sendHazardAlert, t]);
 
   // Filtered POIs
   const filteredPois = useMemo(() => searchPois(poiQuery), [poiQuery]);
@@ -146,28 +151,43 @@ export default function App() {
         <View style={styles.headerTop}>
           <View style={styles.brandRow}>
             <View style={styles.pulseDot} />
-            <Text style={styles.headerTitle}>EMERGENCY MESH NÜRNBERG</Text>
+            <Text style={styles.headerTitle}>{t.header.title}</Text>
           </View>
-          <Text style={styles.nodeBadge}>{nodeId}</Text>
+          <View style={styles.headerRightRow}>
+            <View style={styles.langSelector}>
+              <TouchableOpacity
+                style={[styles.langBtn, language === 'de' && styles.langBtnActive]}
+                onPress={() => setLanguage('de')}
+              >
+                <Text style={[styles.langBtnText, language === 'de' && styles.langBtnTextActive]}>DE</Text>
+              </TouchableOpacity>
+              <View style={styles.langDivider} />
+              <TouchableOpacity
+                style={[styles.langBtn, language === 'en' && styles.langBtnActive]}
+                onPress={() => setLanguage('en')}
+              >
+                <Text style={[styles.langBtnText, language === 'en' && styles.langBtnTextActive]}>EN</Text>
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.nodeBadge}>{nodeId}</Text>
+          </View>
         </View>
-        <Text style={styles.headerSubtitle}>
-          Katastrophenschutz P2P · Kein Mobilfunk / Kein Internet erforderlich
-        </Text>
+        <Text style={styles.headerSubtitle}>{t.header.subtitle}</Text>
 
         {/* Telemetry Metrics Strip */}
         <View style={styles.telemetryStrip}>
           <View style={styles.telemetryItem}>
-            <Text style={styles.telemetryLabel}>PEERS</Text>
-            <Text style={styles.telemetryValueCyan}>{connectedPeers.length + 2} aktiv</Text>
+            <Text style={styles.telemetryLabel}>{t.header.peers}</Text>
+            <Text style={styles.telemetryValueCyan}>{connectedPeers.length + 2} {t.header.peersActive}</Text>
           </View>
           <View style={styles.telemetryDivider} />
           <View style={styles.telemetryItem}>
-            <Text style={styles.telemetryLabel}>WEITERGELEITET</Text>
-            <Text style={styles.telemetryValue}>{stats.relayedCount} Hops</Text>
+            <Text style={styles.telemetryLabel}>{t.header.relayed}</Text>
+            <Text style={styles.telemetryValue}>{stats.relayedCount} {t.header.hops}</Text>
           </View>
           <View style={styles.telemetryDivider} />
           <View style={styles.telemetryItem}>
-            <Text style={styles.telemetryLabel}>PAKETE</Text>
+            <Text style={styles.telemetryLabel}>{t.header.packets}</Text>
             <Text style={styles.telemetryValue}>{stats.totalReceived + packets.length}</Text>
           </View>
         </View>
@@ -179,28 +199,28 @@ export default function App() {
           style={[styles.tabButton, activeTab === 'FEED' && styles.tabButtonActive]}
           onPress={() => setActiveTab('FEED')}
         >
-          <Text style={[styles.tabText, activeTab === 'FEED' && styles.tabTextActive]}>RADAR</Text>
+          <Text style={[styles.tabText, activeTab === 'FEED' && styles.tabTextActive]}>{t.tabs.radar}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={[styles.tabButton, activeTab === 'SOS' && styles.tabButtonActiveSos]}
           onPress={() => setActiveTab('SOS')}
         >
-          <Text style={[styles.tabText, activeTab === 'SOS' && styles.tabTextActiveSos]}>🚨 SOS</Text>
+          <Text style={[styles.tabText, activeTab === 'SOS' && styles.tabTextActiveSos]}>🚨 {t.tabs.sos}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={[styles.tabButton, activeTab === 'FAMILY' && styles.tabButtonActiveSafe]}
           onPress={() => setActiveTab('FAMILY')}
         >
-          <Text style={[styles.tabText, activeTab === 'FAMILY' && styles.tabTextActiveSafe]}>FAMILIE</Text>
+          <Text style={[styles.tabText, activeTab === 'FAMILY' && styles.tabTextActiveSafe]}>{t.tabs.familie}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={[styles.tabButton, activeTab === 'POIS' && styles.tabButtonActive]}
           onPress={() => setActiveTab('POIS')}
         >
-          <Text style={[styles.tabText, activeTab === 'POIS' && styles.tabTextActive]}>ORTE</Text>
+          <Text style={[styles.tabText, activeTab === 'POIS' && styles.tabTextActive]}>{t.tabs.orte}</Text>
         </TouchableOpacity>
       </View>
 
@@ -212,11 +232,11 @@ export default function App() {
             {/* Decrypted Family Highlights Banner */}
             {decryptedFamilyMessages.length > 0 && (
               <View style={styles.familyBanner}>
-                <Text style={styles.familyBannerTitle}>🛡️ FAMILIEN-MELDUNGEN ENTSCHLÜSSELT:</Text>
+                <Text style={styles.familyBannerTitle}>{t.feed.decryptedTitle}</Text>
                 {decryptedFamilyMessages.map((msg, idx) => (
                   <View key={msg.msgId || idx} style={styles.familyBannerItem}>
                     <Text style={styles.familyBannerSender}>
-                      {msg.senderAlias} ({msg.hopCount === 0 ? 'Direkt' : `${msg.hopCount} Hops entfernt`}):
+                      {msg.senderAlias} ({msg.hopCount === 0 ? t.feed.direct : `${msg.hopCount} ${t.feed.hopsSuffix}`}):
                     </Text>
                     <Text style={styles.familyBannerText}>{msg.plaintext}</Text>
                   </View>
@@ -224,19 +244,17 @@ export default function App() {
               </View>
             )}
 
-            <Text style={styles.sectionHeader}>LIVE MESH PACKET STREAM</Text>
+            <Text style={styles.sectionHeader}>{t.feed.title}</Text>
             {packets.length === 0 ? (
               <View style={styles.emptyState}>
-                <Text style={styles.emptyStateText}>Das Mesh-Netzwerk horcht auf Bluetooth-Signale...</Text>
-                <Text style={styles.emptyStateSubtext}>
-                  Pakete von Nachbarn in Reichweite erscheinen hier in Echtzeit.
-                </Text>
+                <Text style={styles.emptyStateText}>{t.feed.emptyTitle}</Text>
+                <Text style={styles.emptyStateSubtext}>{t.feed.emptySubtitle}</Text>
               </View>
             ) : (
               <FlatList
                 data={packets}
                 keyExtractor={(item) => item.msg_id}
-                renderItem={({ item }) => <PacketCard packet={item} />}
+                renderItem={({ item }) => <PacketCard packet={item} t={t} />}
                 keyboardShouldPersistTaps="handled"
               />
             )}
@@ -246,56 +264,54 @@ export default function App() {
         {/* TAB 2: PUBLIC SOS BEACON */}
         {activeTab === 'SOS' && (
           <ScrollView style={styles.formContainer} keyboardShouldPersistTaps="handled">
-            <Text style={styles.formTitle}>ÖFFENTLICHER NOTRUF (SOS)</Text>
-            <Text style={styles.formSubtitle}>
-              Sendet einen unverschlüsselten Notruf mit GPS-Koordinaten über alle Nachbargeräte an Einsatzkräfte und Helfer.
-            </Text>
+            <Text style={styles.formTitle}>{t.sos.title}</Text>
+            <Text style={styles.formSubtitle}>{t.sos.subtitle}</Text>
 
             <TouchableOpacity
               style={[styles.sosCard, { borderColor: OLED_PALETTE.sosRed }]}
               onPress={() => handleTriggerSos('MEDICAL')}
             >
-              <Text style={styles.sosCardTitle}>🚑 MEDIZINISCHER NOTFALL</Text>
-              <Text style={styles.sosCardDesc}>Schwere Verletzung, Bewusstlosigkeit, Herznotfall</Text>
+              <Text style={styles.sosCardTitle}>🚑 {t.sos.medical}</Text>
+              <Text style={styles.sosCardDesc}>{t.sos.medicalDesc}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={[styles.sosCard, { borderColor: '#ff9100' }]}
               onPress={() => handleTriggerSos('FIRE')}
             >
-              <Text style={styles.sosCardTitle}>🔥 FEUER / BRAND</Text>
-              <Text style={styles.sosCardDesc}>Gebäudebrand, Rauchentwicklung, Gasgeruch</Text>
+              <Text style={styles.sosCardTitle}>🔥 {t.sos.fire}</Text>
+              <Text style={styles.sosCardDesc}>{t.sos.fireDesc}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={[styles.sosCard, { borderColor: '#ffd600' }]}
               onPress={() => handleTriggerSos('TRAPPED')}
             >
-              <Text style={styles.sosCardTitle}>🏚️ EINGEKLEMMT / VERSCHÜTTET</Text>
-              <Text style={styles.sosCardDesc}>Einsturz, Trümmer, Tür blockiert</Text>
+              <Text style={styles.sosCardTitle}>🏚️ {t.sos.trapped}</Text>
+              <Text style={styles.sosCardDesc}>{t.sos.trappedDesc}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={[styles.sosCard, { borderColor: OLED_PALETTE.meshCyan }]}
               onPress={() => handleTriggerSos('SUPPLIES')}
             >
-              <Text style={styles.sosCardTitle}>💧 WASSER / NAHRUNG NOTFALL</Text>
-              <Text style={styles.sosCardDesc}>Dringender Trinkwasserbedarf für Kleinkinder / Kranke</Text>
+              <Text style={styles.sosCardTitle}>💧 {t.sos.waterFood}</Text>
+              <Text style={styles.sosCardDesc}>{t.sos.waterFoodDesc}</Text>
             </TouchableOpacity>
 
-            <Text style={[styles.sectionHeader, { marginTop: respHeight(20) }]}>GEFAHRENMELDUNG</Text>
+            <Text style={[styles.sectionHeader, { marginTop: respHeight(20) }]}>{t.sos.hazardHeading}</Text>
             <View style={styles.hazardRow}>
               <TouchableOpacity
                 style={styles.hazardButton}
                 onPress={() => handleTriggerHazard('FLOOD')}
               >
-                <Text style={styles.hazardButtonText}>🌊 Pegnitz Hochwasser</Text>
+                <Text style={styles.hazardButtonText}>🌊 {t.sos.hazardFlood}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.hazardButton}
                 onPress={() => handleTriggerHazard('BLOCKED_ROUTE')}
               >
-                <Text style={styles.hazardButtonText}>⛔ Ringstraße blockiert</Text>
+                <Text style={styles.hazardButtonText}>⛔ {t.sos.hazardBlocked}</Text>
               </TouchableOpacity>
             </View>
           </ScrollView>
@@ -304,43 +320,41 @@ export default function App() {
         {/* TAB 3: FAMILY PRIVATE ENCRYPTION */}
         {activeTab === 'FAMILY' && (
           <ScrollView style={styles.formContainer} keyboardShouldPersistTaps="handled">
-            <Text style={styles.formTitle}>VERSCHLÜSSELTER FAMILIEN-STATUS</Text>
-            <Text style={styles.formSubtitle}>
-              Meldungen werden mit AES-256 verschlüsselt. Fremde Knoten leiten Ihr Paket weiter, können es aber nicht lesen.
-            </Text>
+            <Text style={styles.formTitle}>{t.family.title}</Text>
+            <Text style={styles.formSubtitle}>{t.family.subtitle}</Text>
 
             {/* Secret Setup Card */}
             <View style={styles.card}>
-              <Text style={styles.cardLabel}>1. Gemeinsames Familien-Passwort</Text>
+              <Text style={styles.cardLabel}>{t.family.step1Title}</Text>
               <TextInput
                 style={styles.input}
-                placeholder="z.B. Familie-Nbg-Geheimnis-99"
+                placeholder={t.family.step1Placeholder}
                 placeholderTextColor={OLED_PALETTE.textMuted}
                 value={familySecretInput}
                 onChangeText={setFamilySecretInput}
                 autoCapitalize="none"
               />
               <TouchableOpacity style={styles.actionButton} onPress={handleSetFamilySecret}>
-                <Text style={styles.actionButtonText}>Passwort speichern</Text>
+                <Text style={styles.actionButtonText}>{t.family.step1SaveBtn}</Text>
               </TouchableOpacity>
               {activeFamilySecret ? (
-                <Text style={styles.secretActiveNotice}>✓ Aktiv gekoppelt ({activeFamilySecret})</Text>
+                <Text style={styles.secretActiveNotice}>{t.family.step1SavedBanner(activeFamilySecret)}</Text>
               ) : null}
             </View>
 
             {/* Broadcast Status Card */}
             <View style={[styles.card, { marginTop: respHeight(16) }]}>
-              <Text style={styles.cardLabel}>2. Lebenszeichen / Status funken</Text>
+              <Text style={styles.cardLabel}>{t.family.step2Title}</Text>
               <TextInput
                 style={styles.input}
-                placeholder="Ihr Name / Rufname (z.B. Papa)"
+                placeholder={t.family.namePlaceholder}
                 placeholderTextColor={OLED_PALETTE.textMuted}
                 value={senderAlias}
                 onChangeText={setSenderAlias}
               />
               <TextInput
                 style={[styles.input, { height: respHeight(80), textAlignVertical: 'top' }]}
-                placeholder="Status: z.B. Bin sicher am Hauptmarkt. Trinkwasser geholt."
+                placeholder={t.family.statusPlaceholder}
                 placeholderTextColor={OLED_PALETTE.textMuted}
                 value={safeStatusText}
                 onChangeText={setSafeStatusText}
@@ -351,7 +365,7 @@ export default function App() {
                 onPress={handleBroadcastSafe}
               >
                 <Text style={[styles.actionButtonText, { color: OLED_PALETTE.textInverse }]}>
-                  🛡️ SAFE-Status verschlüsselt senden
+                  {t.family.sendBtn}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -363,7 +377,7 @@ export default function App() {
           <View style={styles.feedContainer}>
             <TextInput
               style={[styles.input, { marginBottom: respHeight(12) }]}
-              placeholder="🔍 Ort suchen (z.B. Klinikum, Brunnen, Gostenhof)..."
+              placeholder={`🔍 ${t.orte.searchPlaceholder}`}
               placeholderTextColor={OLED_PALETTE.textMuted}
               value={poiQuery}
               onChangeText={setPoiQuery}
@@ -372,7 +386,7 @@ export default function App() {
             <FlatList
               data={filteredPois}
               keyExtractor={(item) => item.id}
-              renderItem={({ item }) => <PoiCard poi={item} />}
+              renderItem={({ item }) => <PoiCard poi={item} t={t} />}
               keyboardShouldPersistTaps="handled"
             />
           </View>
@@ -384,7 +398,7 @@ export default function App() {
 
 // ── SUBCOMPONENTS ──
 
-const PacketCard = React.memo(({ packet }: { packet: MeshPacket }) => {
+const PacketCard = React.memo(({ packet, t }: { packet: MeshPacket; t: ReturnType<typeof getTranslations> }) => {
   const isSos = packet.type === 'SOS';
   const isSafe = packet.type === 'SAFE';
   const isHazard = packet.type === 'HAZARD';
@@ -400,32 +414,32 @@ const PacketCard = React.memo(({ packet }: { packet: MeshPacket }) => {
       <View style={styles.packetHeader}>
         <Text style={[styles.packetType, { color: borderColor }]}>{packet.type}</Text>
         <Text style={styles.packetHops}>
-          {packet.hop_count === 0 ? 'Direkt' : `${packet.hop_count} Hops`} · TTL: {packet.ttl}
+          {packet.hop_count === 0 ? t.feed.direct : `${packet.hop_count} ${t.feed.hopsSuffix}`} · TTL: {packet.ttl}
         </Text>
       </View>
 
       {isSos && (
         <View>
-          <Text style={styles.sosAlertTitle}>🚨 KATEGORIE: {(packet as any).category}</Text>
-          <Text style={styles.packetDesc}>{(packet as any).notes || 'Sofortige Hilfe erforderlich'}</Text>
+          <Text style={styles.sosAlertTitle}>🚨 {t.feed.categoryLabel}: {(packet as any).category}</Text>
+          <Text style={styles.packetDesc}>{(packet as any).notes || 'Help requested'}</Text>
           <Text style={styles.gpsCoords}>
-            Standort: {(packet as any).lat.toFixed(4)}, {(packet as any).lon.toFixed(4)} (Nürnberg)
+            {t.feed.locationLabel}: {(packet as any).lat.toFixed(4)}, {(packet as any).lon.toFixed(4)} (Nürnberg)
           </Text>
         </View>
       )}
 
       {isSafe && (
         <View>
-          <Text style={styles.safeSender}>Von: {(packet as any).sender_alias || 'Unbekannt'}</Text>
+          <Text style={styles.safeSender}>{t.feed.sender}: {(packet as any).sender_alias || t.feed.anonymous}</Text>
           <Text style={styles.encryptedPayload}>
-            [Verschlüsselter AES-256 Ciphertext: {(packet as any).encrypted_payload.slice(0, 24)}...]
+            {t.feed.encryptedCiphertext}{(packet as any).encrypted_payload.slice(0, 24)}...]
           </Text>
         </View>
       )}
 
       {isHazard && (
         <View>
-          <Text style={styles.hazardTitle}>⚠️ GEFAHR: {(packet as any).hazard_type}</Text>
+          <Text style={styles.hazardTitle}>⚠️ {t.feed.hazardLabel}: {(packet as any).hazard_type}</Text>
           <Text style={styles.packetDesc}>{(packet as any).description}</Text>
         </View>
       )}
@@ -433,7 +447,7 @@ const PacketCard = React.memo(({ packet }: { packet: MeshPacket }) => {
   );
 });
 
-const PoiCard = React.memo(({ poi }: { poi: NurnbergEmergencyPoi }) => {
+const PoiCard = React.memo(({ poi, t }: { poi: NurnbergEmergencyPoi; t: ReturnType<typeof getTranslations> }) => {
   const isHospital = poi.category === 'HOSPITAL';
   const isWater = poi.category === 'WATER';
 
@@ -448,12 +462,12 @@ const PoiCard = React.memo(({ poi }: { poi: NurnbergEmergencyPoi }) => {
       <View style={styles.poiHeader}>
         <Text style={styles.poiName}>{poi.name}</Text>
         <Text style={[styles.poiTag, { color: tagColor, borderColor: tagColor }]}>
-          {poi.category}
+          {(t.orte.types as any)[poi.category] || poi.category}
         </Text>
       </View>
       <Text style={styles.poiAddress}>{poi.address} ({poi.district})</Text>
       <Text style={styles.poiNotes}>{poi.notes}</Text>
-      {poi.capacity && <Text style={styles.poiCapacity}>Kapazität: {poi.capacity}</Text>}
+      {poi.capacity && <Text style={styles.poiCapacity}>{t.orte.capacityLabel}: {poi.capacity}</Text>}
     </View>
   );
 });
@@ -492,6 +506,42 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     fontSize: respFontSize(14),
     letterSpacing: 1
+  },
+  headerRightRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: respWidth(8)
+  },
+  langSelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#0a0a0f',
+    borderRadius: respWidth(4),
+    borderWidth: 1,
+    borderColor: '#1f242e',
+    overflow: 'hidden'
+  },
+  langBtn: {
+    paddingHorizontal: respWidth(7),
+    paddingVertical: respHeight(3)
+  },
+  langBtnActive: {
+    backgroundColor: '#00e5ff22'
+  },
+  langDivider: {
+    width: 1,
+    height: respHeight(14),
+    backgroundColor: '#1f242e'
+  },
+  langBtnText: {
+    color: OLED_PALETTE.textMuted,
+    fontSize: respFontSize(10),
+    fontWeight: '700',
+    fontFamily: 'monospace'
+  },
+  langBtnTextActive: {
+    color: OLED_PALETTE.meshCyan,
+    fontWeight: '900'
   },
   nodeBadge: {
     color: OLED_PALETTE.meshCyan,

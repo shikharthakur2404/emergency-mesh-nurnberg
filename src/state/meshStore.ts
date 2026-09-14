@@ -17,6 +17,7 @@ import {
 import { MeshRouter } from '../core/router';
 import { generateNodeId } from '../core/crypto';
 import { NURNBERG_EMERGENCY_POIS } from '../data/nurnberg-emergency-data';
+import { Language } from '../i18n/translations';
 
 export interface DecryptedSafeEntry {
   msgId: string;
@@ -34,6 +35,7 @@ export interface MeshState {
   connectedPeers: PeerNode[];
   activeFamilySecret: string;
   offlinePois: NurnbergEmergencyPoi[];
+  language: Language;
   stats: {
     totalReceived: number;
     relayedCount: number;
@@ -42,6 +44,7 @@ export interface MeshState {
 
   // Actions
   attachRouter: (router: MeshRouter) => void;
+  setLanguage: (lang: Language) => void;
   setFamilySecret: (secret: string) => void;
   sendSafeStatus: (text: string, alias?: string) => Promise<SafePacket | null>;
   sendSosBeacon: (category: SosCategory, lat: number, lon: number, notes?: string) => Promise<SosPacket | null>;
@@ -58,10 +61,15 @@ export const useMeshStore = create<MeshState>((set, get) => ({
   connectedPeers: [],
   activeFamilySecret: '',
   offlinePois: NURNBERG_EMERGENCY_POIS,
+  language: 'de',
   stats: {
     totalReceived: 0,
     relayedCount: 0,
     droppedDuplicates: 0
+  },
+
+  setLanguage: (lang: Language) => {
+    set({ language: lang });
   },
 
   attachRouter: (router: MeshRouter) => {
