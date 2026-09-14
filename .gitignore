@@ -12,3 +12,4 @@ android/local.properties
 *.keystore
 !android/app/debug.keystore
 KEYSTORE_CREDENTIALS.txt
+android/app/release/
