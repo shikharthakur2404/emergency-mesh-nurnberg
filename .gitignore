@@ -11,3 +11,4 @@ android/local.properties
 *.apk
 *.keystore
 !android/app/debug.keystore
+KEYSTORE_CREDENTIALS.txt
