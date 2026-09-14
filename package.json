@@ -4,6 +4,8 @@
   "description": "Decentralized P2P Offline Emergency Coordination Mesh for Nürnberg Katastrophenschutz",
   "main": "src/index.ts",
   "scripts": {
+    "start": "react-native start",
+    "android": "react-native run-android",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
@@ -26,9 +28,9 @@
     "zustand": "^5.0.3"
   },
   "devDependencies": {
-    "@react-native-community/cli": "^20.2.0",
-    "@react-native/babel-preset": "^0.87.1",
-    "@react-native/metro-config": "^0.87.1",
+    "@react-native-community/cli": "^15.0.1",
+    "@react-native/babel-preset": "^0.77.1",
+    "@react-native/metro-config": "^0.77.1",
     "@types/node": "^22.13.9",
     "@types/react": "^18.3.31",
     "typescript": "^5.8.2",
