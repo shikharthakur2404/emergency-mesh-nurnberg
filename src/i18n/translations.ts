@@ -1,6 +1,6 @@
 /**
  * Emergency Mesh Nürnberg — Bilingual i18n Dictionary
- * Supports German (DE) and English (EN) for all mesh subsystems.
+ * Supports German (DE) and English (EN) for all mesh subsystems with authentic Nürnberg Katastrophenschutz flair.
  */
 
 export type Language = 'de' | 'en';
@@ -17,6 +17,9 @@ export const TRANSLATIONS = {
       packets: 'PAKETE',
       radioOta: 'OTA-HARDWARE-FUNK AKTIV (UDP 8888)',
       radioSim: 'SIMULATIONS-MODUS AKTIV',
+      crestTag: '🏰 KAISERBURG RELAY',
+      sectorTag: 'SEKTOR 01: ALTSTADT-BURG',
+      frequencyTag: 'KANAL: PEGNITZ-8888 // 49.45°N 11.08°E',
     },
     tabs: {
       radar: 'RADAR',
@@ -26,8 +29,8 @@ export const TRANSLATIONS = {
     },
     feed: {
       title: 'LIVE MESH PACKET STREAM',
-      emptyTitle: 'Das Mesh-Netzwerk horcht auf Bluetooth-Signale...',
-      emptySubtitle: 'Pakete von Nachbarn in Reichweite erscheinen hier in Echtzeit.',
+      emptyTitle: 'Horche auf Nürnberg Mesh-Signale...',
+      emptySubtitle: 'Pakete von Altstadt, Gostenhof, Südstadt und Nachbarn erscheinen hier in Echtzeit.',
       decryptedTitle: '🛡️ FAMILIEN-MELDUNGEN ENTSCHLÜSSELT:',
       direct: 'Direkt',
       hopsSuffix: 'Hops',
@@ -37,6 +40,8 @@ export const TRANSLATIONS = {
       categoryLabel: 'KATEGORIE',
       hazardLabel: 'GEFAHR',
       locationLabel: 'Standort',
+      sectorBadge: 'SEKTOR',
+      signalGood: 'SIGNAL STARK',
     },
     sos: {
       title: 'ÖFFENTLICHER NOTRUF (SOS)',
@@ -49,14 +54,19 @@ export const TRANSLATIONS = {
       trappedDesc: 'Einsturz, Trümmer, Tür blockiert',
       waterFood: 'WASSER / NAHRUNG NOTFALL',
       waterFoodDesc: 'Dringender Trinkwasserbedarf für Kleinkinder / Kranke',
-      hazardHeading: 'GEFAHRENMELDUNG',
+      hazardHeading: 'GEFAHRENMELDUNG (NÜRNBERG)',
       hazardFlood: 'Pegnitz Hochwasser',
-      hazardBlocked: 'Ringstraße blockiert',
+      hazardBlocked: 'Frankenschnellweg blockiert',
+      hazardRing: 'Ringstraße blockiert',
       alertTitle: '🚨 SOS GESENDET',
       alertMessage: (category: string) =>
         `Öffentlicher ${category}-Notruf wurde an alle erreichbaren Geräte in Nürnberg gefunkt!`,
       hazardAlertTitle: 'Gefahr gemeldet',
       hazardAlertMessage: (type: string) => `${type} wurde in den Mesh-Feed eingespeist.`,
+      codeMedical: 'KATS-101 // SANITÄT',
+      codeFire: 'KATS-204 // FEUERWEHR',
+      codeTrapped: 'KATS-308 // THW RETTUNG',
+      codeWater: 'KATS-410 // VERSORGUNG',
     },
     family: {
       title: 'VERSCHLÜSSELTER FAMILIEN-STATUS',
@@ -79,10 +89,18 @@ export const TRANSLATIONS = {
       saveSuccessMsg: 'Familien-Schlüssel gekoppelt. Eingehende SAFE-Meldungen werden nun automatisch entschlüsselt.',
       errorTitle: 'Fehler',
       errorMsg: 'SAFE-Status konnte nicht gesendet werden.',
+      vaultBadge: 'KAISERBURG KRYPTO-TRESOR // AES-256',
     },
     orte: {
       searchPlaceholder: 'Ort suchen (z.B. Klinikum, Brunnen, Gostenhof)...',
       capacityLabel: 'Kapazität',
+      filterAll: 'Alle',
+      filterAltstadt: 'Altstadt',
+      filterGostenhof: 'Gostenhof',
+      filterJohannis: 'Johannis',
+      filterLangwasser: 'Langwasser',
+      filterSuedstadt: 'Südstadt',
+      distPrefix: 'ca.',
       types: {
         HOSPITAL: 'HOSPITAL',
         WATER: 'WATER',
@@ -103,6 +121,9 @@ export const TRANSLATIONS = {
       packets: 'PACKETS',
       radioOta: 'OTA HARDWARE RADIO ACTIVE (UDP 8888)',
       radioSim: 'SIMULATION MODE ACTIVE',
+      crestTag: '🏰 KAISERBURG RELAY',
+      sectorTag: 'SECTOR 01: ALTSTADT-CASTLE',
+      frequencyTag: 'CHANNEL: PEGNITZ-8888 // 49.45°N 11.08°E',
     },
     tabs: {
       radar: 'RADAR',
@@ -112,8 +133,8 @@ export const TRANSLATIONS = {
     },
     feed: {
       title: 'LIVE MESH PACKET STREAM',
-      emptyTitle: 'Mesh network listening for Bluetooth signals...',
-      emptySubtitle: 'Packets from nearby devices will appear here in real time.',
+      emptyTitle: 'Listening for Nuremberg mesh radio signals...',
+      emptySubtitle: 'Packets from Altstadt, Gostenhof, Südstadt and nearby nodes appear here in real time.',
       decryptedTitle: '🛡️ DECRYPTED FAMILY MESSAGES:',
       direct: 'Direct',
       hopsSuffix: 'Hops',
@@ -123,6 +144,8 @@ export const TRANSLATIONS = {
       categoryLabel: 'CATEGORY',
       hazardLabel: 'HAZARD',
       locationLabel: 'Location',
+      sectorBadge: 'SECTOR',
+      signalGood: 'STRONG SIGNAL',
     },
     sos: {
       title: 'PUBLIC EMERGENCY BEACON (SOS)',
@@ -135,14 +158,19 @@ export const TRANSLATIONS = {
       trappedDesc: 'Building collapse, rubble, door blocked',
       waterFood: 'CRITICAL WATER / FOOD',
       waterFoodDesc: 'Urgent drinking water shortage for infants / ill persons',
-      hazardHeading: 'HAZARD BROADCAST',
+      hazardHeading: 'HAZARD BROADCAST (NUREMBERG)',
       hazardFlood: 'Pegnitz Flash Flood',
-      hazardBlocked: 'Ring Road Blocked',
+      hazardBlocked: 'Frankenschnellweg Blocked',
+      hazardRing: 'Ring Road Blocked',
       alertTitle: '🚨 SOS BROADCASTED',
       alertMessage: (category: string) =>
         `Public ${category} distress beacon broadcasted across all reachable devices in Nuremberg!`,
       hazardAlertTitle: 'Hazard Reported',
       hazardAlertMessage: (type: string) => `${type} has been broadcasted into the mesh feed.`,
+      codeMedical: 'KATS-101 // EMS',
+      codeFire: 'KATS-204 // FIRE DEPT',
+      codeTrapped: 'KATS-308 // RESCUE THW',
+      codeWater: 'KATS-410 // SUPPLIES',
     },
     family: {
       title: 'ENCRYPTED FAMILY CHECK-IN',
@@ -165,10 +193,18 @@ export const TRANSLATIONS = {
       saveSuccessMsg: 'Family key configured. Inbound SAFE packets matching this key will automatically decrypt.',
       errorTitle: 'Error',
       errorMsg: 'Could not transmit SAFE status.',
+      vaultBadge: 'KAISERBURG CIPHER VAULT // AES-256',
     },
     orte: {
       searchPlaceholder: 'Search location (e.g. Hospital, Well, Gostenhof)...',
       capacityLabel: 'Capacity',
+      filterAll: 'All',
+      filterAltstadt: 'Altstadt',
+      filterGostenhof: 'Gostenhof',
+      filterJohannis: 'Johannis',
+      filterLangwasser: 'Langwasser',
+      filterSuedstadt: 'Südstadt',
+      distPrefix: 'approx.',
       types: {
         HOSPITAL: 'HOSPITAL',
         WATER: 'WATER',

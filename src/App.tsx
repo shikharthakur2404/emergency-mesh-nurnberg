@@ -2,6 +2,7 @@
  * Emergency Mesh Nürnberg — Main React Native HUD Interface
  * Pure OLED Black (#000000) Civil Defense (Katastrophenschutz) Dashboard
  * Built for Situation A: Total cellular/ISP blackout in Nürnberg.
+ * High-tech tactical Kaiserburg / Franconian aesthetic.
  */
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
@@ -39,12 +40,31 @@ import { getTranslations } from './i18n/translations';
 
 type Tab = 'FEED' | 'SOS' | 'FAMILY' | 'POIS';
 
+const DISTRICT_FILTERS = ['ALL', 'Altstadt', 'Gostenhof', 'Johannis', 'Langwasser', 'Südstadt'] as const;
+
+function calculateDistanceKm(lat: number, lon: number): string {
+  // Distance to Nürnberg Hauptmarkt (49.4539, 11.0775)
+  const R = 6371;
+  const dLat = ((lat - 49.4539) * Math.PI) / 180;
+  const dLon = ((lon - 11.0775) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((49.4539 * Math.PI) / 180) *
+      Math.cos((lat * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const d = R * c;
+  return `${d.toFixed(1)} km`;
+}
+
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('FEED');
   const [familySecretInput, setFamilySecretInput] = useState('');
   const [safeStatusText, setSafeStatusText] = useState('');
   const [senderAlias, setSenderAlias] = useState('');
   const [poiQuery, setPoiQuery] = useState('');
+  const [selectedDistrict, setSelectedDistrict] = useState<string>('ALL');
   const [isRadioActive, setIsRadioActive] = useState(false);
 
   const {
@@ -69,7 +89,6 @@ export default function App() {
 
   // Initialize Mesh Engine with Physical Hardware UDP Radio & Virtual Multi-Node RF Simulator
   useEffect(() => {
-    // Request Android runtime permissions for wireless discovery
     requestMeshPermissions();
 
     const hybridTransport = new HybridMeshTransport(nodeId);
@@ -146,21 +165,46 @@ export default function App() {
     setActiveTab('FEED');
   }, [sendHazardAlert, t]);
 
-  // Filtered POIs
-  const filteredPois = useMemo(() => searchPois(poiQuery), [poiQuery]);
+  // Filtered POIs by search text + selected district
+  const filteredPois = useMemo(() => {
+    let list = searchPois(poiQuery);
+    if (selectedDistrict !== 'ALL') {
+      list = list.filter((p) => p.district.toLowerCase().includes(selectedDistrict.toLowerCase()));
+    }
+    return list;
+  }, [poiQuery, selectedDistrict]);
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={OLED_PALETTE.background} />
 
+      {/* ── FRANCONIAN TACTICAL TOP ACCENT BAR ── */}
+      <View style={styles.franconianAccentBar}>
+        <View style={styles.franconianRedSegment} />
+        <View style={styles.franconianWhiteSegment} />
+        <View style={styles.franconianRedSegment} />
+        <View style={styles.franconianGoldSegment} />
+      </View>
+
       {/* ── OLED HEADER & HUD STATUS BAR ── */}
       <View style={styles.header}>
         <View style={styles.headerTop}>
           <View style={styles.brandRow}>
-            <View style={styles.pulseDot} />
-            <Text style={styles.headerTitle}>{t.header.title}</Text>
+            {/* Nürnberg Kaiserburg Emblem */}
+            <View style={styles.crestBadge}>
+              <Text style={styles.crestIcon}>🏰</Text>
+            </View>
+            <View>
+              <View style={styles.titleRow}>
+                <View style={styles.pulseDot} />
+                <Text style={styles.headerTitle}>{t.header.title}</Text>
+              </View>
+              <Text style={styles.headerSectorSub}>{t.header.sectorTag}</Text>
+            </View>
           </View>
+
           <View style={styles.headerRightRow}>
+            {/* Bilingual Switcher */}
             <View style={styles.langSelector}>
               <TouchableOpacity
                 style={[styles.langBtn, language === 'de' && styles.langBtnActive]}
@@ -176,21 +220,37 @@ export default function App() {
                 <Text style={[styles.langBtnText, language === 'en' && styles.langBtnTextActive]}>EN</Text>
               </TouchableOpacity>
             </View>
-            <Text style={styles.nodeBadge}>{nodeId}</Text>
+
+            {/* Tactical Node Badge */}
+            <View style={styles.nodeBadgeContainer}>
+              <Text style={styles.nodeBadgePrefix}>NODE</Text>
+              <Text style={styles.nodeBadge}>{nodeId}</Text>
+            </View>
           </View>
         </View>
+
         <Text style={styles.headerSubtitle}>{t.header.subtitle}</Text>
 
-        {/* Hardware OTA Radio Indicator */}
+        {/* Hardware OTA Radio & Frequency Indicator */}
         <View style={styles.radioStatusBar}>
-          <View style={[styles.radioStatusDot, isRadioActive ? styles.radioDotGreen : styles.radioDotAmber]} />
-          <Text style={styles.radioStatusText}>
-            {isRadioActive ? t.header.radioOta : t.header.radioSim}
-          </Text>
+          <View style={styles.radioStatusLeft}>
+            <View style={[styles.radioStatusDot, isRadioActive ? styles.radioDotGreen : styles.radioDotAmber]} />
+            <Text style={styles.radioStatusText}>
+              {isRadioActive ? t.header.radioOta : t.header.radioSim}
+            </Text>
+          </View>
+          <View style={styles.channelBadge}>
+            <Text style={styles.channelBadgeText}>{t.header.frequencyTag}</Text>
+          </View>
         </View>
 
         {/* Telemetry Metrics Strip */}
         <View style={styles.telemetryStrip}>
+          <View style={styles.telemetryItem}>
+            <Text style={styles.telemetryLabel}>SEKTOR</Text>
+            <Text style={styles.telemetryValueGold}>NBG-01</Text>
+          </View>
+          <View style={styles.telemetryDivider} />
           <View style={styles.telemetryItem}>
             <Text style={styles.telemetryLabel}>{t.header.peers}</Text>
             <Text style={styles.telemetryValueCyan}>{connectedPeers.length + 2} {t.header.peersActive}</Text>
@@ -211,31 +271,39 @@ export default function App() {
       {/* ── 4-TAB NAVIGATION SEGMENT ── */}
       <View style={styles.tabBar}>
         <TouchableOpacity
-          style={[styles.tabButton, activeTab === 'FEED' && styles.tabButtonActive]}
+          style={[styles.tabButton, activeTab === 'FEED' && styles.tabButtonActiveRadar]}
           onPress={() => setActiveTab('FEED')}
         >
-          <Text style={[styles.tabText, activeTab === 'FEED' && styles.tabTextActive]}>{t.tabs.radar}</Text>
+          <Text style={[styles.tabText, activeTab === 'FEED' && styles.tabTextActiveRadar]}>
+            📡 {t.tabs.radar}
+          </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={[styles.tabButton, activeTab === 'SOS' && styles.tabButtonActiveSos]}
           onPress={() => setActiveTab('SOS')}
         >
-          <Text style={[styles.tabText, activeTab === 'SOS' && styles.tabTextActiveSos]}>🚨 {t.tabs.sos}</Text>
+          <Text style={[styles.tabText, activeTab === 'SOS' && styles.tabTextActiveSos]}>
+            🚨 {t.tabs.sos}
+          </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.tabButton, activeTab === 'FAMILY' && styles.tabButtonActiveSafe]}
+          style={[styles.tabButton, activeTab === 'FAMILY' && styles.tabButtonActiveFamily]}
           onPress={() => setActiveTab('FAMILY')}
         >
-          <Text style={[styles.tabText, activeTab === 'FAMILY' && styles.tabTextActiveSafe]}>{t.tabs.familie}</Text>
+          <Text style={[styles.tabText, activeTab === 'FAMILY' && styles.tabTextActiveFamily]}>
+            🛡️ {t.tabs.familie}
+          </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.tabButton, activeTab === 'POIS' && styles.tabButtonActive]}
+          style={[styles.tabButton, activeTab === 'POIS' && styles.tabButtonActivePlaces]}
           onPress={() => setActiveTab('POIS')}
         >
-          <Text style={[styles.tabText, activeTab === 'POIS' && styles.tabTextActive]}>{t.tabs.orte}</Text>
+          <Text style={[styles.tabText, activeTab === 'POIS' && styles.tabTextActivePlaces]}>
+            📍 {t.tabs.orte}
+          </Text>
         </TouchableOpacity>
       </View>
 
@@ -244,14 +312,37 @@ export default function App() {
         {/* TAB 1: RADAR / LIVE FEED */}
         {activeTab === 'FEED' && (
           <View style={styles.feedContainer}>
+            {/* Nürnberg Tactical Sector Grid Status */}
+            <View style={styles.sectorBar}>
+              <View style={styles.sectorChip}>
+                <View style={styles.sectorDotGreen} />
+                <Text style={styles.sectorChipText}>ALTSTADT-BURG</Text>
+              </View>
+              <View style={styles.sectorChip}>
+                <View style={styles.sectorDotGreen} />
+                <Text style={styles.sectorChipText}>GOSTENHOF</Text>
+              </View>
+              <View style={styles.sectorChip}>
+                <View style={styles.sectorDotGreen} />
+                <Text style={styles.sectorChipText}>SÜDSTADT</Text>
+              </View>
+              <View style={styles.sectorChip}>
+                <View style={styles.sectorDotAmber} />
+                <Text style={styles.sectorChipText}>LANGWASSER</Text>
+              </View>
+            </View>
+
             {/* Decrypted Family Highlights Banner */}
             {decryptedFamilyMessages.length > 0 && (
               <View style={styles.familyBanner}>
-                <Text style={styles.familyBannerTitle}>{t.feed.decryptedTitle}</Text>
+                <View style={styles.familyBannerHeader}>
+                  <Text style={styles.familyBannerTitle}>{t.feed.decryptedTitle}</Text>
+                  <Text style={styles.kaiserburgTag}>KAISERBURG VAULT</Text>
+                </View>
                 {decryptedFamilyMessages.map((msg, idx) => (
                   <View key={msg.msgId || idx} style={styles.familyBannerItem}>
                     <Text style={styles.familyBannerSender}>
-                      {msg.senderAlias} ({msg.hopCount === 0 ? t.feed.direct : `${msg.hopCount} ${t.feed.hopsSuffix}`}):
+                      🛡️ {msg.senderAlias} ({msg.hopCount === 0 ? t.feed.direct : `${msg.hopCount} ${t.feed.hopsSuffix}`}):
                     </Text>
                     <Text style={styles.familyBannerText}>{msg.plaintext}</Text>
                   </View>
@@ -259,9 +350,14 @@ export default function App() {
               </View>
             )}
 
-            <Text style={styles.sectionHeader}>{t.feed.title}</Text>
+            <View style={styles.streamHeaderRow}>
+              <Text style={styles.sectionHeader}>{t.feed.title}</Text>
+              <Text style={styles.streamSignalBadge}>● {t.feed.signalGood}</Text>
+            </View>
+
             {packets.length === 0 ? (
               <View style={styles.emptyState}>
+                <Text style={styles.emptyStateIcon}>🏰</Text>
                 <Text style={styles.emptyStateText}>{t.feed.emptyTitle}</Text>
                 <Text style={styles.emptyStateSubtext}>{t.feed.emptySubtitle}</Text>
               </View>
@@ -279,68 +375,102 @@ export default function App() {
         {/* TAB 2: PUBLIC SOS BEACON */}
         {activeTab === 'SOS' && (
           <ScrollView style={styles.formContainer} keyboardShouldPersistTaps="handled">
-            <Text style={styles.formTitle}>{t.sos.title}</Text>
+            <View style={styles.sosTitleRow}>
+              <Text style={styles.formTitle}>{t.sos.title}</Text>
+              <View style={styles.katsBadge}>
+                <Text style={styles.katsBadgeText}>KATS-DEFCON 1</Text>
+              </View>
+            </View>
             <Text style={styles.formSubtitle}>{t.sos.subtitle}</Text>
 
             <TouchableOpacity
-              style={[styles.sosCard, { borderColor: OLED_PALETTE.sosRed }]}
+              style={[styles.sosCard, { borderColor: OLED_PALETTE.nurnbergRed, borderLeftWidth: respWidth(6) }]}
               onPress={() => handleTriggerSos('MEDICAL')}
             >
-              <Text style={styles.sosCardTitle}>🚑 {t.sos.medical}</Text>
+              <View style={styles.sosCardTop}>
+                <Text style={styles.sosCardTitle}>🚑 {t.sos.medical}</Text>
+                <Text style={styles.sosCodeBadge}>{t.sos.codeMedical}</Text>
+              </View>
               <Text style={styles.sosCardDesc}>{t.sos.medicalDesc}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.sosCard, { borderColor: '#ff9100' }]}
+              style={[styles.sosCard, { borderColor: '#ff6b35', borderLeftWidth: respWidth(6) }]}
               onPress={() => handleTriggerSos('FIRE')}
             >
-              <Text style={styles.sosCardTitle}>🔥 {t.sos.fire}</Text>
+              <View style={styles.sosCardTop}>
+                <Text style={styles.sosCardTitle}>🔥 {t.sos.fire}</Text>
+                <Text style={styles.sosCodeBadge}>{t.sos.codeFire}</Text>
+              </View>
               <Text style={styles.sosCardDesc}>{t.sos.fireDesc}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.sosCard, { borderColor: '#ffd600' }]}
+              style={[styles.sosCard, { borderColor: OLED_PALETTE.imperialGold, borderLeftWidth: respWidth(6) }]}
               onPress={() => handleTriggerSos('TRAPPED')}
             >
-              <Text style={styles.sosCardTitle}>🏚️ {t.sos.trapped}</Text>
+              <View style={styles.sosCardTop}>
+                <Text style={styles.sosCardTitle}>🏚️ {t.sos.trapped}</Text>
+                <Text style={styles.sosCodeBadge}>{t.sos.codeTrapped}</Text>
+              </View>
               <Text style={styles.sosCardDesc}>{t.sos.trappedDesc}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.sosCard, { borderColor: OLED_PALETTE.meshCyan }]}
+              style={[styles.sosCard, { borderColor: OLED_PALETTE.meshCyan, borderLeftWidth: respWidth(6) }]}
               onPress={() => handleTriggerSos('SUPPLIES')}
             >
-              <Text style={styles.sosCardTitle}>💧 {t.sos.waterFood}</Text>
+              <View style={styles.sosCardTop}>
+                <Text style={styles.sosCardTitle}>💧 {t.sos.waterFood}</Text>
+                <Text style={styles.sosCodeBadge}>{t.sos.codeWater}</Text>
+              </View>
               <Text style={styles.sosCardDesc}>{t.sos.waterFoodDesc}</Text>
             </TouchableOpacity>
 
-            <Text style={[styles.sectionHeader, { marginTop: respHeight(20) }]}>{t.sos.hazardHeading}</Text>
-            <View style={styles.hazardRow}>
+            <Text style={[styles.sectionHeader, { marginTop: respHeight(22) }]}>{t.sos.hazardHeading}</Text>
+            <View style={styles.hazardGrid}>
               <TouchableOpacity
-                style={styles.hazardButton}
+                style={[styles.hazardButton, { borderColor: OLED_PALETTE.meshCyan }]}
                 onPress={() => handleTriggerHazard('FLOOD')}
               >
                 <Text style={styles.hazardButtonText}>🌊 {t.sos.hazardFlood}</Text>
+                <Text style={styles.hazardButtonSub}>Pegnitz-Pegel Altstadt</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={styles.hazardButton}
+                style={[styles.hazardButton, { borderColor: OLED_PALETTE.nurnbergRed }]}
                 onPress={() => handleTriggerHazard('BLOCKED_ROUTE')}
               >
                 <Text style={styles.hazardButtonText}>⛔ {t.sos.hazardBlocked}</Text>
+                <Text style={styles.hazardButtonSub}>A73 Frankenschnellweg</Text>
               </TouchableOpacity>
             </View>
+            <TouchableOpacity
+              style={[styles.hazardButtonWide, { borderColor: OLED_PALETTE.warningAmber, marginTop: respHeight(8) }]}
+              onPress={() => handleTriggerHazard('GRID_DOWN')}
+            >
+              <Text style={styles.hazardButtonText}>⚠️ {t.sos.hazardRing}</Text>
+              <Text style={styles.hazardButtonSub}>Nordostbahnhof / Südstadt Ring</Text>
+            </TouchableOpacity>
           </ScrollView>
         )}
 
         {/* TAB 3: FAMILY PRIVATE ENCRYPTION */}
         {activeTab === 'FAMILY' && (
           <ScrollView style={styles.formContainer} keyboardShouldPersistTaps="handled">
-            <Text style={styles.formTitle}>{t.family.title}</Text>
+            <View style={styles.familyTitleRow}>
+              <Text style={styles.formTitle}>{t.family.title}</Text>
+              <View style={styles.vaultTag}>
+                <Text style={styles.vaultTagText}>{t.family.vaultBadge}</Text>
+              </View>
+            </View>
             <Text style={styles.formSubtitle}>{t.family.subtitle}</Text>
 
             {/* Secret Setup Card */}
-            <View style={styles.card}>
-              <Text style={styles.cardLabel}>{t.family.step1Title}</Text>
+            <View style={[styles.card, { borderLeftColor: OLED_PALETTE.imperialGold, borderLeftWidth: respWidth(4) }]}>
+              <View style={styles.cardHeaderRow}>
+                <Text style={styles.cardLabel}>{t.family.step1Title}</Text>
+                <Text style={styles.cipherLabel}>AES-256-CBC</Text>
+              </View>
               <TextInput
                 style={styles.input}
                 placeholder={t.family.step1Placeholder}
@@ -349,8 +479,8 @@ export default function App() {
                 onChangeText={setFamilySecretInput}
                 autoCapitalize="none"
               />
-              <TouchableOpacity style={styles.actionButton} onPress={handleSetFamilySecret}>
-                <Text style={styles.actionButtonText}>{t.family.step1SaveBtn}</Text>
+              <TouchableOpacity style={styles.actionButtonGold} onPress={handleSetFamilySecret}>
+                <Text style={styles.actionButtonGoldText}>{t.family.step1SaveBtn}</Text>
               </TouchableOpacity>
               {activeFamilySecret ? (
                 <Text style={styles.secretActiveNotice}>{t.family.step1SavedBanner(activeFamilySecret)}</Text>
@@ -358,7 +488,7 @@ export default function App() {
             </View>
 
             {/* Broadcast Status Card */}
-            <View style={[styles.card, { marginTop: respHeight(16) }]}>
+            <View style={[styles.card, { marginTop: respHeight(16), borderLeftColor: OLED_PALETTE.safeGreen, borderLeftWidth: respWidth(4) }]}>
               <Text style={styles.cardLabel}>{t.family.step2Title}</Text>
               <TextInput
                 style={styles.input}
@@ -391,18 +521,38 @@ export default function App() {
         {activeTab === 'POIS' && (
           <View style={styles.feedContainer}>
             <TextInput
-              style={[styles.input, { marginBottom: respHeight(12) }]}
+              style={[styles.input, { marginBottom: respHeight(8) }]}
               placeholder={`🔍 ${t.orte.searchPlaceholder}`}
               placeholderTextColor={OLED_PALETTE.textMuted}
               value={poiQuery}
               onChangeText={setPoiQuery}
             />
 
+            {/* District Quick Filter Bar */}
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.districtFilterScroll}>
+              {DISTRICT_FILTERS.map((d) => {
+                const isSelected = selectedDistrict === d;
+                const label = d === 'ALL' ? t.orte.filterAll : d;
+                return (
+                  <TouchableOpacity
+                    key={d}
+                    style={[styles.districtChip, isSelected && styles.districtChipActive]}
+                    onPress={() => setSelectedDistrict(d)}
+                  >
+                    <Text style={[styles.districtChipText, isSelected && styles.districtChipTextActive]}>
+                      {label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+
             <FlatList
               data={filteredPois}
               keyExtractor={(item) => item.id}
               renderItem={({ item }) => <PoiCard poi={item} t={t} />}
               keyboardShouldPersistTaps="handled"
+              contentContainerStyle={{ paddingBottom: respHeight(20) }}
             />
           </View>
         )}
@@ -419,33 +569,38 @@ const PacketCard = React.memo(({ packet, t }: { packet: MeshPacket; t: ReturnTyp
   const isHazard = packet.type === 'HAZARD';
 
   const borderColor = isSos
-    ? OLED_PALETTE.sosRed
+    ? OLED_PALETTE.nurnbergRed
     : isSafe
-    ? OLED_PALETTE.safeGreen
+    ? OLED_PALETTE.imperialGold
     : OLED_PALETTE.warningAmber;
 
   return (
     <View style={[styles.packetCard, { borderLeftColor: borderColor }]}>
       <View style={styles.packetHeader}>
-        <Text style={[styles.packetType, { color: borderColor }]}>{packet.type}</Text>
+        <View style={styles.packetHeaderLeft}>
+          <Text style={[styles.packetTypeBadge, { backgroundColor: `${borderColor}22`, color: borderColor }]}>
+            {packet.type}
+          </Text>
+          <Text style={styles.packetSectorTag}>// NBG-NET</Text>
+        </View>
         <Text style={styles.packetHops}>
           {packet.hop_count === 0 ? t.feed.direct : `${packet.hop_count} ${t.feed.hopsSuffix}`} · TTL: {packet.ttl}
         </Text>
       </View>
 
       {isSos && (
-        <View>
+        <View style={styles.packetBody}>
           <Text style={styles.sosAlertTitle}>🚨 {t.feed.categoryLabel}: {(packet as any).category}</Text>
           <Text style={styles.packetDesc}>{(packet as any).notes || 'Help requested'}</Text>
           <Text style={styles.gpsCoords}>
-            {t.feed.locationLabel}: {(packet as any).lat.toFixed(4)}, {(packet as any).lon.toFixed(4)} (Nürnberg)
+            📍 {(packet as any).lat.toFixed(4)}°N, {(packet as any).lon.toFixed(4)}°E (Nürnberg)
           </Text>
         </View>
       )}
 
       {isSafe && (
-        <View>
-          <Text style={styles.safeSender}>{t.feed.sender}: {(packet as any).sender_alias || t.feed.anonymous}</Text>
+        <View style={styles.packetBody}>
+          <Text style={styles.safeSender}>🛡️ {t.feed.sender}: {(packet as any).sender_alias || t.feed.anonymous}</Text>
           <Text style={styles.encryptedPayload}>
             {t.feed.encryptedCiphertext}{(packet as any).encrypted_payload.slice(0, 24)}...]
           </Text>
@@ -453,7 +608,7 @@ const PacketCard = React.memo(({ packet, t }: { packet: MeshPacket; t: ReturnTyp
       )}
 
       {isHazard && (
-        <View>
+        <View style={styles.packetBody}>
           <Text style={styles.hazardTitle}>⚠️ {t.feed.hazardLabel}: {(packet as any).hazard_type}</Text>
           <Text style={styles.packetDesc}>{(packet as any).description}</Text>
         </View>
@@ -467,10 +622,12 @@ const PoiCard = React.memo(({ poi, t }: { poi: NurnbergEmergencyPoi; t: ReturnTy
   const isWater = poi.category === 'WATER';
 
   const tagColor = isHospital
-    ? OLED_PALETTE.sosRed
+    ? OLED_PALETTE.nurnbergRed
     : isWater
     ? OLED_PALETTE.meshCyan
     : OLED_PALETTE.warningAmber;
+
+  const distance = calculateDistanceKm(poi.lat, poi.lon);
 
   return (
     <View style={styles.poiCard}>
@@ -480,9 +637,14 @@ const PoiCard = React.memo(({ poi, t }: { poi: NurnbergEmergencyPoi; t: ReturnTy
           {(t.orte.types as any)[poi.category] || poi.category}
         </Text>
       </View>
-      <Text style={styles.poiAddress}>{poi.address} ({poi.district})</Text>
+      <View style={styles.poiMetaRow}>
+        <Text style={styles.poiDistrictBadge}>[{poi.district}]</Text>
+        <Text style={styles.poiDistanceChip}>📍 {distance} zum Hauptmarkt</Text>
+      </View>
+      <Text style={styles.poiAddress}>{poi.address}</Text>
       <Text style={styles.poiNotes}>{poi.notes}</Text>
       {poi.capacity && <Text style={styles.poiCapacity}>{t.orte.capacityLabel}: {poi.capacity}</Text>}
+      {poi.radioFrequency && <Text style={styles.poiRadio}>📡 {poi.radioFrequency}</Text>}
     </View>
   );
 });
@@ -494,9 +656,27 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: OLED_PALETTE.background
   },
+  franconianAccentBar: {
+    flexDirection: 'row',
+    height: respHeight(3),
+    width: '100%'
+  },
+  franconianRedSegment: {
+    flex: 2,
+    backgroundColor: OLED_PALETTE.nurnbergRed
+  },
+  franconianWhiteSegment: {
+    flex: 1,
+    backgroundColor: OLED_PALETTE.franconianWhite
+  },
+  franconianGoldSegment: {
+    flex: 1,
+    backgroundColor: OLED_PALETTE.imperialGold
+  },
   header: {
     paddingHorizontal: respWidth(16),
-    paddingVertical: respHeight(12),
+    paddingTop: respHeight(10),
+    paddingBottom: respHeight(12),
     borderBottomWidth: 1,
     borderBottomColor: OLED_PALETTE.surfaceBorder
   },
@@ -510,22 +690,47 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: respWidth(8)
   },
+  crestBadge: {
+    width: respWidth(34),
+    height: respWidth(34),
+    borderRadius: respWidth(6),
+    backgroundColor: '#16080a',
+    borderWidth: 1,
+    borderColor: OLED_PALETTE.nurnbergRed,
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  crestIcon: {
+    fontSize: respFontSize(18)
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: respWidth(6)
+  },
   pulseDot: {
-    width: respWidth(8),
-    height: respWidth(8),
+    width: respWidth(7),
+    height: respWidth(7),
     borderRadius: respWidth(4),
     backgroundColor: OLED_PALETTE.safeGreen
   },
   headerTitle: {
     color: OLED_PALETTE.textPrimary,
     fontWeight: '900',
-    fontSize: respFontSize(14),
-    letterSpacing: 1
+    fontSize: respFontSize(13),
+    letterSpacing: 0.8
+  },
+  headerSectorSub: {
+    color: OLED_PALETTE.imperialGold,
+    fontSize: respFontSize(9),
+    fontWeight: '700',
+    letterSpacing: 0.5,
+    marginTop: respHeight(1)
   },
   headerRightRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: respWidth(8)
+    gap: respWidth(6)
   },
   langSelector: {
     flexDirection: 'row',
@@ -537,7 +742,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden'
   },
   langBtn: {
-    paddingHorizontal: respWidth(7),
+    paddingHorizontal: respWidth(6),
     paddingVertical: respHeight(3)
   },
   langBtnActive: {
@@ -550,7 +755,7 @@ const styles = StyleSheet.create({
   },
   langBtnText: {
     color: OLED_PALETTE.textMuted,
-    fontSize: respFontSize(10),
+    fontSize: respFontSize(9),
     fontWeight: '700',
     fontFamily: 'monospace'
   },
@@ -558,31 +763,54 @@ const styles = StyleSheet.create({
     color: OLED_PALETTE.meshCyan,
     fontWeight: '900'
   },
-  nodeBadge: {
-    color: OLED_PALETTE.meshCyan,
-    fontFamily: 'monospace',
-    fontSize: respFontSize(11),
+  nodeBadgeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#051b24',
-    paddingHorizontal: respWidth(8),
+    paddingHorizontal: respWidth(6),
     paddingVertical: respHeight(2),
     borderRadius: respWidth(4),
     borderWidth: 1,
-    borderColor: '#0a3a4c'
+    borderColor: '#0a3a4c',
+    gap: respWidth(4)
+  },
+  nodeBadgePrefix: {
+    color: OLED_PALETTE.textMuted,
+    fontSize: respFontSize(8),
+    fontWeight: '700',
+    fontFamily: 'monospace'
+  },
+  nodeBadge: {
+    color: OLED_PALETTE.meshCyan,
+    fontFamily: 'monospace',
+    fontSize: respFontSize(10),
+    fontWeight: '800'
   },
   headerSubtitle: {
     color: OLED_PALETTE.textMuted,
-    fontSize: respFontSize(11),
+    fontSize: respFontSize(10),
     marginTop: respHeight(4)
   },
   radioStatusBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: respHeight(6)
+    justifyContent: 'space-between',
+    marginTop: respHeight(6),
+    backgroundColor: '#070b10',
+    paddingHorizontal: respWidth(8),
+    paddingVertical: respHeight(4),
+    borderRadius: respWidth(4),
+    borderWidth: 1,
+    borderColor: '#0f172a'
+  },
+  radioStatusLeft: {
+    flexDirection: 'row',
+    alignItems: 'center'
   },
   radioStatusDot: {
-    width: respWidth(7),
-    height: respWidth(7),
-    borderRadius: respWidth(4),
+    width: respWidth(6),
+    height: respWidth(6),
+    borderRadius: respWidth(3),
     marginRight: respWidth(6)
   },
   radioDotGreen: {
@@ -592,19 +820,31 @@ const styles = StyleSheet.create({
     backgroundColor: OLED_PALETTE.warningAmber
   },
   radioStatusText: {
-    color: OLED_PALETTE.textMuted,
-    fontSize: respFontSize(10),
+    color: OLED_PALETTE.textPrimary,
+    fontSize: respFontSize(9),
     fontWeight: '700',
-    letterSpacing: 0.5
+    letterSpacing: 0.3
+  },
+  channelBadge: {
+    backgroundColor: '#0f172a',
+    paddingHorizontal: respWidth(6),
+    paddingVertical: respHeight(1),
+    borderRadius: respWidth(3)
+  },
+  channelBadgeText: {
+    color: OLED_PALETTE.imperialGold,
+    fontSize: respFontSize(8),
+    fontWeight: '800',
+    fontFamily: 'monospace'
   },
   telemetryStrip: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: OLED_PALETTE.surfaceCard,
     paddingVertical: respHeight(6),
-    paddingHorizontal: respWidth(12),
-    borderRadius: respWidth(8),
-    marginTop: respHeight(8),
+    paddingHorizontal: respWidth(8),
+    borderRadius: respWidth(6),
+    marginTop: respHeight(6),
     borderWidth: 1,
     borderColor: OLED_PALETTE.surfaceBorder
   },
@@ -619,125 +859,212 @@ const styles = StyleSheet.create({
   },
   telemetryLabel: {
     color: OLED_PALETTE.textMuted,
-    fontSize: respFontSize(9),
-    fontWeight: '700'
+    fontSize: respFontSize(8),
+    fontWeight: '800',
+    letterSpacing: 0.5
   },
   telemetryValue: {
     color: OLED_PALETTE.textPrimary,
-    fontSize: respFontSize(12),
-    fontWeight: '800'
+    fontSize: respFontSize(11),
+    fontWeight: '800',
+    fontFamily: 'monospace'
   },
   telemetryValueCyan: {
     color: OLED_PALETTE.meshCyan,
-    fontSize: respFontSize(12),
-    fontWeight: '800'
+    fontSize: respFontSize(11),
+    fontWeight: '800',
+    fontFamily: 'monospace'
+  },
+  telemetryValueGold: {
+    color: OLED_PALETTE.imperialGold,
+    fontSize: respFontSize(11),
+    fontWeight: '800',
+    fontFamily: 'monospace'
   },
   tabBar: {
     flexDirection: 'row',
     borderBottomWidth: 1,
-    borderBottomColor: OLED_PALETTE.surfaceBorder
+    borderBottomColor: OLED_PALETTE.surfaceBorder,
+    backgroundColor: '#030508'
   },
   tabButton: {
     flex: 1,
-    paddingVertical: respHeight(10),
+    paddingVertical: respHeight(9),
     alignItems: 'center',
     borderBottomWidth: 2,
     borderBottomColor: 'transparent'
   },
-  tabButtonActive: {
-    borderBottomColor: OLED_PALETTE.meshCyan
+  tabButtonActiveRadar: {
+    borderBottomColor: OLED_PALETTE.meshCyan,
+    backgroundColor: '#00e5ff0d'
   },
   tabButtonActiveSos: {
-    borderBottomColor: OLED_PALETTE.sosRed
+    borderBottomColor: OLED_PALETTE.nurnbergRed,
+    backgroundColor: '#d9042915'
   },
-  tabButtonActiveSafe: {
-    borderBottomColor: OLED_PALETTE.safeGreen
+  tabButtonActiveFamily: {
+    borderBottomColor: OLED_PALETTE.imperialGold,
+    backgroundColor: '#ffb70312'
+  },
+  tabButtonActivePlaces: {
+    borderBottomColor: OLED_PALETTE.safeGreen,
+    backgroundColor: '#00e6760d'
   },
   tabText: {
     color: OLED_PALETTE.textMuted,
     fontWeight: '700',
-    fontSize: respFontSize(12)
+    fontSize: respFontSize(11)
   },
-  tabTextActive: {
-    color: OLED_PALETTE.meshCyan
+  tabTextActiveRadar: {
+    color: OLED_PALETTE.meshCyan,
+    fontWeight: '900'
   },
   tabTextActiveSos: {
-    color: OLED_PALETTE.sosRed
+    color: OLED_PALETTE.sosRed,
+    fontWeight: '900'
   },
-  tabTextActiveSafe: {
-    color: OLED_PALETTE.safeGreen
+  tabTextActiveFamily: {
+    color: OLED_PALETTE.imperialGold,
+    fontWeight: '900'
+  },
+  tabTextActivePlaces: {
+    color: OLED_PALETTE.safeGreen,
+    fontWeight: '900'
   },
   content: {
     flex: 1,
-    padding: respWidth(16)
+    padding: respWidth(14)
   },
   feedContainer: {
     flex: 1
   },
+  sectorBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    backgroundColor: '#060a10',
+    paddingVertical: respHeight(4),
+    paddingHorizontal: respWidth(6),
+    borderRadius: respWidth(4),
+    borderWidth: 1,
+    borderColor: '#0f172a',
+    marginBottom: respHeight(10)
+  },
+  sectorChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: respWidth(4)
+  },
+  sectorDotGreen: {
+    width: respWidth(5),
+    height: respWidth(5),
+    borderRadius: respWidth(3),
+    backgroundColor: OLED_PALETTE.safeGreen
+  },
+  sectorDotAmber: {
+    width: respWidth(5),
+    height: respWidth(5),
+    borderRadius: respWidth(3),
+    backgroundColor: OLED_PALETTE.warningAmber
+  },
+  sectorChipText: {
+    color: OLED_PALETTE.textSecondary,
+    fontSize: respFontSize(8),
+    fontWeight: '800',
+    fontFamily: 'monospace'
+  },
+  streamHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: respHeight(6)
+  },
   sectionHeader: {
     color: OLED_PALETTE.textSecondary,
     fontWeight: '800',
-    fontSize: respFontSize(11),
-    letterSpacing: 1,
-    marginBottom: respHeight(8)
+    fontSize: respFontSize(10),
+    letterSpacing: 1
+  },
+  streamSignalBadge: {
+    color: OLED_PALETTE.safeGreen,
+    fontSize: respFontSize(9),
+    fontWeight: '800',
+    fontFamily: 'monospace'
   },
   emptyState: {
     padding: respWidth(24),
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: OLED_PALETTE.surfaceCard,
-    borderRadius: respWidth(12),
+    backgroundColor: OLED_PALETTE.kaiserburgCard,
+    borderRadius: respWidth(10),
     borderWidth: 1,
     borderColor: OLED_PALETTE.surfaceBorder,
     marginTop: respHeight(20)
   },
+  emptyStateIcon: {
+    fontSize: respFontSize(28),
+    marginBottom: respHeight(8)
+  },
   emptyStateText: {
     color: OLED_PALETTE.textSecondary,
-    fontSize: respFontSize(13),
-    fontWeight: '600',
+    fontSize: respFontSize(12),
+    fontWeight: '700',
     textAlign: 'center'
   },
   emptyStateSubtext: {
     color: OLED_PALETTE.textMuted,
-    fontSize: respFontSize(11),
+    fontSize: respFontSize(10),
     marginTop: respHeight(4),
     textAlign: 'center'
   },
   familyBanner: {
-    backgroundColor: '#032414',
+    backgroundColor: '#051b10',
     borderWidth: 1,
-    borderColor: '#0b5b35',
-    padding: respWidth(12),
-    borderRadius: respWidth(10),
-    marginBottom: respHeight(14)
+    borderColor: OLED_PALETTE.imperialGoldMuted,
+    borderLeftWidth: respWidth(4),
+    borderLeftColor: OLED_PALETTE.imperialGold,
+    padding: respWidth(10),
+    borderRadius: respWidth(6),
+    marginBottom: respHeight(10)
+  },
+  familyBannerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: respHeight(4)
   },
   familyBannerTitle: {
+    color: OLED_PALETTE.imperialGold,
+    fontWeight: '900',
+    fontSize: respFontSize(10),
+    letterSpacing: 0.5
+  },
+  kaiserburgTag: {
     color: OLED_PALETTE.safeGreen,
+    fontSize: respFontSize(8),
     fontWeight: '800',
-    fontSize: respFontSize(11),
-    marginBottom: respHeight(6)
+    fontFamily: 'monospace'
   },
   familyBannerItem: {
-    marginTop: respHeight(4)
+    marginTop: respHeight(2)
   },
   familyBannerSender: {
     color: OLED_PALETTE.textPrimary,
     fontWeight: '700',
-    fontSize: respFontSize(12)
+    fontSize: respFontSize(11)
   },
   familyBannerText: {
     color: '#d4edda',
-    fontSize: respFontSize(13),
-    marginTop: respHeight(2)
+    fontSize: respFontSize(12),
+    marginTop: respHeight(1)
   },
   packetCard: {
-    backgroundColor: OLED_PALETTE.surfaceCard,
+    backgroundColor: OLED_PALETTE.kaiserburgCard,
     borderWidth: 1,
     borderColor: OLED_PALETTE.surfaceBorder,
-    borderLeftWidth: 4,
-    borderRadius: respWidth(8),
-    padding: respWidth(12),
-    marginBottom: respHeight(10)
+    borderLeftWidth: respWidth(4),
+    borderRadius: respWidth(6),
+    padding: respWidth(10),
+    marginBottom: respHeight(8)
   },
   packetHeader: {
     flexDirection: 'row',
@@ -745,144 +1072,272 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: respHeight(4)
   },
-  packetType: {
+  packetHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: respWidth(6)
+  },
+  packetTypeBadge: {
     fontWeight: '900',
-    fontSize: respFontSize(12)
+    fontSize: respFontSize(10),
+    paddingHorizontal: respWidth(5),
+    paddingVertical: respHeight(1),
+    borderRadius: respWidth(3),
+    overflow: 'hidden'
+  },
+  packetSectorTag: {
+    color: OLED_PALETTE.textMuted,
+    fontSize: respFontSize(9),
+    fontWeight: '700',
+    fontFamily: 'monospace'
   },
   packetHops: {
     color: OLED_PALETTE.textMuted,
-    fontSize: respFontSize(10),
+    fontSize: respFontSize(9),
     fontFamily: 'monospace'
   },
+  packetBody: {
+    marginTop: respHeight(2)
+  },
   sosAlertTitle: {
-    color: OLED_PALETTE.sosRed,
+    color: OLED_PALETTE.nurnbergRed,
     fontWeight: '800',
-    fontSize: respFontSize(13)
+    fontSize: respFontSize(12)
   },
   safeSender: {
-    color: OLED_PALETTE.safeGreen,
-    fontWeight: '700',
-    fontSize: respFontSize(12)
+    color: OLED_PALETTE.imperialGold,
+    fontWeight: '800',
+    fontSize: respFontSize(11)
   },
   encryptedPayload: {
     color: OLED_PALETTE.textMuted,
     fontFamily: 'monospace',
-    fontSize: respFontSize(11),
+    fontSize: respFontSize(10),
     marginTop: respHeight(2)
   },
   hazardTitle: {
     color: OLED_PALETTE.warningAmber,
     fontWeight: '800',
-    fontSize: respFontSize(13)
+    fontSize: respFontSize(12)
   },
   packetDesc: {
     color: OLED_PALETTE.textPrimary,
-    fontSize: respFontSize(13),
+    fontSize: respFontSize(12),
     marginTop: respHeight(2)
   },
   gpsCoords: {
     color: OLED_PALETTE.textMuted,
-    fontSize: respFontSize(11),
-    marginTop: respHeight(4),
+    fontSize: respFontSize(10),
+    marginTop: respHeight(3),
     fontFamily: 'monospace'
   },
   formContainer: {
     flex: 1
   },
+  sosTitleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: respHeight(2)
+  },
+  familyTitleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: respHeight(2)
+  },
   formTitle: {
     color: OLED_PALETTE.textPrimary,
     fontWeight: '900',
-    fontSize: respFontSize(16),
-    marginBottom: respHeight(4)
+    fontSize: respFontSize(14),
+    letterSpacing: 0.5
+  },
+  katsBadge: {
+    backgroundColor: '#38060b',
+    borderWidth: 1,
+    borderColor: OLED_PALETTE.nurnbergRed,
+    paddingHorizontal: respWidth(6),
+    paddingVertical: respHeight(2),
+    borderRadius: respWidth(3)
+  },
+  katsBadgeText: {
+    color: OLED_PALETTE.nurnbergRed,
+    fontSize: respFontSize(8),
+    fontWeight: '900',
+    fontFamily: 'monospace'
+  },
+  vaultTag: {
+    backgroundColor: '#261b00',
+    borderWidth: 1,
+    borderColor: OLED_PALETTE.imperialGold,
+    paddingHorizontal: respWidth(6),
+    paddingVertical: respHeight(2),
+    borderRadius: respWidth(3)
+  },
+  vaultTagText: {
+    color: OLED_PALETTE.imperialGold,
+    fontSize: respFontSize(8),
+    fontWeight: '800',
+    fontFamily: 'monospace'
   },
   formSubtitle: {
     color: OLED_PALETTE.textMuted,
-    fontSize: respFontSize(12),
-    marginBottom: respHeight(16)
+    fontSize: respFontSize(11),
+    marginBottom: respHeight(12)
   },
   sosCard: {
     backgroundColor: OLED_PALETTE.surfaceCard,
     borderWidth: 1,
-    borderRadius: respWidth(10),
-    padding: respWidth(14),
-    marginBottom: respHeight(12)
+    borderRadius: respWidth(8),
+    padding: respWidth(12),
+    marginBottom: respHeight(10)
+  },
+  sosCardTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center'
   },
   sosCardTitle: {
     color: OLED_PALETTE.textPrimary,
     fontWeight: '800',
-    fontSize: respFontSize(14)
+    fontSize: respFontSize(13)
+  },
+  sosCodeBadge: {
+    color: OLED_PALETTE.textMuted,
+    fontSize: respFontSize(9),
+    fontWeight: '700',
+    fontFamily: 'monospace'
   },
   sosCardDesc: {
     color: OLED_PALETTE.textMuted,
-    fontSize: respFontSize(12),
-    marginTop: respHeight(2)
+    fontSize: respFontSize(11),
+    marginTop: respHeight(3)
   },
-  hazardRow: {
+  hazardGrid: {
     flexDirection: 'row',
-    gap: respWidth(10)
+    gap: respWidth(8)
   },
   hazardButton: {
     flex: 1,
     backgroundColor: OLED_PALETTE.surfaceCard,
     borderWidth: 1,
-    borderColor: OLED_PALETTE.warningAmber,
-    padding: respWidth(12),
-    borderRadius: respWidth(8),
+    padding: respWidth(10),
+    borderRadius: respWidth(6),
+    alignItems: 'center'
+  },
+  hazardButtonWide: {
+    backgroundColor: OLED_PALETTE.surfaceCard,
+    borderWidth: 1,
+    padding: respWidth(10),
+    borderRadius: respWidth(6),
     alignItems: 'center'
   },
   hazardButtonText: {
-    color: OLED_PALETTE.warningAmber,
-    fontWeight: '700',
-    fontSize: respFontSize(12)
+    color: OLED_PALETTE.textPrimary,
+    fontWeight: '800',
+    fontSize: respFontSize(11)
+  },
+  hazardButtonSub: {
+    color: OLED_PALETTE.textMuted,
+    fontSize: respFontSize(9),
+    marginTop: respHeight(2)
   },
   card: {
     backgroundColor: OLED_PALETTE.surfaceCard,
     borderWidth: 1,
     borderColor: OLED_PALETTE.surfaceBorder,
-    padding: respWidth(14),
-    borderRadius: respWidth(10)
+    padding: respWidth(12),
+    borderRadius: respWidth(8)
+  },
+  cardHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: respHeight(6)
   },
   cardLabel: {
     color: OLED_PALETTE.textPrimary,
     fontWeight: '700',
-    fontSize: respFontSize(13),
-    marginBottom: respHeight(8)
+    fontSize: respFontSize(12)
+  },
+  cipherLabel: {
+    color: OLED_PALETTE.imperialGold,
+    fontSize: respFontSize(9),
+    fontWeight: '800',
+    fontFamily: 'monospace'
   },
   input: {
-    backgroundColor: '#111111',
+    backgroundColor: '#0c0f14',
     borderWidth: 1,
     borderColor: OLED_PALETTE.surfaceBorder,
     color: OLED_PALETTE.textPrimary,
-    paddingHorizontal: respWidth(12),
-    paddingVertical: respHeight(8),
-    borderRadius: respWidth(6),
-    fontSize: respFontSize(13),
-    marginBottom: respHeight(10)
+    paddingHorizontal: respWidth(10),
+    paddingVertical: respHeight(7),
+    borderRadius: respWidth(5),
+    fontSize: respFontSize(12),
+    marginBottom: respHeight(8)
   },
   actionButton: {
     backgroundColor: OLED_PALETTE.meshCyan,
-    paddingVertical: respHeight(10),
-    borderRadius: respWidth(6),
+    paddingVertical: respHeight(9),
+    borderRadius: respWidth(5),
+    alignItems: 'center'
+  },
+  actionButtonGold: {
+    backgroundColor: OLED_PALETTE.imperialGold,
+    paddingVertical: respHeight(9),
+    borderRadius: respWidth(5),
     alignItems: 'center'
   },
   actionButtonText: {
     color: OLED_PALETTE.textInverse,
     fontWeight: '800',
-    fontSize: respFontSize(13)
+    fontSize: respFontSize(12)
+  },
+  actionButtonGoldText: {
+    color: OLED_PALETTE.textInverse,
+    fontWeight: '900',
+    fontSize: respFontSize(12)
   },
   secretActiveNotice: {
     color: OLED_PALETTE.safeGreen,
-    fontSize: respFontSize(11),
-    marginTop: respHeight(8),
+    fontSize: respFontSize(10),
+    marginTop: respHeight(6),
     fontFamily: 'monospace'
   },
-  poiCard: {
+  districtFilterScroll: {
+    flexGrow: 0,
+    marginBottom: respHeight(10)
+  },
+  districtChip: {
+    paddingHorizontal: respWidth(10),
+    paddingVertical: respHeight(4),
+    borderRadius: respWidth(4),
     backgroundColor: OLED_PALETTE.surfaceCard,
     borderWidth: 1,
     borderColor: OLED_PALETTE.surfaceBorder,
-    padding: respWidth(12),
-    borderRadius: respWidth(8),
-    marginBottom: respHeight(10)
+    marginRight: respWidth(6)
+  },
+  districtChipActive: {
+    borderColor: OLED_PALETTE.safeGreen,
+    backgroundColor: '#00e67615'
+  },
+  districtChipText: {
+    color: OLED_PALETTE.textMuted,
+    fontSize: respFontSize(10),
+    fontWeight: '700'
+  },
+  districtChipTextActive: {
+    color: OLED_PALETTE.safeGreen,
+    fontWeight: '900'
+  },
+  poiCard: {
+    backgroundColor: OLED_PALETTE.kaiserburgCard,
+    borderWidth: 1,
+    borderColor: OLED_PALETTE.surfaceBorder,
+    padding: respWidth(10),
+    borderRadius: respWidth(6),
+    marginBottom: respHeight(8)
   },
   poiHeader: {
     flexDirection: 'row',
@@ -892,32 +1347,55 @@ const styles = StyleSheet.create({
   poiName: {
     color: OLED_PALETTE.textPrimary,
     fontWeight: '800',
-    fontSize: respFontSize(13),
+    fontSize: respFontSize(12),
     flex: 1
   },
   poiTag: {
-    fontSize: respFontSize(9),
+    fontSize: respFontSize(8),
     fontWeight: '800',
     borderWidth: 1,
-    paddingHorizontal: respWidth(6),
-    paddingVertical: respHeight(2),
-    borderRadius: respWidth(4),
+    paddingHorizontal: respWidth(5),
+    paddingVertical: respHeight(1),
+    borderRadius: respWidth(3),
     marginLeft: respWidth(6)
+  },
+  poiMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: respWidth(8),
+    marginTop: respHeight(2)
+  },
+  poiDistrictBadge: {
+    color: OLED_PALETTE.imperialGold,
+    fontSize: respFontSize(9),
+    fontWeight: '800',
+    fontFamily: 'monospace'
+  },
+  poiDistanceChip: {
+    color: OLED_PALETTE.textMuted,
+    fontSize: respFontSize(9),
+    fontFamily: 'monospace'
   },
   poiAddress: {
     color: OLED_PALETTE.textSecondary,
-    fontSize: respFontSize(12),
+    fontSize: respFontSize(11),
     marginTop: respHeight(2)
   },
   poiNotes: {
     color: OLED_PALETTE.textMuted,
-    fontSize: respFontSize(11),
-    marginTop: respHeight(4)
+    fontSize: respFontSize(10),
+    marginTop: respHeight(3)
   },
   poiCapacity: {
     color: OLED_PALETTE.meshCyan,
-    fontSize: respFontSize(10),
+    fontSize: respFontSize(9),
     marginTop: respHeight(2),
     fontWeight: '700'
+  },
+  poiRadio: {
+    color: OLED_PALETTE.imperialGold,
+    fontSize: respFontSize(9),
+    marginTop: respHeight(2),
+    fontFamily: 'monospace'
   }
 });

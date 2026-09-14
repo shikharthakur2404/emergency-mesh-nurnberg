@@ -53,6 +53,17 @@ export const OLED_PALETTE = {
   warningAmber: '#ffb300',
   meshCyan: '#00e5ff',
 
+  // Nürnberg & Franconian Tactical Accents
+  nurnbergRed: '#d90429',        // Official Franconian / Nürnberg Red
+  nurnbergRedDark: '#4a0008',
+  imperialGold: '#ffb703',       // Kaiserburg Imperial Gold
+  imperialGoldMuted: '#664900',
+  sinwellSlate: '#0f172a',       // Sinwellturm Fortress Slate
+  kaiserburgCard: '#070b12',     // Deep tactical OLED card surface
+  hudBorderCyan: '#0d3240',      // Cyber HUD subtle border
+  hudGoldBorder: '#423106',      // Imperial gold border
+  franconianWhite: '#f8f9fa',    // Crisp silver-white
+
   // Text Hierarchy
   textPrimary: '#ffffff',
   textSecondary: '#a0a0a0',
