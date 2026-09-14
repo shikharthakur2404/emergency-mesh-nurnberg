@@ -63,6 +63,10 @@ export class MeshRouter {
     await this.transport.stop();
   }
 
+  public clearCache(): void {
+    this.dedupCache.clear();
+  }
+
   public subscribe(listener: MeshEventListener): () => void {
     this.listeners.add(listener);
     return () => this.listeners.delete(listener);

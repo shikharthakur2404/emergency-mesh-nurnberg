@@ -1,0 +1,324 @@
+import React, { useState, useCallback, useMemo } from 'react';
+import {
+  Modal,
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  useWindowDimensions,
+  ScrollView,
+} from 'react-native';
+import {
+  OLED_PALETTE,
+  respWidth,
+  respHeight,
+  respFontSize,
+} from '../ui/responsive';
+import { getTranslations, Language } from '../i18n/translations';
+
+interface EmergencyGuideModalProps {
+  visible: boolean;
+  onClose: () => void;
+  language: Language;
+}
+
+export const EmergencyGuideModal: React.FC<EmergencyGuideModalProps> = React.memo(({
+  visible,
+  onClose,
+  language,
+}) => {
+  const { width, height } = useWindowDimensions();
+  const [currentStep, setCurrentStep] = useState(0);
+
+  const t = useMemo(() => getTranslations(language), [language]);
+  const steps = t.guide.steps;
+  const totalSteps = steps.length;
+
+  const handleNext = useCallback(() => {
+    if (currentStep < totalSteps - 1) {
+      setCurrentStep((prev) => prev + 1);
+    } else {
+      onClose();
+      setCurrentStep(0);
+    }
+  }, [currentStep, totalSteps, onClose]);
+
+  const handlePrev = useCallback(() => {
+    if (currentStep > 0) {
+      setCurrentStep((prev) => prev - 1);
+    }
+  }, [currentStep]);
+
+  const handleClose = useCallback(() => {
+    onClose();
+    setCurrentStep(0);
+  }, [onClose]);
+
+  const activeStep = steps[currentStep] || steps[0];
+
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        backdrop: {
+          flex: 1,
+          backgroundColor: 'rgba(0, 0, 0, 0.85)',
+          justifyContent: 'center',
+          alignItems: 'center',
+          paddingHorizontal: respWidth(16, width),
+        },
+        card: {
+          width: '100%',
+          maxHeight: respHeight(680, height),
+          backgroundColor: OLED_PALETTE.kaiserburgCard,
+          borderWidth: respWidth(2, width),
+          borderColor: OLED_PALETTE.imperialGold,
+          borderRadius: respWidth(16, width),
+          padding: respWidth(20, width),
+          shadowColor: OLED_PALETTE.imperialGold,
+          shadowOffset: { width: 0, height: respHeight(4, height) },
+          shadowOpacity: 0.3,
+          shadowRadius: respWidth(12, width),
+          elevation: 10,
+        },
+        headerRow: {
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          borderBottomWidth: respWidth(1, width),
+          borderBottomColor: OLED_PALETTE.hudGoldBorder,
+          paddingBottom: respHeight(12, height),
+          marginBottom: respHeight(14, height),
+        },
+        headerTitle: {
+          color: OLED_PALETTE.imperialGold,
+          fontSize: respFontSize(14, width),
+          fontWeight: '900',
+          letterSpacing: respWidth(1, width),
+        },
+        closeIconButton: {
+          width: respWidth(32, width),
+          height: respHeight(32, height),
+          borderRadius: respWidth(16, width),
+          backgroundColor: OLED_PALETTE.surfaceBorder,
+          justifyContent: 'center',
+          alignItems: 'center',
+        },
+        closeIconText: {
+          color: OLED_PALETTE.textPrimary,
+          fontSize: respFontSize(16, width),
+          fontWeight: '700',
+        },
+        stepProgressRow: {
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: respHeight(16, height),
+        },
+        stepCounterText: {
+          color: OLED_PALETTE.meshCyan,
+          fontSize: respFontSize(12, width),
+          fontWeight: '700',
+        },
+        dotsRow: {
+          flexDirection: 'row',
+          alignItems: 'center',
+        },
+        dot: {
+          width: respWidth(8, width),
+          height: respHeight(8, height),
+          borderRadius: respWidth(4, width),
+          backgroundColor: OLED_PALETTE.surfaceBorderActive,
+          marginHorizontal: respWidth(4, width),
+        },
+        dotActive: {
+          width: respWidth(22, width),
+          backgroundColor: OLED_PALETTE.imperialGold,
+        },
+        contentScroll: {
+          maxHeight: respHeight(380, height),
+        },
+        badgeBox: {
+          alignSelf: 'flex-start',
+          paddingHorizontal: respWidth(10, width),
+          paddingVertical: respHeight(4, height),
+          backgroundColor: OLED_PALETTE.nurnbergRedDark,
+          borderRadius: respWidth(4, width),
+          borderWidth: respWidth(1, width),
+          borderColor: OLED_PALETTE.nurnbergRed,
+          marginBottom: respHeight(12, height),
+        },
+        badgeText: {
+          color: OLED_PALETTE.franconianWhite,
+          fontSize: respFontSize(10, width),
+          fontWeight: '900',
+          letterSpacing: respWidth(0.5, width),
+        },
+        iconHeaderRow: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          marginBottom: respHeight(10, height),
+        },
+        largeIcon: {
+          fontSize: respFontSize(34, width),
+          marginRight: respWidth(12, width),
+        },
+        stepTitle: {
+          flex: 1,
+          color: OLED_PALETTE.textPrimary,
+          fontSize: respFontSize(17, width),
+          fontWeight: '800',
+          lineHeight: respHeight(22, height),
+        },
+        stepDesc: {
+          color: OLED_PALETTE.franconianWhite,
+          fontSize: respFontSize(13.5, width),
+          lineHeight: respHeight(21, height),
+          marginTop: respHeight(8, height),
+          marginBottom: respHeight(14, height),
+        },
+        tipBox: {
+          backgroundColor: OLED_PALETTE.sinwellSlate,
+          borderLeftWidth: respWidth(4, width),
+          borderLeftColor: OLED_PALETTE.meshCyan,
+          padding: respWidth(12, width),
+          borderRadius: respWidth(6, width),
+          marginVertical: respHeight(8, height),
+        },
+        tipText: {
+          color: OLED_PALETTE.meshCyan,
+          fontSize: respFontSize(12, width),
+          fontWeight: '600',
+          lineHeight: respHeight(17, height),
+        },
+        navFooterRow: {
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginTop: respHeight(18, height),
+          paddingTop: respHeight(12, height),
+          borderTopWidth: respWidth(1, width),
+          borderTopColor: OLED_PALETTE.hudGoldBorder,
+        },
+        prevButton: {
+          paddingVertical: respHeight(10, height),
+          paddingHorizontal: respWidth(16, width),
+          borderRadius: respWidth(8, width),
+          backgroundColor: OLED_PALETTE.surfaceBorder,
+        },
+        prevButtonText: {
+          color: OLED_PALETTE.textSecondary,
+          fontSize: respFontSize(13, width),
+          fontWeight: '700',
+        },
+        nextButton: {
+          flex: 1,
+          marginLeft: respWidth(12, width),
+          paddingVertical: respHeight(11, height),
+          paddingHorizontal: respWidth(16, width),
+          borderRadius: respWidth(8, width),
+          backgroundColor:
+            currentStep === totalSteps - 1
+              ? OLED_PALETTE.safeGreen
+              : OLED_PALETTE.imperialGold,
+          alignItems: 'center',
+        },
+        nextButtonText: {
+          color: OLED_PALETTE.textInverse,
+          fontSize: respFontSize(14, width),
+          fontWeight: '900',
+          letterSpacing: respWidth(0.5, width),
+        },
+      }),
+    [width, height, currentStep, totalSteps]
+  );
+
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={handleClose}
+    >
+      <View style={styles.backdrop}>
+        <View style={styles.card}>
+          {/* Header */}
+          <View style={styles.headerRow}>
+            <Text style={styles.headerTitle}>{t.guide.modalTitle}</Text>
+            <TouchableOpacity
+              style={styles.closeIconButton}
+              onPress={handleClose}
+              accessibilityLabel={t.guide.closeBtn}
+            >
+              <Text style={styles.closeIconText}>✕</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Progress / Step indicators */}
+          <View style={styles.stepProgressRow}>
+            <Text style={styles.stepCounterText}>
+              {t.guide.stepCounter(currentStep + 1, totalSteps)}
+            </Text>
+            <View style={styles.dotsRow}>
+              {steps.map((_, idx) => (
+                <View
+                  key={`dot-${idx}`}
+                  style={[styles.dot, idx === currentStep && styles.dotActive]}
+                />
+              ))}
+            </View>
+          </View>
+
+          {/* Body Content */}
+          <ScrollView
+            style={styles.contentScroll}
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.badgeBox}>
+              <Text style={styles.badgeText}>{activeStep.badge}</Text>
+            </View>
+
+            <View style={styles.iconHeaderRow}>
+              <Text style={styles.largeIcon}>{activeStep.icon}</Text>
+              <Text style={styles.stepTitle}>{activeStep.title}</Text>
+            </View>
+
+            <Text style={styles.stepDesc}>{activeStep.desc}</Text>
+
+            <View style={styles.tipBox}>
+              <Text style={styles.tipText}>💡 {activeStep.tip}</Text>
+            </View>
+          </ScrollView>
+
+          {/* Navigation Controls */}
+          <View style={styles.navFooterRow}>
+            {currentStep > 0 ? (
+              <TouchableOpacity
+                style={styles.prevButton}
+                onPress={handlePrev}
+                accessibilityLabel={t.guide.prevBtn}
+              >
+                <Text style={styles.prevButtonText}>{t.guide.prevBtn}</Text>
+              </TouchableOpacity>
+            ) : (
+              <View />
+            )}
+
+            <TouchableOpacity
+              style={styles.nextButton}
+              onPress={handleNext}
+              accessibilityLabel={
+                currentStep === totalSteps - 1 ? t.guide.startBtn : t.guide.nextBtn
+              }
+            >
+              <Text style={styles.nextButtonText}>
+                {currentStep === totalSteps - 1
+                  ? t.guide.startBtn
+                  : t.guide.nextBtn}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+});

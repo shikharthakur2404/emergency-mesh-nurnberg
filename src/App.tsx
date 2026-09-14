@@ -37,6 +37,8 @@ import {
 } from './core/types';
 import { searchPois } from './data/nurnberg-emergency-data';
 import { getTranslations } from './i18n/translations';
+import { EmergencyGuideModal } from './components/EmergencyGuideModal';
+import { TacticalDrawer } from './components/TacticalDrawer';
 
 type Tab = 'FEED' | 'SOS' | 'FAMILY' | 'POIS';
 
@@ -66,6 +68,8 @@ export default function App() {
   const [poiQuery, setPoiQuery] = useState('');
   const [selectedDistrict, setSelectedDistrict] = useState<string>('ALL');
   const [isRadioActive, setIsRadioActive] = useState(false);
+  const [guideVisible, setGuideVisible] = useState(false);
+  const [drawerVisible, setDrawerVisible] = useState(false);
 
   const {
     nodeId,
@@ -82,7 +86,8 @@ export default function App() {
     offlinePois,
     language,
     setLanguage,
-    stats
+    stats,
+    clearHistory
   } = useMeshStore();
 
   const t = useMemo(() => getTranslations(language), [language]);
@@ -165,6 +170,13 @@ export default function App() {
     setActiveTab('FEED');
   }, [sendHazardAlert, t]);
 
+  const handleClearCache = useCallback(() => {
+    if (router) {
+      router.clearCache();
+    }
+    clearHistory();
+  }, [router, clearHistory]);
+
   // Filtered POIs by search text + selected district
   const filteredPois = useMemo(() => {
     let list = searchPois(poiQuery);
@@ -204,66 +216,38 @@ export default function App() {
           </View>
 
           <View style={styles.headerRightRow}>
-            {/* Bilingual Switcher */}
-            <View style={styles.langSelector}>
-              <TouchableOpacity
-                style={[styles.langBtn, language === 'de' && styles.langBtnActive]}
-                onPress={() => setLanguage('de')}
-              >
-                <Text style={[styles.langBtnText, language === 'de' && styles.langBtnTextActive]}>DE</Text>
-              </TouchableOpacity>
-              <View style={styles.langDivider} />
-              <TouchableOpacity
-                style={[styles.langBtn, language === 'en' && styles.langBtnActive]}
-                onPress={() => setLanguage('en')}
-              >
-                <Text style={[styles.langBtnText, language === 'en' && styles.langBtnTextActive]}>EN</Text>
-              </TouchableOpacity>
-            </View>
+            {/* Quick Emergency Walkthrough Guide Button */}
+            <TouchableOpacity
+              style={styles.guideQuickBtn}
+              onPress={() => setGuideVisible(true)}
+              accessibilityLabel={t.civilianStatus.guideBtn}
+            >
+              <Text style={styles.guideQuickBtnText}>{t.civilianStatus.guideBtn}</Text>
+            </TouchableOpacity>
 
-            {/* Tactical Node Badge */}
-            <View style={styles.nodeBadgeContainer}>
-              <Text style={styles.nodeBadgePrefix}>NODE</Text>
-              <Text style={styles.nodeBadge}>{nodeId}</Text>
-            </View>
+            {/* Tactical Diagnostics & Hotlines Drawer Button */}
+            <TouchableOpacity
+              style={styles.menuDrawerBtn}
+              onPress={() => setDrawerVisible(true)}
+              accessibilityLabel={t.civilianStatus.menuBtn}
+            >
+              <Text style={styles.menuDrawerBtnText}>{t.civilianStatus.menuBtn}</Text>
+            </TouchableOpacity>
           </View>
         </View>
 
         <Text style={styles.headerSubtitle}>{t.header.subtitle}</Text>
 
-        {/* Hardware OTA Radio & Frequency Indicator */}
-        <View style={styles.radioStatusBar}>
-          <View style={styles.radioStatusLeft}>
-            <View style={[styles.radioStatusDot, isRadioActive ? styles.radioDotGreen : styles.radioDotAmber]} />
-            <Text style={styles.radioStatusText}>
-              {isRadioActive ? t.header.radioOta : t.header.radioSim}
+        {/* High-Signal Civilian Emergency Status Banner */}
+        <View style={styles.civilianStatusBanner}>
+          <View style={styles.civilianStatusLeft}>
+            <View style={[styles.civilianStatusDot, isRadioActive ? styles.civilianDotGreen : styles.civilianDotAmber]} />
+            <Text style={styles.civilianStatusText}>
+              {isRadioActive ? t.civilianStatus.active : t.header.radioSim} · {t.civilianStatus.peersCount(connectedPeers.length + 2)}
             </Text>
           </View>
-          <View style={styles.channelBadge}>
-            <Text style={styles.channelBadgeText}>{t.header.frequencyTag}</Text>
-          </View>
-        </View>
-
-        {/* Telemetry Metrics Strip */}
-        <View style={styles.telemetryStrip}>
-          <View style={styles.telemetryItem}>
-            <Text style={styles.telemetryLabel}>SEKTOR</Text>
-            <Text style={styles.telemetryValueGold}>NBG-01</Text>
-          </View>
-          <View style={styles.telemetryDivider} />
-          <View style={styles.telemetryItem}>
-            <Text style={styles.telemetryLabel}>{t.header.peers}</Text>
-            <Text style={styles.telemetryValueCyan}>{connectedPeers.length + 2} {t.header.peersActive}</Text>
-          </View>
-          <View style={styles.telemetryDivider} />
-          <View style={styles.telemetryItem}>
-            <Text style={styles.telemetryLabel}>{t.header.relayed}</Text>
-            <Text style={styles.telemetryValue}>{stats.relayedCount} {t.header.hops}</Text>
-          </View>
-          <View style={styles.telemetryDivider} />
-          <View style={styles.telemetryItem}>
-            <Text style={styles.telemetryLabel}>{t.header.packets}</Text>
-            <Text style={styles.telemetryValue}>{stats.totalReceived + packets.length}</Text>
+          <View style={styles.civilianStatusBadge}>
+            <Text style={styles.civilianStatusBadgeText}>{t.civilianStatus.noInternet}</Text>
           </View>
         </View>
       </View>
@@ -557,6 +541,28 @@ export default function App() {
           </View>
         )}
       </View>
+
+      {/* Emergency Crisis Walkthrough Guide Modal */}
+      <EmergencyGuideModal
+        visible={guideVisible}
+        onClose={() => setGuideVisible(false)}
+        language={language}
+      />
+
+      {/* Tactical Civil Defense & Hardware Telemetry Drawer */}
+      <TacticalDrawer
+        visible={drawerVisible}
+        onClose={() => setDrawerVisible(false)}
+        language={language}
+        onSelectLanguage={setLanguage}
+        onOpenGuide={() => setGuideVisible(true)}
+        nodeId={nodeId}
+        isRadioActive={isRadioActive}
+        connectedPeersCount={connectedPeers.length + 2}
+        relayedCount={stats.relayedCount}
+        totalPacketsCount={stats.totalReceived + packets.length}
+        onClearCache={handleClearCache}
+      />
     </SafeAreaView>
   );
 }
@@ -717,173 +723,103 @@ const styles = StyleSheet.create({
   headerTitle: {
     color: OLED_PALETTE.textPrimary,
     fontWeight: '900',
-    fontSize: respFontSize(13),
-    letterSpacing: 0.8
+    fontSize: respFontSize(11.5),
+    letterSpacing: respWidth(0.5),
   },
   headerSectorSub: {
     color: OLED_PALETTE.imperialGold,
-    fontSize: respFontSize(9),
+    fontSize: respFontSize(8.5),
     fontWeight: '700',
-    letterSpacing: 0.5,
-    marginTop: respHeight(1)
+    letterSpacing: respWidth(0.4),
+    marginTop: respHeight(1),
   },
   headerRightRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: respWidth(6)
+    gap: respWidth(6),
   },
-  langSelector: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#0a0a0f',
-    borderRadius: respWidth(4),
-    borderWidth: 1,
-    borderColor: '#1f242e',
-    overflow: 'hidden'
+  guideQuickBtn: {
+    backgroundColor: OLED_PALETTE.sinwellSlate,
+    borderWidth: respWidth(1),
+    borderColor: OLED_PALETTE.imperialGold,
+    paddingHorizontal: respWidth(7),
+    paddingVertical: respHeight(4),
+    borderRadius: respWidth(5),
   },
-  langBtn: {
-    paddingHorizontal: respWidth(6),
-    paddingVertical: respHeight(3)
-  },
-  langBtnActive: {
-    backgroundColor: '#00e5ff22'
-  },
-  langDivider: {
-    width: 1,
-    height: respHeight(14),
-    backgroundColor: '#1f242e'
-  },
-  langBtnText: {
-    color: OLED_PALETTE.textMuted,
-    fontSize: respFontSize(9),
-    fontWeight: '700',
-    fontFamily: 'monospace'
-  },
-  langBtnTextActive: {
-    color: OLED_PALETTE.meshCyan,
-    fontWeight: '900'
-  },
-  nodeBadgeContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#051b24',
-    paddingHorizontal: respWidth(6),
-    paddingVertical: respHeight(2),
-    borderRadius: respWidth(4),
-    borderWidth: 1,
-    borderColor: '#0a3a4c',
-    gap: respWidth(4)
-  },
-  nodeBadgePrefix: {
-    color: OLED_PALETTE.textMuted,
-    fontSize: respFontSize(8),
-    fontWeight: '700',
-    fontFamily: 'monospace'
-  },
-  nodeBadge: {
-    color: OLED_PALETTE.meshCyan,
-    fontFamily: 'monospace',
+  guideQuickBtnText: {
+    color: OLED_PALETTE.imperialGold,
     fontSize: respFontSize(10),
-    fontWeight: '800'
+    fontWeight: '800',
+    letterSpacing: respWidth(0.3),
+  },
+  menuDrawerBtn: {
+    backgroundColor: OLED_PALETTE.kaiserburgCard,
+    borderWidth: respWidth(1),
+    borderColor: OLED_PALETTE.meshCyan,
+    paddingHorizontal: respWidth(7),
+    paddingVertical: respHeight(4),
+    borderRadius: respWidth(5),
+  },
+  menuDrawerBtnText: {
+    color: OLED_PALETTE.meshCyan,
+    fontSize: respFontSize(10),
+    fontWeight: '800',
+    letterSpacing: respWidth(0.3),
   },
   headerSubtitle: {
     color: OLED_PALETTE.textMuted,
     fontSize: respFontSize(10),
-    marginTop: respHeight(4)
+    marginTop: respHeight(4),
   },
-  radioStatusBar: {
+  civilianStatusBanner: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: respHeight(6),
-    backgroundColor: '#070b10',
-    paddingHorizontal: respWidth(8),
-    paddingVertical: respHeight(4),
-    borderRadius: respWidth(4),
-    borderWidth: 1,
-    borderColor: '#0f172a'
+    backgroundColor: OLED_PALETTE.kaiserburgCard,
+    borderWidth: respWidth(1),
+    borderColor: OLED_PALETTE.safeGreen,
+    paddingVertical: respHeight(7),
+    paddingHorizontal: respWidth(10),
+    borderRadius: respWidth(6),
+    marginTop: respHeight(8),
   },
-  radioStatusLeft: {
-    flexDirection: 'row',
-    alignItems: 'center'
-  },
-  radioStatusDot: {
-    width: respWidth(6),
-    height: respWidth(6),
-    borderRadius: respWidth(3),
-    marginRight: respWidth(6)
-  },
-  radioDotGreen: {
-    backgroundColor: OLED_PALETTE.safeGreen
-  },
-  radioDotAmber: {
-    backgroundColor: OLED_PALETTE.warningAmber
-  },
-  radioStatusText: {
-    color: OLED_PALETTE.textPrimary,
-    fontSize: respFontSize(9),
-    fontWeight: '700',
-    letterSpacing: 0.3
-  },
-  channelBadge: {
-    backgroundColor: '#0f172a',
-    paddingHorizontal: respWidth(6),
-    paddingVertical: respHeight(1),
-    borderRadius: respWidth(3)
-  },
-  channelBadgeText: {
-    color: OLED_PALETTE.imperialGold,
-    fontSize: respFontSize(8),
-    fontWeight: '800',
-    fontFamily: 'monospace'
-  },
-  telemetryStrip: {
+  civilianStatusLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: OLED_PALETTE.surfaceCard,
-    paddingVertical: respHeight(6),
-    paddingHorizontal: respWidth(8),
-    borderRadius: respWidth(6),
-    marginTop: respHeight(6),
-    borderWidth: 1,
-    borderColor: OLED_PALETTE.surfaceBorder
-  },
-  telemetryItem: {
     flex: 1,
-    alignItems: 'center'
   },
-  telemetryDivider: {
-    width: 1,
-    height: respHeight(18),
-    backgroundColor: OLED_PALETTE.surfaceBorder
+  civilianStatusDot: {
+    width: respWidth(8),
+    height: respWidth(8),
+    borderRadius: respWidth(4),
+    marginRight: respWidth(8),
   },
-  telemetryLabel: {
-    color: OLED_PALETTE.textMuted,
-    fontSize: respFontSize(8),
-    fontWeight: '800',
-    letterSpacing: 0.5
+  civilianDotGreen: {
+    backgroundColor: OLED_PALETTE.safeGreen,
   },
-  telemetryValue: {
+  civilianDotAmber: {
+    backgroundColor: OLED_PALETTE.warningAmber,
+  },
+  civilianStatusText: {
     color: OLED_PALETTE.textPrimary,
     fontSize: respFontSize(11),
     fontWeight: '800',
-    fontFamily: 'monospace'
   },
-  telemetryValueCyan: {
+  civilianStatusBadge: {
+    backgroundColor: OLED_PALETTE.sinwellSlate,
+    paddingHorizontal: respWidth(8),
+    paddingVertical: respHeight(3),
+    borderRadius: respWidth(4),
+    marginLeft: respWidth(6),
+  },
+  civilianStatusBadgeText: {
     color: OLED_PALETTE.meshCyan,
-    fontSize: respFontSize(11),
-    fontWeight: '800',
-    fontFamily: 'monospace'
-  },
-  telemetryValueGold: {
-    color: OLED_PALETTE.imperialGold,
-    fontSize: respFontSize(11),
-    fontWeight: '800',
-    fontFamily: 'monospace'
+    fontSize: respFontSize(9),
+    fontWeight: '700',
   },
   tabBar: {
     flexDirection: 'row',
-    borderBottomWidth: 1,
+    borderBottomWidth: respWidth(1),
     borderBottomColor: OLED_PALETTE.surfaceBorder,
     backgroundColor: '#030508'
   },
@@ -891,7 +827,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: respHeight(9),
     alignItems: 'center',
-    borderBottomWidth: 2,
+    borderBottomWidth: respWidth(2),
     borderBottomColor: 'transparent'
   },
   tabButtonActiveRadar: {
