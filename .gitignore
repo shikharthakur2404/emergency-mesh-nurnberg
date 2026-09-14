@@ -9,3 +9,5 @@ android/app/.cxx/
 android/build/
 android/local.properties
 *.apk
+*.keystore
+!android/app/debug.keystore
