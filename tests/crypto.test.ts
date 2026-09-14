@@ -4,7 +4,10 @@ import {
   encryptFamilyPayload,
   decryptFamilyPayload,
   generateMsgId,
-  generateNodeId
+  generateNodeId,
+  signEmergencyPayload,
+  verifyEmergencyPayload,
+  isTimestampFresh
 } from '../src/core/crypto';
 
 describe('Cryptographic Engine', () => {
@@ -48,3 +51,33 @@ describe('Cryptographic Engine', () => {
     expect(node1).toMatch(/^anon_[a-z0-9]+$/);
   });
 });
+
+  it('signs and verifies emergency payloads, rejecting tampered content', () => {
+    const senderId = 'anon_kats1';
+    const canonical = 'SOS:anon_kats1:1789390000:MEDICAL:49.4539:11.0775:Trapped in basement';
+
+    const { signature, authToken } = signEmergencyPayload(canonical, senderId);
+    expect(signature).toBeDefined();
+    expect(authToken).toBeDefined();
+
+    // Valid verification
+    const isValid = verifyEmergencyPayload(canonical, signature, senderId);
+    expect(isValid).toBe(true);
+
+    // Tampered payload rejected
+    const tampered = 'SOS:anon_kats1:1789390000:MEDICAL:49.4539:11.0775:Fake notes injected';
+    const isTamperedValid = verifyEmergencyPayload(tampered, signature, senderId);
+    expect(isTamperedValid).toBe(false);
+
+    // Impersonated sender rejected
+    const isImpersonatedValid = verifyEmergencyPayload(canonical, signature, 'anon_impostor');
+    expect(isImpersonatedValid).toBe(false);
+  });
+
+  it('evaluates timestamp freshness accurately', () => {
+    const now = Math.floor(Date.now() / 1000);
+    expect(isTimestampFresh(now)).toBe(true);
+    expect(isTimestampFresh(now - 3600)).toBe(true); // 1 hr ago is fresh
+    expect(isTimestampFresh(now - 200000)).toBe(false); // > 48 hr ago is stale
+    expect(isTimestampFresh(now + 600)).toBe(false); // > 5m in future is rejected
+  });

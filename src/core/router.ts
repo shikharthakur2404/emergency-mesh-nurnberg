@@ -1,6 +1,7 @@
 /**
  * Emergency Mesh Nürnberg — Coordination & Routing Arbiter
- * Enforces deterministic TTL decrement, loop detection, packet relaying, and family key decryption.
+ * Enforces deterministic TTL decrement, loop detection, packet relaying,
+ * family key decryption, anti-spoofing signature verification, and DTN epidemic store-and-forward.
  */
 
 import {
@@ -8,6 +9,8 @@ import {
   SafePacket,
   SosPacket,
   HazardPacket,
+  SyncInvPacket,
+  SyncDataPacket,
   SosCategory,
   HazardType,
   RouterConfig,
@@ -18,26 +21,37 @@ import {
   generateMsgId,
   hashFamilySecret,
   encryptFamilyPayload,
-  decryptFamilyPayload
+  decryptFamilyPayload,
+  signEmergencyPayload,
+  verifyEmergencyPayload,
+  isTimestampFresh
 } from './crypto';
+import { StoreAndForwardBuffer } from './dtn/StoreAndForwardBuffer';
 import { MeshTransport } from './transport/MeshTransport';
 
-export type MeshEventListener = (packet: MeshPacket, meta: { isDirect: boolean; decryptedText?: string }) => void;
+export type MeshEventListener = (
+  packet: MeshPacket,
+  meta: { isDirect: boolean; decryptedText?: string; isVerified?: boolean }
+) => void;
 
 export class MeshRouter {
   public config: RouterConfig;
   private transport: MeshTransport;
   private dedupCache: DeduplicationCache;
+  private dtnBuffer: StoreAndForwardBuffer;
   private listeners: Set<MeshEventListener> = new Set();
   private familySecretMap: Map<string, string> = new Map(); // hash -> rawSecret
   public relayedPacketsCount = 0;
   public droppedLoopPacketsCount = 0;
   public totalReceivedCount = 0;
+  public dtnSyncCount = 0;
+  private dtnTimer: any = null;
 
   constructor(config: RouterConfig, transport: MeshTransport) {
     this.config = config;
     this.transport = transport;
     this.dedupCache = new DeduplicationCache(config.dedupCacheSize || 500);
+    this.dtnBuffer = new StoreAndForwardBuffer(config.dtnCapacity || 250);
 
     // Register family secrets
     for (const secret of config.familySecrets || []) {
@@ -57,14 +71,29 @@ export class MeshRouter {
 
   public async start(): Promise<void> {
     await this.transport.start();
+    const intervalMs = this.config.dtnSyncIntervalMs || 25000;
+    if (intervalMs > 0 && typeof setInterval !== 'undefined') {
+      this.dtnTimer = setInterval(() => {
+        this.triggerDtnSync().catch(() => {});
+      }, intervalMs);
+    }
   }
 
   public async stop(): Promise<void> {
+    if (this.dtnTimer) {
+      clearInterval(this.dtnTimer);
+      this.dtnTimer = null;
+    }
     await this.transport.stop();
   }
 
   public clearCache(): void {
     this.dedupCache.clear();
+    this.dtnBuffer.clear();
+  }
+
+  public getDtnBuffer(): StoreAndForwardBuffer {
+    return this.dtnBuffer;
   }
 
   public subscribe(listener: MeshEventListener): () => void {
@@ -74,6 +103,27 @@ export class MeshRouter {
 
   public getConnectedPeers(): PeerNode[] {
     return this.transport.getConnectedPeers();
+  }
+
+  /**
+   * Broadcasts a lightweight inventory vector (SYNC_INV) of our buffered packets
+   * to initiate epidemic synchronization across disconnected cluster partitions.
+   */
+  public async triggerDtnSync(): Promise<void> {
+    const inventory = this.dtnBuffer.getInventory();
+    if (inventory.length === 0) return;
+
+    const syncInv: SyncInvPacket = {
+      type: 'SYNC_INV',
+      msg_id: generateMsgId(),
+      timestamp: Math.floor(Date.now() / 1000),
+      ttl: 1, // 1-hop direct exchange only
+      hop_count: 0,
+      sender_id: this.config.nodeId,
+      inventory
+    };
+
+    await this.transport.broadcast(syncInv);
   }
 
   /**
@@ -92,8 +142,12 @@ export class MeshRouter {
       hop_count: 0,
       family_id: familyHash,
       encrypted_payload: encrypted,
-      sender_alias: alias || this.config.nodeId
+      sender_alias: alias || this.config.nodeId,
+      priority: 'HIGH'
     };
+
+    // Buffer in DTN store-and-forward vault
+    this.dtnBuffer.addPacket(packet);
 
     // Mark seen locally to never accept own echoes
     this.dedupCache.recordSeen(msgId);
@@ -102,7 +156,7 @@ export class MeshRouter {
   }
 
   /**
-   * Originates a new public SOS Emergency Beacon.
+   * Originates a new public SOS Emergency Beacon with cryptographic tamper protection.
    */
   public async broadcastSos(
     category: SosCategory,
@@ -111,18 +165,28 @@ export class MeshRouter {
     notes?: string
   ): Promise<SosPacket> {
     const msgId = generateMsgId();
+    const timestamp = Math.floor(Date.now() / 1000);
+    const canonical = `SOS:${this.config.nodeId}:${timestamp}:${category}:${lat}:${lon}:${notes || ''}`;
+    const { signature, authToken } = signEmergencyPayload(canonical, this.config.nodeId);
+
     const packet: SosPacket = {
       type: 'SOS',
       msg_id: msgId,
-      timestamp: Math.floor(Date.now() / 1000),
+      timestamp,
       ttl: this.config.maxTtl || 20,
       hop_count: 0,
       sender_id: this.config.nodeId,
       category,
       lat,
       lon,
-      notes
+      notes,
+      signature,
+      auth_token: authToken,
+      priority: 'CRITICAL'
     };
+
+    // Buffer in DTN store-and-forward vault
+    this.dtnBuffer.addPacket(packet);
 
     this.dedupCache.recordSeen(msgId);
     await this.transport.broadcast(packet);
@@ -130,7 +194,7 @@ export class MeshRouter {
   }
 
   /**
-   * Originates a new Local Hazard Notification (e.g. Flooded Underpass, Blocked Ring Road).
+   * Originates a new Local Hazard Notification with cryptographic tamper protection.
    */
   public async broadcastHazard(
     hazardType: HazardType,
@@ -139,18 +203,28 @@ export class MeshRouter {
     description: string
   ): Promise<HazardPacket> {
     const msgId = generateMsgId();
+    const timestamp = Math.floor(Date.now() / 1000);
+    const canonical = `HAZARD:${this.config.nodeId}:${timestamp}:${hazardType}:${lat}:${lon}:${description}`;
+    const { signature, authToken } = signEmergencyPayload(canonical, this.config.nodeId);
+
     const packet: HazardPacket = {
       type: 'HAZARD',
       msg_id: msgId,
-      timestamp: Math.floor(Date.now() / 1000),
+      timestamp,
       ttl: this.config.maxTtl || 15,
       hop_count: 0,
       sender_id: this.config.nodeId,
       hazard_type: hazardType,
       lat,
       lon,
-      description
+      description,
+      signature,
+      auth_token: authToken,
+      priority: 'HIGH'
     };
+
+    // Buffer in DTN store-and-forward vault
+    this.dtnBuffer.addPacket(packet);
 
     this.dedupCache.recordSeen(msgId);
     await this.transport.broadcast(packet);
@@ -163,17 +237,55 @@ export class MeshRouter {
   public async handleIncoming(packet: MeshPacket, isDirect: boolean): Promise<boolean> {
     this.totalReceivedCount++;
 
+    // 0. Handle Epidemic DTN Synchronization Packets (1-Hop Only)
+    if (packet.type === 'SYNC_INV') {
+      if (packet.sender_id === this.config.nodeId) return false;
+      const delta = this.dtnBuffer.getOutboundDelta(packet.inventory);
+      if (delta.length > 0) {
+        const syncData: SyncDataPacket = {
+          type: 'SYNC_DATA',
+          msg_id: generateMsgId(),
+          timestamp: Math.floor(Date.now() / 1000),
+          ttl: 1,
+          hop_count: 0,
+          sender_id: this.config.nodeId,
+          packets: delta
+        };
+        this.dtnSyncCount++;
+        await this.transport.broadcast(syncData);
+      }
+      return true;
+    }
+
+    if (packet.type === 'SYNC_DATA') {
+      if (packet.sender_id === this.config.nodeId) return false;
+      for (const item of packet.packets) {
+        await this.handleIncoming(item, false);
+      }
+      return true;
+    }
+
     // 1. Loop Prevention & Deduplication
     if (this.dedupCache.hasSeen(packet.msg_id)) {
       this.droppedLoopPacketsCount++;
       return false; // Silently drop duplicate packet
     }
 
-    // 2. Record packet as seen
+    // 2. Timestamp Freshness Check (Prevent stale replays)
+    if (!isTimestampFresh(packet.timestamp)) {
+      return false;
+    }
+
+    // 3. Record packet as seen
     this.dedupCache.recordSeen(packet.msg_id);
 
-    // 3. Cryptographic Family Decryption (if applicable)
+    // 4. Archive packet into DTN Store & Forward Buffer
+    this.dtnBuffer.addPacket(packet);
+
+    // 5. Cryptographic Family Decryption & Signature Verification
     let decryptedText: string | undefined;
+    let isVerified: boolean | undefined;
+
     if (packet.type === 'SAFE') {
       const matchingSecret = this.familySecretMap.get(packet.family_id);
       if (matchingSecret) {
@@ -182,14 +294,24 @@ export class MeshRouter {
           decryptedText = decrypted;
         }
       }
+    } else if (packet.type === 'SOS') {
+      if (packet.signature && packet.sender_id) {
+        const canonical = `SOS:${packet.sender_id}:${packet.timestamp}:${packet.category}:${packet.lat}:${packet.lon}:${packet.notes || ''}`;
+        isVerified = verifyEmergencyPayload(canonical, packet.signature, packet.sender_id);
+      }
+    } else if (packet.type === 'HAZARD') {
+      if (packet.signature && packet.sender_id) {
+        const canonical = `HAZARD:${packet.sender_id}:${packet.timestamp}:${packet.hazard_type}:${packet.lat}:${packet.lon}:${packet.description}`;
+        isVerified = verifyEmergencyPayload(canonical, packet.signature, packet.sender_id);
+      }
     }
 
-    // 4. Notify Local Subscribers (UI / State Store)
+    // 6. Notify Local Subscribers (UI / State Store)
     for (const listener of this.listeners) {
-      listener(packet, { isDirect, decryptedText });
+      listener(packet, { isDirect, decryptedText, isVerified });
     }
 
-    // 5. Hop-Count Decrement & Relay Decision
+    // 7. Hop-Count Decrement & Relay Decision
     if (packet.ttl > 1) {
       const relayPacket: MeshPacket = {
         ...packet,
@@ -209,9 +331,11 @@ export class MeshRouter {
     return {
       nodeId: this.config.nodeId,
       dedupCacheSize: this.dedupCache.size,
+      dtnBufferedCount: this.dtnBuffer.size,
       relayedPackets: this.relayedPacketsCount,
       droppedDuplicates: this.droppedLoopPacketsCount,
       totalReceived: this.totalReceivedCount,
+      dtnSyncs: this.dtnSyncCount,
       connectedPeers: this.transport.getConnectedPeers().length
     };
   }

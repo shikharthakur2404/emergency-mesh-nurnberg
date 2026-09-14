@@ -3,13 +3,17 @@
  * Designed for zero-cloud, byte-efficient, P2P disaster coordination.
  */
 
-export type MeshPacketType = 'SAFE' | 'SOS' | 'HAZARD' | 'PING';
+export type MeshPacketType = 'SAFE' | 'SOS' | 'HAZARD' | 'PING' | 'SYNC_INV' | 'SYNC_DATA';
+
+export type PacketPriority = 'CRITICAL' | 'HIGH' | 'NORMAL';
 
 export interface BasePacket {
   msg_id: string;      // Unique 8-12 char identifier for deduplication
   timestamp: number;   // UNIX timestamp in seconds
   ttl: number;         // Decremented on each hop; dropped when 0
   hop_count: number;   // Total hops traversed so far
+  priority?: PacketPriority; // Priority for DTN retention & queue ordering
+  dtn_buffered?: boolean;    // Flagged if carried/synced via store-and-forward
 }
 
 export interface SafePacket extends BasePacket {
@@ -28,6 +32,8 @@ export interface SosPacket extends BasePacket {
   lat: number;
   lon: number;
   notes?: string;
+  signature?: string;         // Cryptographic integrity signature (anti-spoofing)
+  auth_token?: string;        // Node verification token
 }
 
 export type HazardType = 'FLOOD' | 'COLLAPSE' | 'GRID_DOWN' | 'BLOCKED_ROUTE' | 'FIRE';
@@ -39,6 +45,8 @@ export interface HazardPacket extends BasePacket {
   lat: number;
   lon: number;
   description: string;
+  signature?: string;         // Cryptographic integrity signature (anti-spoofing)
+  auth_token?: string;        // Node verification token
 }
 
 export interface PingPacket extends BasePacket {
@@ -46,7 +54,26 @@ export interface PingPacket extends BasePacket {
   node_id: string;
 }
 
-export type MeshPacket = SafePacket | SosPacket | HazardPacket | PingPacket;
+export interface SyncInvItem {
+  msg_id: string;
+  timestamp: number;
+  type: MeshPacketType;
+  priority: PacketPriority;
+}
+
+export interface SyncInvPacket extends BasePacket {
+  type: 'SYNC_INV';
+  sender_id: string;
+  inventory: SyncInvItem[];
+}
+
+export interface SyncDataPacket extends BasePacket {
+  type: 'SYNC_DATA';
+  sender_id: string;
+  packets: MeshPacket[];
+}
+
+export type MeshPacket = SafePacket | SosPacket | HazardPacket | PingPacket | SyncInvPacket | SyncDataPacket;
 
 export interface PeerNode {
   id: string;
@@ -76,4 +103,6 @@ export interface RouterConfig {
   maxTtl: number;
   dedupCacheSize: number;
   familySecrets: string[]; // Hashes of family secrets configured on this node
+  dtnCapacity?: number;
+  dtnSyncIntervalMs?: number;
 }

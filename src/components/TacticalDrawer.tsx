@@ -28,6 +28,8 @@ interface TacticalDrawerProps {
   connectedPeersCount: number;
   relayedCount: number;
   totalPacketsCount: number;
+  dtnBufferedCount?: number;
+  dtnSyncCount?: number;
   onClearCache: () => void;
 }
 
@@ -51,6 +53,8 @@ export const TacticalDrawer: React.FC<TacticalDrawerProps> = React.memo(({
   connectedPeersCount,
   relayedCount,
   totalPacketsCount,
+  dtnBufferedCount = 0,
+  dtnSyncCount = 0,
   onClearCache,
 }) => {
   const { width, height } = useWindowDimensions();
@@ -399,6 +403,33 @@ export const TacticalDrawer: React.FC<TacticalDrawerProps> = React.memo(({
               <View style={styles.telemetryRow}>
                 <Text style={styles.telemetryLabel}>{t.drawer.totalPackets}</Text>
                 <Text style={styles.telemetryValue}>{totalPacketsCount}</Text>
+              </View>
+            </View>
+
+            {/* Delay-Tolerant Carrier Mesh (DTN) Section */}
+            <Text style={styles.sectionHeading}>
+              🚚 {t.drawer.dtnHeader}
+            </Text>
+            <Text style={styles.sectionSub}>{t.drawer.dtnSubhead}</Text>
+            <View style={styles.telemetryBox}>
+              <View style={styles.telemetryRow}>
+                <Text style={styles.telemetryLabel}>{t.drawer.dtnBuffered}</Text>
+                <Text style={styles.telemetryValueGold}>{dtnBufferedCount}</Text>
+              </View>
+              <View style={styles.telemetryDivider} />
+              <View style={styles.telemetryRow}>
+                <Text style={styles.telemetryLabel}>{t.drawer.dtnSyncs}</Text>
+                <Text style={styles.telemetryValueActive}>{dtnSyncCount}</Text>
+              </View>
+              <View style={styles.telemetryDivider} />
+              <View style={styles.telemetryRow}>
+                <Text style={styles.telemetryLabel}>{t.drawer.foregroundService}</Text>
+                <Text style={styles.telemetryValueActive}>{t.drawer.foregroundServiceActive}</Text>
+              </View>
+              <View style={styles.telemetryDivider} />
+              <View style={styles.telemetryRow}>
+                <Text style={styles.telemetryLabel}>{t.drawer.sigSecurity}</Text>
+                <Text style={styles.telemetryValueActive}>{t.drawer.sigSecurityVal}</Text>
               </View>
             </View>
 

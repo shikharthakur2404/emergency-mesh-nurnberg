@@ -561,6 +561,8 @@ export default function App() {
         connectedPeersCount={connectedPeers.length + 2}
         relayedCount={stats.relayedCount}
         totalPacketsCount={stats.totalReceived + packets.length}
+        dtnBufferedCount={router ? router.getStats().dtnBufferedCount : 0}
+        dtnSyncCount={router ? router.getStats().dtnSyncs : 0}
         onClearCache={handleClearCache}
       />
     </SafeAreaView>

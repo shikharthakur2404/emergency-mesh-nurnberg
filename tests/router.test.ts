@@ -83,3 +83,74 @@ describe('Mesh Router & Relay Engine', () => {
     expect(router.relayedPacketsCount).toBe(0);
   });
 });
+
+  it('signs SOS beacons and verifies integrity on receive', async () => {
+    const transport = new VirtualMeshTransport('node-signer');
+    const router = new MeshRouter(
+      { nodeId: 'node-signer', maxTtl: 15, dedupCacheSize: 100, familySecrets: [] },
+      transport
+    );
+    await router.start();
+
+    let verifiedEvent: boolean | undefined;
+    router.subscribe((pkt, meta) => {
+      verifiedEvent = meta.isVerified;
+    });
+
+    const sos = await router.broadcastSos('MEDICAL', 49.45, 11.08, 'Broken limb');
+    expect(sos.signature).toBeDefined();
+    expect(sos.auth_token).toBeDefined();
+    expect(sos.priority).toBe('CRITICAL');
+
+    // Simulate incoming verified SOS from peer
+    const peerSos: SosPacket = {
+      ...sos,
+      msg_id: 'peer-signed-sos-001'
+    };
+
+    await router.handleIncoming(peerSos, true);
+    expect(verifiedEvent).toBe(true);
+  });
+
+  it('performs epidemic DTN synchronization on receiving SYNC_INV', async () => {
+    const transportA = new VirtualMeshTransport('node-a');
+    const routerA = new MeshRouter(
+      { nodeId: 'node-a', maxTtl: 15, dedupCacheSize: 100, familySecrets: [] },
+      transportA
+    );
+    await routerA.start();
+
+    // Node A originates an SOS beacon (buffered in DTN)
+    const sosA = await routerA.broadcastSos('TRAPPED', 49.4539, 11.0775, 'Shelter cellar blocked');
+    expect(routerA.getStats().dtnBufferedCount).toBe(1);
+
+    // Node B arrives (empty buffer) and broadcasts SYNC_INV
+    const transportB = new VirtualMeshTransport('node-b');
+    const routerB = new MeshRouter(
+      { nodeId: 'node-b', maxTtl: 15, dedupCacheSize: 100, familySecrets: [] },
+      transportB
+    );
+    await routerB.start();
+
+    // Capture packets received by Node B
+    let receivedByB: SosPacket | null = null;
+    routerB.subscribe((pkt) => {
+      if (pkt.type === 'SOS') {
+        receivedByB = pkt as SosPacket;
+      }
+    });
+
+    // Node B triggers DTN Sync
+    await routerA.handleIncoming({
+      type: 'SYNC_INV',
+      msg_id: 'sync-inv-b',
+      timestamp: Math.floor(Date.now() / 1000),
+      ttl: 1,
+      hop_count: 0,
+      sender_id: 'node-b',
+      inventory: [] // Node B has empty inventory
+    }, true);
+
+    // Router A should have initiated a SYNC_DATA burst
+    expect(routerA.getStats().dtnSyncs).toBe(1);
+  });
