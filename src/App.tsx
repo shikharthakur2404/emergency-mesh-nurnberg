@@ -22,7 +22,8 @@ import {
   OLED_PALETTE,
   respWidth,
   respHeight,
-  respFontSize
+  respFontSize,
+  FONTS
 } from './ui/responsive';
 import { useMeshStore, DecryptedSafeEntry } from './state/meshStore';
 import { MeshRouter } from './core/router';
@@ -206,12 +207,16 @@ export default function App() {
             <View style={styles.crestBadge}>
               <Text style={styles.crestIcon}>🏰</Text>
             </View>
-            <View>
+            <View style={styles.titleColumn}>
               <View style={styles.titleRow}>
                 <View style={styles.pulseDot} />
-                <Text style={styles.headerTitle}>{t.header.title}</Text>
+                <Text style={styles.headerTitle}>
+                  {t.header.title}
+                </Text>
               </View>
-              <Text style={styles.headerSectorSub}>{t.header.sectorTag}</Text>
+              <Text style={styles.headerSectorSub} numberOfLines={1}>
+                {t.header.sectorTag}
+              </Text>
             </View>
           </View>
 
@@ -340,10 +345,71 @@ export default function App() {
             </View>
 
             {packets.length === 0 ? (
-              <View style={styles.emptyState}>
-                <Text style={styles.emptyStateIcon}>🏰</Text>
-                <Text style={styles.emptyStateText}>{t.feed.emptyTitle}</Text>
-                <Text style={styles.emptyStateSubtext}>{t.feed.emptySubtitle}</Text>
+              <View style={styles.emptyFeedContainer}>
+                <View style={styles.emptyState}>
+                  <Text style={styles.emptyStateIcon}>🏰</Text>
+                  <Text style={styles.emptyStateText}>{t.feed.emptyTitle}</Text>
+                  <Text style={styles.emptyStateSubtext}>{t.feed.emptySubtitle}</Text>
+                </View>
+
+                {/* Tactical Live Mesh Node & Channel Telemetry Card */}
+                <View style={styles.tacticalNodeCard}>
+                  <View style={styles.tacticalCardHeader}>
+                    <Text style={styles.tacticalCardTitle}>📡 {t.drawer.telemetryHeader}</Text>
+                    <View style={styles.tacticalCardLiveBadge}>
+                      <View style={styles.tacticalLiveDot} />
+                      <Text style={styles.tacticalLiveText}>AUTO-SCAN</Text>
+                    </View>
+                  </View>
+
+                  <View style={styles.tacticalGrid}>
+                    <View style={styles.tacticalGridItem}>
+                      <Text style={styles.tacticalGridLabel}>KANAL</Text>
+                      <Text style={styles.tacticalGridVal}>PEGNITZ-8888</Text>
+                    </View>
+                    <View style={styles.tacticalGridItem}>
+                      <Text style={styles.tacticalGridLabel}>GPS-SEKTOR</Text>
+                      <Text style={styles.tacticalGridVal}>49.45°N 11.08°E</Text>
+                    </View>
+                    <View style={styles.tacticalGridItem}>
+                      <Text style={styles.tacticalGridLabel}>DTN-PUFFER</Text>
+                      <Text style={styles.tacticalGridValGold}>
+                        {router ? router.getStats().dtnBufferedCount : 0} AKTIV
+                      </Text>
+                    </View>
+                    <View style={styles.tacticalGridItem}>
+                      <Text style={styles.tacticalGridLabel}>KRYPTO-SIG</Text>
+                      <Text style={styles.tacticalGridValGreen}>HMAC-SHA256</Text>
+                    </View>
+                  </View>
+                </View>
+
+                {/* Quick Emergency Action Cards */}
+                <View style={styles.quickActionRow}>
+                  <TouchableOpacity
+                    style={styles.quickActionBtnSos}
+                    onPress={() => setActiveTab('SOS')}
+                  >
+                    <Text style={styles.quickActionBtnText}>🚨 {t.tabs.sos}</Text>
+                    <Text style={styles.quickActionBtnSub}>Notruf auslösen</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.quickActionBtnFam}
+                    onPress={() => setActiveTab('FAMILY')}
+                  >
+                    <Text style={styles.quickActionBtnText}>🛡️ {t.tabs.familie}</Text>
+                    <Text style={styles.quickActionBtnSub}>Status sichern</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.quickActionBtnPoi}
+                    onPress={() => setActiveTab('POIS')}
+                  >
+                    <Text style={styles.quickActionBtnText}>📍 {t.tabs.orte}</Text>
+                    <Text style={styles.quickActionBtnSub}>Brunnen & Hilfe</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             ) : (
               <FlatList
@@ -696,25 +762,30 @@ const styles = StyleSheet.create({
   brandRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: respWidth(8)
+    gap: respWidth(8),
+    flex: 1,
+    marginRight: respWidth(6),
+  },
+  titleColumn: {
+    flex: 1,
   },
   crestBadge: {
-    width: respWidth(34),
-    height: respWidth(34),
-    borderRadius: respWidth(6),
+    width: respWidth(38),
+    height: respWidth(38),
+    borderRadius: respWidth(7),
     backgroundColor: '#16080a',
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: OLED_PALETTE.nurnbergRed,
     alignItems: 'center',
     justifyContent: 'center'
   },
   crestIcon: {
-    fontSize: respFontSize(18)
+    fontSize: respFontSize(19)
   },
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: respWidth(6)
+    gap: respWidth(4)
   },
   pulseDot: {
     width: respWidth(7),
@@ -724,66 +795,68 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     color: OLED_PALETTE.textPrimary,
-    fontWeight: '900',
-    fontSize: respFontSize(11.5),
-    letterSpacing: respWidth(0.5),
+    fontFamily: FONTS.displayBold,
+    fontSize: respFontSize(14.2),
+    letterSpacing: respWidth(0.3),
   },
   headerSectorSub: {
     color: OLED_PALETTE.imperialGold,
-    fontSize: respFontSize(8.5),
-    fontWeight: '700',
-    letterSpacing: respWidth(0.4),
+    fontFamily: FONTS.displayBold,
+    fontSize: respFontSize(11),
+    letterSpacing: respWidth(0.3),
     marginTop: respHeight(1),
   },
   headerRightRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: respWidth(6),
+    gap: respWidth(5),
+    flexShrink: 0,
   },
   guideQuickBtn: {
     backgroundColor: OLED_PALETTE.sinwellSlate,
-    borderWidth: respWidth(1),
+    borderWidth: respWidth(1.5),
     borderColor: OLED_PALETTE.imperialGold,
-    paddingHorizontal: respWidth(7),
+    paddingHorizontal: respWidth(6),
     paddingVertical: respHeight(4),
     borderRadius: respWidth(5),
   },
   guideQuickBtnText: {
     color: OLED_PALETTE.imperialGold,
-    fontSize: respFontSize(10),
-    fontWeight: '800',
-    letterSpacing: respWidth(0.3),
+    fontFamily: FONTS.displayBold,
+    fontSize: respFontSize(11),
+    letterSpacing: respWidth(0.2),
   },
   menuDrawerBtn: {
     backgroundColor: OLED_PALETTE.kaiserburgCard,
-    borderWidth: respWidth(1),
+    borderWidth: respWidth(1.5),
     borderColor: OLED_PALETTE.meshCyan,
-    paddingHorizontal: respWidth(7),
+    paddingHorizontal: respWidth(6),
     paddingVertical: respHeight(4),
     borderRadius: respWidth(5),
   },
   menuDrawerBtnText: {
     color: OLED_PALETTE.meshCyan,
-    fontSize: respFontSize(10),
-    fontWeight: '800',
-    letterSpacing: respWidth(0.3),
+    fontFamily: FONTS.displayBold,
+    fontSize: respFontSize(11),
+    letterSpacing: respWidth(0.2),
   },
   headerSubtitle: {
     color: OLED_PALETTE.textMuted,
-    fontSize: respFontSize(10),
-    marginTop: respHeight(4),
+    fontFamily: FONTS.displayMedium,
+    fontSize: respFontSize(12),
+    marginTop: respHeight(5),
   },
   civilianStatusBanner: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: OLED_PALETTE.kaiserburgCard,
-    borderWidth: respWidth(1),
+    borderWidth: respWidth(1.5),
     borderColor: OLED_PALETTE.safeGreen,
-    paddingVertical: respHeight(7),
-    paddingHorizontal: respWidth(10),
-    borderRadius: respWidth(6),
-    marginTop: respHeight(8),
+    paddingVertical: respHeight(10),
+    paddingHorizontal: respWidth(12),
+    borderRadius: respWidth(8),
+    marginTop: respHeight(10),
   },
   civilianStatusLeft: {
     flexDirection: 'row',
@@ -791,9 +864,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   civilianStatusDot: {
-    width: respWidth(8),
-    height: respWidth(8),
-    borderRadius: respWidth(4),
+    width: respWidth(9),
+    height: respWidth(9),
+    borderRadius: respWidth(5),
     marginRight: respWidth(8),
   },
   civilianDotGreen: {
@@ -804,20 +877,23 @@ const styles = StyleSheet.create({
   },
   civilianStatusText: {
     color: OLED_PALETTE.textPrimary,
-    fontSize: respFontSize(11),
-    fontWeight: '800',
+    fontFamily: FONTS.displayBold,
+    fontSize: respFontSize(14),
+    letterSpacing: respWidth(0.3),
   },
   civilianStatusBadge: {
     backgroundColor: OLED_PALETTE.sinwellSlate,
-    paddingHorizontal: respWidth(8),
-    paddingVertical: respHeight(3),
-    borderRadius: respWidth(4),
+    paddingHorizontal: respWidth(9),
+    paddingVertical: respHeight(4),
+    borderRadius: respWidth(5),
     marginLeft: respWidth(6),
+    borderWidth: 1,
+    borderColor: OLED_PALETTE.hudBorderCyan,
   },
   civilianStatusBadgeText: {
     color: OLED_PALETTE.meshCyan,
-    fontSize: respFontSize(9),
-    fontWeight: '700',
+    fontFamily: FONTS.monoBold,
+    fontSize: respFontSize(11),
   },
   tabBar: {
     flexDirection: 'row',
@@ -827,47 +903,51 @@ const styles = StyleSheet.create({
   },
   tabButton: {
     flex: 1,
-    paddingVertical: respHeight(9),
+    paddingVertical: respHeight(11),
     alignItems: 'center',
-    borderBottomWidth: respWidth(2),
+    borderBottomWidth: respWidth(2.5),
     borderBottomColor: 'transparent'
   },
   tabButtonActiveRadar: {
     borderBottomColor: OLED_PALETTE.meshCyan,
-    backgroundColor: '#00e5ff0d'
+    backgroundColor: '#00e5ff12'
   },
   tabButtonActiveSos: {
     borderBottomColor: OLED_PALETTE.nurnbergRed,
-    backgroundColor: '#d9042915'
+    backgroundColor: '#d9042918'
   },
   tabButtonActiveFamily: {
     borderBottomColor: OLED_PALETTE.imperialGold,
-    backgroundColor: '#ffb70312'
+    backgroundColor: '#ffb70318'
   },
   tabButtonActivePlaces: {
     borderBottomColor: OLED_PALETTE.safeGreen,
-    backgroundColor: '#00e6760d'
+    backgroundColor: '#00e67612'
   },
   tabText: {
     color: OLED_PALETTE.textMuted,
-    fontWeight: '700',
-    fontSize: respFontSize(11)
+    fontFamily: FONTS.displaySemiBold,
+    fontSize: respFontSize(13)
   },
   tabTextActiveRadar: {
     color: OLED_PALETTE.meshCyan,
-    fontWeight: '900'
+    fontFamily: FONTS.displayBold,
+    fontSize: respFontSize(13)
   },
   tabTextActiveSos: {
     color: OLED_PALETTE.sosRed,
-    fontWeight: '900'
+    fontFamily: FONTS.displayBold,
+    fontSize: respFontSize(13)
   },
   tabTextActiveFamily: {
     color: OLED_PALETTE.imperialGold,
-    fontWeight: '900'
+    fontFamily: FONTS.displayBold,
+    fontSize: respFontSize(13)
   },
   tabTextActivePlaces: {
     color: OLED_PALETTE.safeGreen,
-    fontWeight: '900'
+    fontFamily: FONTS.displayBold,
+    fontSize: respFontSize(13)
   },
   content: {
     flex: 1,
@@ -880,79 +960,210 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     backgroundColor: '#060a10',
-    paddingVertical: respHeight(4),
-    paddingHorizontal: respWidth(6),
-    borderRadius: respWidth(4),
+    paddingVertical: respHeight(8),
+    paddingHorizontal: respWidth(10),
+    borderRadius: respWidth(6),
     borderWidth: 1,
     borderColor: '#0f172a',
-    marginBottom: respHeight(10)
+    marginBottom: respHeight(12)
   },
   sectorChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: respWidth(4)
+    gap: respWidth(5)
   },
   sectorDotGreen: {
-    width: respWidth(5),
-    height: respWidth(5),
+    width: respWidth(6),
+    height: respWidth(6),
     borderRadius: respWidth(3),
     backgroundColor: OLED_PALETTE.safeGreen
   },
   sectorDotAmber: {
-    width: respWidth(5),
-    height: respWidth(5),
+    width: respWidth(6),
+    height: respWidth(6),
     borderRadius: respWidth(3),
     backgroundColor: OLED_PALETTE.warningAmber
   },
   sectorChipText: {
     color: OLED_PALETTE.textSecondary,
-    fontSize: respFontSize(8),
-    fontWeight: '800',
-    fontFamily: 'monospace'
+    fontFamily: FONTS.monoBold,
+    fontSize: respFontSize(11),
   },
   streamHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: respHeight(6)
+    marginBottom: respHeight(8)
   },
   sectionHeader: {
     color: OLED_PALETTE.textSecondary,
-    fontWeight: '800',
-    fontSize: respFontSize(10),
-    letterSpacing: 1
+    fontFamily: FONTS.displayBold,
+    fontSize: respFontSize(13),
+    letterSpacing: 1.2
   },
   streamSignalBadge: {
     color: OLED_PALETTE.safeGreen,
-    fontSize: respFontSize(9),
-    fontWeight: '800',
-    fontFamily: 'monospace'
+    fontFamily: FONTS.monoBold,
+    fontSize: respFontSize(12),
+  },
+  emptyFeedContainer: {
+    gap: respHeight(12),
+    marginTop: respHeight(10),
   },
   emptyState: {
-    padding: respWidth(24),
+    padding: respWidth(20),
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: OLED_PALETTE.kaiserburgCard,
     borderRadius: respWidth(10),
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: OLED_PALETTE.surfaceBorder,
-    marginTop: respHeight(20)
   },
   emptyStateIcon: {
-    fontSize: respFontSize(28),
-    marginBottom: respHeight(8)
+    fontSize: respFontSize(34),
+    marginBottom: respHeight(6)
   },
   emptyStateText: {
     color: OLED_PALETTE.textSecondary,
-    fontSize: respFontSize(12),
-    fontWeight: '700',
+    fontFamily: FONTS.displayBold,
+    fontSize: respFontSize(15),
     textAlign: 'center'
   },
   emptyStateSubtext: {
     color: OLED_PALETTE.textMuted,
-    fontSize: respFontSize(10),
+    fontFamily: FONTS.displayRegular,
+    fontSize: respFontSize(12),
+    lineHeight: respHeight(16),
     marginTop: respHeight(4),
     textAlign: 'center'
+  },
+  tacticalNodeCard: {
+    backgroundColor: OLED_PALETTE.kaiserburgCard,
+    borderWidth: 1.5,
+    borderColor: OLED_PALETTE.hudBorderCyan,
+    borderRadius: respWidth(10),
+    padding: respWidth(12),
+  },
+  tacticalCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: OLED_PALETTE.surfaceBorder,
+    paddingBottom: respHeight(6),
+    marginBottom: respHeight(8),
+  },
+  tacticalCardTitle: {
+    color: OLED_PALETTE.meshCyan,
+    fontFamily: FONTS.displayBold,
+    fontSize: respFontSize(13),
+    letterSpacing: respWidth(0.6),
+  },
+  tacticalCardLiveBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: respWidth(5),
+    backgroundColor: '#00e67615',
+    borderWidth: 1,
+    borderColor: OLED_PALETTE.safeGreen,
+    paddingHorizontal: respWidth(7),
+    paddingVertical: respHeight(2),
+    borderRadius: respWidth(4),
+  },
+  tacticalLiveDot: {
+    width: respWidth(6),
+    height: respWidth(6),
+    borderRadius: respWidth(3),
+    backgroundColor: OLED_PALETTE.safeGreen,
+  },
+  tacticalLiveText: {
+    color: OLED_PALETTE.safeGreen,
+    fontFamily: FONTS.monoBold,
+    fontSize: respFontSize(10),
+  },
+  tacticalGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: respWidth(8),
+  },
+  tacticalGridItem: {
+    width: '48%',
+    backgroundColor: OLED_PALETTE.surfaceCard,
+    padding: respWidth(8),
+    borderRadius: respWidth(6),
+    borderWidth: 1,
+    borderColor: OLED_PALETTE.surfaceBorder,
+  },
+  tacticalGridLabel: {
+    color: OLED_PALETTE.textSecondary,
+    fontFamily: FONTS.displayBold,
+    fontSize: respFontSize(11),
+    letterSpacing: respWidth(0.4),
+  },
+  tacticalGridVal: {
+    color: OLED_PALETTE.textPrimary,
+    fontFamily: FONTS.monoBold,
+    fontSize: respFontSize(11.5),
+    marginTop: respHeight(2),
+  },
+  tacticalGridValGold: {
+    color: OLED_PALETTE.imperialGold,
+    fontFamily: FONTS.monoBold,
+    fontSize: respFontSize(11.5),
+    marginTop: respHeight(2),
+  },
+  tacticalGridValGreen: {
+    color: OLED_PALETTE.safeGreen,
+    fontFamily: FONTS.monoBold,
+    fontSize: respFontSize(11.5),
+    marginTop: respHeight(2),
+  },
+  quickActionRow: {
+    flexDirection: 'row',
+    gap: respWidth(8),
+    marginTop: respHeight(2),
+  },
+  quickActionBtnSos: {
+    flex: 1,
+    backgroundColor: '#1f070a',
+    borderWidth: 1.5,
+    borderColor: OLED_PALETTE.nurnbergRed,
+    paddingVertical: respHeight(10),
+    paddingHorizontal: respWidth(6),
+    borderRadius: respWidth(8),
+    alignItems: 'center',
+  },
+  quickActionBtnFam: {
+    flex: 1,
+    backgroundColor: '#1f1604',
+    borderWidth: 1.5,
+    borderColor: OLED_PALETTE.imperialGold,
+    paddingVertical: respHeight(10),
+    paddingHorizontal: respWidth(6),
+    borderRadius: respWidth(8),
+    alignItems: 'center',
+  },
+  quickActionBtnPoi: {
+    flex: 1,
+    backgroundColor: '#041d11',
+    borderWidth: 1.5,
+    borderColor: OLED_PALETTE.safeGreen,
+    paddingVertical: respHeight(10),
+    paddingHorizontal: respWidth(6),
+    borderRadius: respWidth(8),
+    alignItems: 'center',
+  },
+  quickActionBtnText: {
+    color: OLED_PALETTE.textPrimary,
+    fontFamily: FONTS.displayBold,
+    fontSize: respFontSize(12),
+  },
+  quickActionBtnSub: {
+    color: OLED_PALETTE.textMuted,
+    fontFamily: FONTS.displayMedium,
+    fontSize: respFontSize(10),
+    marginTop: respHeight(2),
   },
   familyBanner: {
     backgroundColor: '#051b10',
@@ -960,9 +1171,9 @@ const styles = StyleSheet.create({
     borderColor: OLED_PALETTE.imperialGoldMuted,
     borderLeftWidth: respWidth(4),
     borderLeftColor: OLED_PALETTE.imperialGold,
-    padding: respWidth(10),
-    borderRadius: respWidth(6),
-    marginBottom: respHeight(10)
+    padding: respWidth(12),
+    borderRadius: respWidth(8),
+    marginBottom: respHeight(12)
   },
   familyBannerHeader: {
     flexDirection: 'row',
@@ -972,102 +1183,102 @@ const styles = StyleSheet.create({
   },
   familyBannerTitle: {
     color: OLED_PALETTE.imperialGold,
-    fontWeight: '900',
-    fontSize: respFontSize(10),
+    fontFamily: FONTS.displayBold,
+    fontSize: respFontSize(13),
     letterSpacing: 0.5
   },
   kaiserburgTag: {
     color: OLED_PALETTE.safeGreen,
-    fontSize: respFontSize(8),
-    fontWeight: '800',
-    fontFamily: 'monospace'
+    fontFamily: FONTS.monoBold,
+    fontSize: respFontSize(11),
   },
   familyBannerItem: {
-    marginTop: respHeight(2)
+    marginTop: respHeight(4)
   },
   familyBannerSender: {
     color: OLED_PALETTE.textPrimary,
-    fontWeight: '700',
-    fontSize: respFontSize(11)
+    fontFamily: FONTS.displayBold,
+    fontSize: respFontSize(13)
   },
   familyBannerText: {
     color: '#d4edda',
-    fontSize: respFontSize(12),
-    marginTop: respHeight(1)
+    fontFamily: FONTS.displayMedium,
+    fontSize: respFontSize(14),
+    marginTop: respHeight(2)
   },
   packetCard: {
     backgroundColor: OLED_PALETTE.kaiserburgCard,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: OLED_PALETTE.surfaceBorder,
     borderLeftWidth: respWidth(4),
-    borderRadius: respWidth(6),
-    padding: respWidth(10),
-    marginBottom: respHeight(8)
+    borderRadius: respWidth(8),
+    padding: respWidth(12),
+    marginBottom: respHeight(10)
   },
   packetHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: respHeight(4)
+    marginBottom: respHeight(6)
   },
   packetHeaderLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: respWidth(6)
+    gap: respWidth(8)
   },
   packetTypeBadge: {
-    fontWeight: '900',
-    fontSize: respFontSize(10),
-    paddingHorizontal: respWidth(5),
-    paddingVertical: respHeight(1),
-    borderRadius: respWidth(3),
+    fontFamily: FONTS.monoBold,
+    fontSize: respFontSize(11),
+    paddingHorizontal: respWidth(7),
+    paddingVertical: respHeight(2),
+    borderRadius: respWidth(4),
     overflow: 'hidden'
   },
   packetSectorTag: {
     color: OLED_PALETTE.textMuted,
-    fontSize: respFontSize(9),
-    fontWeight: '700',
-    fontFamily: 'monospace'
+    fontFamily: FONTS.monoMedium,
+    fontSize: respFontSize(11),
   },
   packetHops: {
     color: OLED_PALETTE.textMuted,
-    fontSize: respFontSize(9),
-    fontFamily: 'monospace'
+    fontFamily: FONTS.monoRegular,
+    fontSize: respFontSize(11),
   },
   packetBody: {
-    marginTop: respHeight(2)
+    marginTop: respHeight(4)
   },
   sosAlertTitle: {
     color: OLED_PALETTE.nurnbergRed,
-    fontWeight: '800',
-    fontSize: respFontSize(12)
+    fontFamily: FONTS.displayBold,
+    fontSize: respFontSize(16)
   },
   safeSender: {
     color: OLED_PALETTE.imperialGold,
-    fontWeight: '800',
-    fontSize: respFontSize(11)
+    fontFamily: FONTS.displayBold,
+    fontSize: respFontSize(14)
   },
   encryptedPayload: {
     color: OLED_PALETTE.textMuted,
-    fontFamily: 'monospace',
-    fontSize: respFontSize(10),
-    marginTop: respHeight(2)
+    fontFamily: FONTS.monoRegular,
+    fontSize: respFontSize(12),
+    marginTop: respHeight(3)
   },
   hazardTitle: {
     color: OLED_PALETTE.warningAmber,
-    fontWeight: '800',
-    fontSize: respFontSize(12)
+    fontFamily: FONTS.displayBold,
+    fontSize: respFontSize(15)
   },
   packetDesc: {
     color: OLED_PALETTE.textPrimary,
-    fontSize: respFontSize(12),
-    marginTop: respHeight(2)
+    fontFamily: FONTS.displayMedium,
+    fontSize: respFontSize(14),
+    marginTop: respHeight(3)
   },
   gpsCoords: {
     color: OLED_PALETTE.textMuted,
-    fontSize: respFontSize(10),
-    marginTop: respHeight(3),
-    fontFamily: 'monospace'
+    fontFamily: FONTS.monoRegular,
+    fontSize: respFontSize(11),
+    marginTop: respHeight(4),
   },
   formContainer: {
     flex: 1
@@ -1086,49 +1297,48 @@ const styles = StyleSheet.create({
   },
   formTitle: {
     color: OLED_PALETTE.textPrimary,
-    fontWeight: '900',
-    fontSize: respFontSize(14),
+    fontFamily: FONTS.displayBold,
+    fontSize: respFontSize(17),
     letterSpacing: 0.5
   },
   katsBadge: {
     backgroundColor: '#38060b',
     borderWidth: 1,
     borderColor: OLED_PALETTE.nurnbergRed,
-    paddingHorizontal: respWidth(6),
-    paddingVertical: respHeight(2),
-    borderRadius: respWidth(3)
+    paddingHorizontal: respWidth(8),
+    paddingVertical: respHeight(3),
+    borderRadius: respWidth(4)
   },
   katsBadgeText: {
     color: OLED_PALETTE.nurnbergRed,
-    fontSize: respFontSize(8),
-    fontWeight: '900',
-    fontFamily: 'monospace'
+    fontFamily: FONTS.monoBold,
+    fontSize: respFontSize(11),
   },
   vaultTag: {
     backgroundColor: '#261b00',
     borderWidth: 1,
     borderColor: OLED_PALETTE.imperialGold,
-    paddingHorizontal: respWidth(6),
-    paddingVertical: respHeight(2),
-    borderRadius: respWidth(3)
+    paddingHorizontal: respWidth(8),
+    paddingVertical: respHeight(3),
+    borderRadius: respWidth(4)
   },
   vaultTagText: {
     color: OLED_PALETTE.imperialGold,
-    fontSize: respFontSize(8),
-    fontWeight: '800',
-    fontFamily: 'monospace'
+    fontFamily: FONTS.monoBold,
+    fontSize: respFontSize(11),
   },
   formSubtitle: {
     color: OLED_PALETTE.textMuted,
-    fontSize: respFontSize(11),
-    marginBottom: respHeight(12)
+    fontFamily: FONTS.displayRegular,
+    fontSize: respFontSize(13),
+    marginBottom: respHeight(14)
   },
   sosCard: {
     backgroundColor: OLED_PALETTE.surfaceCard,
-    borderWidth: 1,
-    borderRadius: respWidth(8),
-    padding: respWidth(12),
-    marginBottom: respHeight(10)
+    borderWidth: 1.5,
+    borderRadius: respWidth(10),
+    padding: respWidth(14),
+    marginBottom: respHeight(12)
   },
   sosCardTop: {
     flexDirection: 'row',
@@ -1137,19 +1347,19 @@ const styles = StyleSheet.create({
   },
   sosCardTitle: {
     color: OLED_PALETTE.textPrimary,
-    fontWeight: '800',
-    fontSize: respFontSize(13)
+    fontFamily: FONTS.displayBold,
+    fontSize: respFontSize(17)
   },
   sosCodeBadge: {
     color: OLED_PALETTE.textMuted,
-    fontSize: respFontSize(9),
-    fontWeight: '700',
-    fontFamily: 'monospace'
+    fontFamily: FONTS.monoBold,
+    fontSize: respFontSize(12),
   },
   sosCardDesc: {
     color: OLED_PALETTE.textMuted,
-    fontSize: respFontSize(11),
-    marginTop: respHeight(3)
+    fontFamily: FONTS.displayRegular,
+    fontSize: respFontSize(13),
+    marginTop: respHeight(4)
   },
   hazardGrid: {
     flexDirection: 'row',
@@ -1158,124 +1368,126 @@ const styles = StyleSheet.create({
   hazardButton: {
     flex: 1,
     backgroundColor: OLED_PALETTE.surfaceCard,
-    borderWidth: 1,
-    padding: respWidth(10),
-    borderRadius: respWidth(6),
+    borderWidth: 1.5,
+    padding: respWidth(12),
+    borderRadius: respWidth(8),
     alignItems: 'center'
   },
   hazardButtonWide: {
     backgroundColor: OLED_PALETTE.surfaceCard,
-    borderWidth: 1,
-    padding: respWidth(10),
-    borderRadius: respWidth(6),
+    borderWidth: 1.5,
+    padding: respWidth(12),
+    borderRadius: respWidth(8),
     alignItems: 'center'
   },
   hazardButtonText: {
     color: OLED_PALETTE.textPrimary,
-    fontWeight: '800',
-    fontSize: respFontSize(11)
+    fontFamily: FONTS.displayBold,
+    fontSize: respFontSize(14)
   },
   hazardButtonSub: {
     color: OLED_PALETTE.textMuted,
-    fontSize: respFontSize(9),
-    marginTop: respHeight(2)
+    fontFamily: FONTS.displayMedium,
+    fontSize: respFontSize(12),
+    marginTop: respHeight(3)
   },
   card: {
     backgroundColor: OLED_PALETTE.surfaceCard,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: OLED_PALETTE.surfaceBorder,
-    padding: respWidth(12),
-    borderRadius: respWidth(8)
+    padding: respWidth(14),
+    borderRadius: respWidth(10)
   },
   cardHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: respHeight(6)
+    marginBottom: respHeight(8)
   },
   cardLabel: {
     color: OLED_PALETTE.textPrimary,
-    fontWeight: '700',
-    fontSize: respFontSize(12)
+    fontFamily: FONTS.displayBold,
+    fontSize: respFontSize(15)
   },
   cipherLabel: {
     color: OLED_PALETTE.imperialGold,
-    fontSize: respFontSize(9),
-    fontWeight: '800',
-    fontFamily: 'monospace'
+    fontFamily: FONTS.monoBold,
+    fontSize: respFontSize(12),
   },
   input: {
     backgroundColor: '#0c0f14',
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: OLED_PALETTE.surfaceBorder,
     color: OLED_PALETTE.textPrimary,
-    paddingHorizontal: respWidth(10),
-    paddingVertical: respHeight(7),
-    borderRadius: respWidth(5),
-    fontSize: respFontSize(12),
-    marginBottom: respHeight(8)
+    fontFamily: FONTS.monoMedium,
+    paddingHorizontal: respWidth(12),
+    paddingVertical: respHeight(10),
+    borderRadius: respWidth(6),
+    fontSize: respFontSize(14),
+    marginBottom: respHeight(10)
   },
   actionButton: {
     backgroundColor: OLED_PALETTE.meshCyan,
-    paddingVertical: respHeight(9),
-    borderRadius: respWidth(5),
+    paddingVertical: respHeight(12),
+    borderRadius: respWidth(6),
     alignItems: 'center'
   },
   actionButtonGold: {
     backgroundColor: OLED_PALETTE.imperialGold,
-    paddingVertical: respHeight(9),
-    borderRadius: respWidth(5),
+    paddingVertical: respHeight(12),
+    borderRadius: respWidth(6),
     alignItems: 'center'
   },
   actionButtonText: {
     color: OLED_PALETTE.textInverse,
-    fontWeight: '800',
-    fontSize: respFontSize(12)
+    fontFamily: FONTS.displayBold,
+    fontSize: respFontSize(15)
   },
   actionButtonGoldText: {
     color: OLED_PALETTE.textInverse,
-    fontWeight: '900',
-    fontSize: respFontSize(12)
+    fontFamily: FONTS.displayBold,
+    fontSize: respFontSize(15)
   },
   secretActiveNotice: {
     color: OLED_PALETTE.safeGreen,
-    fontSize: respFontSize(10),
+    fontFamily: FONTS.monoMedium,
+    fontSize: respFontSize(12),
     marginTop: respHeight(6),
-    fontFamily: 'monospace'
   },
   districtFilterScroll: {
     flexGrow: 0,
-    marginBottom: respHeight(10)
+    marginBottom: respHeight(12)
   },
   districtChip: {
-    paddingHorizontal: respWidth(10),
-    paddingVertical: respHeight(4),
-    borderRadius: respWidth(4),
+    paddingHorizontal: respWidth(14),
+    paddingVertical: respHeight(7),
+    borderRadius: respWidth(6),
     backgroundColor: OLED_PALETTE.surfaceCard,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: OLED_PALETTE.surfaceBorder,
-    marginRight: respWidth(6)
+    marginRight: respWidth(8)
   },
   districtChipActive: {
     borderColor: OLED_PALETTE.safeGreen,
-    backgroundColor: '#00e67615'
+    backgroundColor: '#00e67618'
   },
   districtChipText: {
     color: OLED_PALETTE.textMuted,
-    fontSize: respFontSize(10),
-    fontWeight: '700'
+    fontFamily: FONTS.displaySemiBold,
+    fontSize: respFontSize(13),
   },
   districtChipTextActive: {
     color: OLED_PALETTE.safeGreen,
-    fontWeight: '900'
+    fontFamily: FONTS.displayBold,
+    fontSize: respFontSize(13)
   },
   poiCard: {
     backgroundColor: OLED_PALETTE.kaiserburgCard,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: OLED_PALETTE.surfaceBorder,
-    padding: respWidth(10),
-    borderRadius: respWidth(6),
-    marginBottom: respHeight(8)
+    padding: respWidth(12),
+    borderRadius: respWidth(8),
+    marginBottom: respHeight(10)
   },
   poiHeader: {
     flexDirection: 'row',
@@ -1284,56 +1496,57 @@ const styles = StyleSheet.create({
   },
   poiName: {
     color: OLED_PALETTE.textPrimary,
-    fontWeight: '800',
-    fontSize: respFontSize(12),
+    fontFamily: FONTS.displayBold,
+    fontSize: respFontSize(16),
     flex: 1
   },
   poiTag: {
-    fontSize: respFontSize(8),
-    fontWeight: '800',
+    fontFamily: FONTS.monoBold,
+    fontSize: respFontSize(11),
     borderWidth: 1,
-    paddingHorizontal: respWidth(5),
-    paddingVertical: respHeight(1),
-    borderRadius: respWidth(3),
-    marginLeft: respWidth(6)
+    paddingHorizontal: respWidth(7),
+    paddingVertical: respHeight(2),
+    borderRadius: respWidth(4),
+    marginLeft: respWidth(8)
   },
   poiMetaRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: respWidth(8),
-    marginTop: respHeight(2)
+    marginTop: respHeight(4)
   },
   poiDistrictBadge: {
     color: OLED_PALETTE.imperialGold,
-    fontSize: respFontSize(9),
-    fontWeight: '800',
-    fontFamily: 'monospace'
+    fontFamily: FONTS.monoBold,
+    fontSize: respFontSize(12),
   },
   poiDistanceChip: {
     color: OLED_PALETTE.textMuted,
-    fontSize: respFontSize(9),
-    fontFamily: 'monospace'
+    fontFamily: FONTS.monoMedium,
+    fontSize: respFontSize(12),
   },
   poiAddress: {
     color: OLED_PALETTE.textSecondary,
-    fontSize: respFontSize(11),
-    marginTop: respHeight(2)
+    fontFamily: FONTS.displayMedium,
+    fontSize: respFontSize(13),
+    marginTop: respHeight(3)
   },
   poiNotes: {
     color: OLED_PALETTE.textMuted,
-    fontSize: respFontSize(10),
-    marginTop: respHeight(3)
+    fontFamily: FONTS.displayRegular,
+    fontSize: respFontSize(12),
+    marginTop: respHeight(4)
   },
   poiCapacity: {
     color: OLED_PALETTE.meshCyan,
-    fontSize: respFontSize(9),
-    marginTop: respHeight(2),
-    fontWeight: '700'
+    fontFamily: FONTS.monoMedium,
+    fontSize: respFontSize(12),
+    marginTop: respHeight(3),
   },
   poiRadio: {
     color: OLED_PALETTE.imperialGold,
-    fontSize: respFontSize(9),
-    marginTop: respHeight(2),
-    fontFamily: 'monospace'
+    fontFamily: FONTS.monoMedium,
+    fontSize: respFontSize(12),
+    marginTop: respHeight(3),
   }
 });

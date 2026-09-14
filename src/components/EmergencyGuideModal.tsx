@@ -13,6 +13,7 @@ import {
   respWidth,
   respHeight,
   respFontSize,
+  FONTS,
 } from '../ui/responsive';
 import { getTranslations, Language } from '../i18n/translations';
 
@@ -91,22 +92,22 @@ export const EmergencyGuideModal: React.FC<EmergencyGuideModalProps> = React.mem
         },
         headerTitle: {
           color: OLED_PALETTE.imperialGold,
-          fontSize: respFontSize(14, width),
-          fontWeight: '900',
+          fontFamily: FONTS.displayBold,
+          fontSize: respFontSize(17, width),
           letterSpacing: respWidth(1, width),
         },
         closeIconButton: {
-          width: respWidth(32, width),
-          height: respHeight(32, height),
-          borderRadius: respWidth(16, width),
+          width: respWidth(34, width),
+          height: respHeight(34, height),
+          borderRadius: respWidth(17, width),
           backgroundColor: OLED_PALETTE.surfaceBorder,
           justifyContent: 'center',
           alignItems: 'center',
         },
         closeIconText: {
           color: OLED_PALETTE.textPrimary,
+          fontFamily: FONTS.displayBold,
           fontSize: respFontSize(16, width),
-          fontWeight: '700',
         },
         stepProgressRow: {
           flexDirection: 'row',
@@ -116,8 +117,8 @@ export const EmergencyGuideModal: React.FC<EmergencyGuideModalProps> = React.mem
         },
         stepCounterText: {
           color: OLED_PALETTE.meshCyan,
-          fontSize: respFontSize(12, width),
-          fontWeight: '700',
+          fontFamily: FONTS.monoBold,
+          fontSize: respFontSize(13, width),
         },
         dotsRow: {
           flexDirection: 'row',
@@ -143,14 +144,14 @@ export const EmergencyGuideModal: React.FC<EmergencyGuideModalProps> = React.mem
           paddingVertical: respHeight(4, height),
           backgroundColor: OLED_PALETTE.nurnbergRedDark,
           borderRadius: respWidth(4, width),
-          borderWidth: respWidth(1, width),
+          borderWidth: respWidth(1.5, width),
           borderColor: OLED_PALETTE.nurnbergRed,
           marginBottom: respHeight(12, height),
         },
         badgeText: {
           color: OLED_PALETTE.franconianWhite,
-          fontSize: respFontSize(10, width),
-          fontWeight: '900',
+          fontFamily: FONTS.monoBold,
+          fontSize: respFontSize(11, width),
           letterSpacing: respWidth(0.5, width),
         },
         iconHeaderRow: {
@@ -159,20 +160,21 @@ export const EmergencyGuideModal: React.FC<EmergencyGuideModalProps> = React.mem
           marginBottom: respHeight(10, height),
         },
         largeIcon: {
-          fontSize: respFontSize(34, width),
+          fontSize: respFontSize(38, width),
           marginRight: respWidth(12, width),
         },
         stepTitle: {
           flex: 1,
           color: OLED_PALETTE.textPrimary,
-          fontSize: respFontSize(17, width),
-          fontWeight: '800',
-          lineHeight: respHeight(22, height),
+          fontFamily: FONTS.displayBold,
+          fontSize: respFontSize(19, width),
+          lineHeight: respHeight(24, height),
         },
         stepDesc: {
           color: OLED_PALETTE.franconianWhite,
-          fontSize: respFontSize(13.5, width),
-          lineHeight: respHeight(21, height),
+          fontFamily: FONTS.displayMedium,
+          fontSize: respFontSize(15, width),
+          lineHeight: respHeight(22, height),
           marginTop: respHeight(8, height),
           marginBottom: respHeight(14, height),
         },
@@ -186,9 +188,9 @@ export const EmergencyGuideModal: React.FC<EmergencyGuideModalProps> = React.mem
         },
         tipText: {
           color: OLED_PALETTE.meshCyan,
-          fontSize: respFontSize(12, width),
-          fontWeight: '600',
-          lineHeight: respHeight(17, height),
+          fontFamily: FONTS.monoRegular,
+          fontSize: respFontSize(13, width),
+          lineHeight: respHeight(18, height),
         },
         navFooterRow: {
           flexDirection: 'row',
@@ -200,21 +202,21 @@ export const EmergencyGuideModal: React.FC<EmergencyGuideModalProps> = React.mem
           borderTopColor: OLED_PALETTE.hudGoldBorder,
         },
         prevButton: {
-          paddingVertical: respHeight(10, height),
-          paddingHorizontal: respWidth(16, width),
+          paddingVertical: respHeight(11, height),
+          paddingHorizontal: respWidth(18, width),
           borderRadius: respWidth(8, width),
           backgroundColor: OLED_PALETTE.surfaceBorder,
         },
         prevButtonText: {
           color: OLED_PALETTE.textSecondary,
-          fontSize: respFontSize(13, width),
-          fontWeight: '700',
+          fontFamily: FONTS.displayBold,
+          fontSize: respFontSize(14, width),
         },
         nextButton: {
           flex: 1,
           marginLeft: respWidth(12, width),
-          paddingVertical: respHeight(11, height),
-          paddingHorizontal: respWidth(16, width),
+          paddingVertical: respHeight(12, height),
+          paddingHorizontal: respWidth(18, width),
           borderRadius: respWidth(8, width),
           backgroundColor:
             currentStep === totalSteps - 1
@@ -224,8 +226,8 @@ export const EmergencyGuideModal: React.FC<EmergencyGuideModalProps> = React.mem
         },
         nextButtonText: {
           color: OLED_PALETTE.textInverse,
-          fontSize: respFontSize(14, width),
-          fontWeight: '900',
+          fontFamily: FONTS.displayBold,
+          fontSize: respFontSize(15, width),
           letterSpacing: respWidth(0.5, width),
         },
       }),

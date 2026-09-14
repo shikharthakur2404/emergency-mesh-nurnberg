@@ -70,3 +70,6 @@ export const OLED_PALETTE = {
   textMuted: '#666666',
   textInverse: '#000000'
 } as const;
+
+export { FONTS } from './typography';
+
