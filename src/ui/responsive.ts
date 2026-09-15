@@ -73,5 +73,5 @@ export const OLED_PALETTE = {
   textInverse: '#000000'
 } as const;
 
-export { FONTS } from './typography';
+export { FONTS, TRACKING } from './typography';
 

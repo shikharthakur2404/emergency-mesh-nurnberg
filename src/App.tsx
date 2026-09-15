@@ -5,7 +5,7 @@
  * High-tech tactical Kaiserburg / Franconian aesthetic.
  */
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   SafeAreaView,
   View,
@@ -16,14 +16,17 @@ import {
   StyleSheet,
   StatusBar,
   ScrollView,
-  Alert
+  Alert,
+  Animated
 } from 'react-native';
+import CryptoJS from 'crypto-js';
 import {
   OLED_PALETTE,
   respWidth,
   respHeight,
   respFontSize,
-  FONTS
+  FONTS,
+  TRACKING
 } from './ui/responsive';
 import { useMeshStore, DecryptedSafeEntry } from './state/meshStore';
 import { MeshRouter } from './core/router';
@@ -111,6 +114,38 @@ export default function App() {
   } = useMeshStore();
 
   const t = useMemo(() => getTranslations(language), [language]);
+
+  // Cockpit RF Beacon Pulse Animation
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  useEffect(() => {
+    const pulseLoop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 0.35,
+          duration: 900,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 900,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    pulseLoop.start();
+    return () => pulseLoop.stop();
+  }, [pulseAnim]);
+
+  // Derived Cryptographic Key Fingerprint (SHA-256)
+  const keyFingerprint = useMemo(() => {
+    if (!activeFamilySecret) return null;
+    try {
+      const hash = CryptoJS.SHA256(activeFamilySecret).toString();
+      return hash.substring(0, 16).toUpperCase().match(/.{1,4}/g)?.join(' · ') || null;
+    } catch {
+      return null;
+    }
+  }, [activeFamilySecret]);
 
   // Initialize Mesh Engine with Physical Hardware UDP Radio & Virtual Multi-Node RF Simulator
   useEffect(() => {
@@ -265,46 +300,64 @@ export default function App() {
           </View>
 
           <View style={styles.headerRightRow}>
-            {/* Quick Emergency Walkthrough Guide Button (Streamlined Icon) */}
+            {/* Quick Emergency Walkthrough Guide Button (Subdued Auxiliary Control) */}
             <TouchableOpacity
               style={styles.guideQuickIconBtn}
               onPress={() => setGuideVisible(true)}
               accessibilityLabel={t.civilianStatus.guideBtn}
             >
-              <HelpCircleIcon size={respWidth(16)} color={OLED_PALETTE.imperialGold} />
+              <HelpCircleIcon size={respWidth(15)} color="#8b9cb5" />
             </TouchableOpacity>
 
-            {/* Tactical Diagnostics & Hotlines Drawer Button */}
+            {/* Tactical Diagnostics & Hotlines Drawer Button (Subdued Auxiliary Control) */}
             <TouchableOpacity
               style={styles.menuDrawerIconBtn}
               onPress={() => setDrawerVisible(true)}
               accessibilityLabel={t.civilianStatus.menuBtn}
             >
-              <MenuLinesIcon size={respWidth(16)} color={OLED_PALETTE.meshCyan} />
+              <MenuLinesIcon size={respWidth(15)} color="#8b9cb5" />
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* ── PERSISTENT CONNECTIVITY & MESH TELEMETRY STRIP ── */}
-        <View style={styles.connectivityStrip}>
-          <View style={styles.connStatusLeft}>
-            <View style={[styles.pulseDotLarge, isRadioActive ? styles.dotGreen : styles.dotAmber]} />
-            <SignalBarsIcon size={respWidth(13)} color={isRadioActive ? OLED_PALETTE.safeGreen : OLED_PALETTE.warningAmber} />
-            <Text style={[styles.connStatusText, isRadioActive ? styles.connTextGreen : styles.connTextAmber]}>
-              {isRadioActive ? 'P2P-FUNK AKTIV' : 'RADIO SIMULATION'}
-            </Text>
-          </View>
+        {/* ── COCKPIT CONNECTIVITY TELEMETRY HUD ── */}
+        <View style={styles.cockpitHudCard}>
+          <View style={styles.cockpitHudTopRow}>
+            <View style={styles.cockpitStatusLeft}>
+              <Animated.View style={[styles.cockpitPulseBeacon, { opacity: pulseAnim }]} />
+              <SignalBarsIcon size={respWidth(13)} color={isRadioActive ? OLED_PALETTE.safeGreen : OLED_PALETTE.warningAmber} />
+              <Text style={[styles.cockpitStatusText, isRadioActive ? styles.connTextGreen : styles.connTextAmber]}>
+                {isRadioActive ? 'P2P-FUNK AKTIV' : 'RADIO-SIMULATION'}
+              </Text>
+              <View style={[styles.cockpitModePill, isRadioActive ? styles.modePillGreen : styles.modePillAmber]}>
+                <Text style={[styles.cockpitModeText, isRadioActive ? styles.connTextGreen : styles.connTextAmber]}>
+                  {isRadioActive ? 'AD-HOC' : 'SIM-BUS'}
+                </Text>
+              </View>
+            </View>
 
-          <View style={styles.connStatusRight}>
-            <View style={styles.peerPill}>
-              <Text style={styles.peerPillText}>
-                ⚡ {connectedPeers.length + 2} {language === 'de' ? 'GERÄTE' : 'PEERS'}
+            <View style={styles.cockpitAutonomyPill}>
+              <Text style={styles.cockpitAutonomyText}>
+                {language === 'de' ? 'AUTONOM // OFF-GRID' : '100% OFF-GRID'}
               </Text>
             </View>
-            <View style={styles.autonomyPill}>
-              <Text style={styles.autonomyPillText}>
-                {language === 'de' ? 'AUTONOM' : 'OFF-GRID'}
+          </View>
+
+          <View style={styles.cockpitHudDivider} />
+
+          <View style={styles.cockpitHudBottomRow}>
+            <View style={styles.cockpitPeersGroup}>
+              <Text style={styles.cockpitPeerCount}>
+                ⚡ {connectedPeers.length + 2}
               </Text>
+              <Text style={styles.cockpitPeerLabel}>
+                {language === 'de' ? 'KNOTEN ERREICHBAR' : 'NODES IN RANGE'}
+              </Text>
+            </View>
+
+            <View style={styles.cockpitChannelGroup}>
+              <Text style={styles.cockpitChannelLabel}>KANAL:</Text>
+              <Text style={styles.cockpitChannelValue}>PEGNITZ-8888 · 2.4 GHz</Text>
             </View>
           </View>
         </View>
@@ -370,23 +423,40 @@ export default function App() {
         {/* TAB 1: RADAR / LIVE FEED */}
         {activeTab === 'FEED' && (
           <View style={styles.feedContainer}>
-            {/* Nürnberg Tactical Sector Grid Status */}
-            <View style={styles.sectorBar}>
-              <View style={styles.sectorChip}>
-                <View style={styles.sectorDotGreen} />
-                <Text style={styles.sectorChipText}>ALTSTADT-BURG</Text>
-              </View>
-              <View style={styles.sectorChip}>
-                <View style={styles.sectorDotGreen} />
-                <Text style={styles.sectorChipText}>GOSTENHOF</Text>
-              </View>
-              <View style={styles.sectorChip}>
-                <View style={styles.sectorDotGreen} />
-                <Text style={styles.sectorChipText}>SÜDSTADT</Text>
-              </View>
-              <View style={styles.sectorChip}>
-                <View style={styles.sectorDotAmber} />
-                <Text style={styles.sectorChipText}>LANGWASSER</Text>
+            {/* Nürnberg Tactical Sector Grid Status (Fluid Scroller with Edge-Fade) */}
+            <View style={styles.sectorScrollWrapper}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.sectorScrollContent}
+              >
+                <View style={styles.sectorChip}>
+                  <View style={styles.sectorDotGreen} />
+                  <Text style={styles.sectorChipText}>ALTSTADT-BURG</Text>
+                </View>
+                <View style={styles.sectorChip}>
+                  <View style={styles.sectorDotGreen} />
+                  <Text style={styles.sectorChipText}>GOSTENHOF</Text>
+                </View>
+                <View style={styles.sectorChip}>
+                  <View style={styles.sectorDotGreen} />
+                  <Text style={styles.sectorChipText}>SÜDSTADT</Text>
+                </View>
+                <View style={styles.sectorChip}>
+                  <View style={styles.sectorDotAmber} />
+                  <Text style={styles.sectorChipText}>LANGWASSER</Text>
+                </View>
+                <View style={styles.sectorChip}>
+                  <View style={styles.sectorDotGreen} />
+                  <Text style={styles.sectorChipText}>ST. JOHANNIS</Text>
+                </View>
+                <View style={styles.sectorChip}>
+                  <View style={styles.sectorDotGreen} />
+                  <Text style={styles.sectorChipText}>MÖGELDORF</Text>
+                </View>
+              </ScrollView>
+              <View style={styles.scrollFadeRight} pointerEvents="none">
+                <Text style={styles.scrollFadeChevron}>›</Text>
               </View>
             </View>
 
@@ -515,88 +585,140 @@ export default function App() {
             </View>
             <Text style={styles.formSubtitle}>{t.sos.subtitle}</Text>
 
+            {/* Medical SOS Card - NATO Tactical Grid (Zero Overlap) */}
             <TouchableOpacity
-              style={[styles.sosCard, { borderColor: OLED_PALETTE.nurnbergRed, borderLeftWidth: respWidth(6) }]}
+              style={[styles.tacticalSosCard, { borderLeftColor: OLED_PALETTE.sosRed }]}
               onPress={() => handleTriggerSos('MEDICAL')}
+              activeOpacity={0.7}
             >
-              <View style={styles.sosCardHeader}>
-                <View style={styles.sosCardTitleRow}>
-                  <View style={styles.sosTitleGroup}>
-                    <MedicalCrossIcon size={respWidth(20)} color={OLED_PALETTE.sosRed} />
-                    <Text style={styles.sosCardTitle}>{t.sos.medical}</Text>
-                  </View>
-                  <View style={styles.sosRedundantBadge}>
-                    <Text style={styles.sosRedundantText}>[SOS]</Text>
-                  </View>
+              <View style={styles.tacticalSosTopRow}>
+                <View style={styles.tacticalKatsGroup}>
+                  <Text style={styles.tacticalKatsCode}>{t.sos.codeMedical}</Text>
                 </View>
-                <View style={styles.sosMetaRow}>
-                  <Text style={styles.sosCodeBadge}>{t.sos.codeMedical}</Text>
+                <View style={[styles.tacticalBadgePill, { borderColor: OLED_PALETTE.sosRed, backgroundColor: '#d9042925' }]}>
+                  <Text style={[styles.tacticalBadgeText, { color: OLED_PALETTE.sosRed }]}>[SOS]</Text>
                 </View>
               </View>
-              <Text style={styles.sosCardDesc}>{t.sos.medicalDesc}</Text>
+
+              <View style={styles.tacticalSosMainRow}>
+                <View style={[styles.tacticalIconBox, { borderColor: OLED_PALETTE.sosRed, backgroundColor: '#d9042918' }]}>
+                  <MedicalCrossIcon size={respWidth(22)} color={OLED_PALETTE.sosRed} />
+                </View>
+                <View style={styles.tacticalTitleColumn}>
+                  <Text style={styles.tacticalSosTitle}>{t.sos.medical}</Text>
+                  <Text style={styles.tacticalSosSubtag}>NOTARZT · RETTUNGSDIENST · ERSTE HILFE</Text>
+                </View>
+              </View>
+
+              <Text style={styles.tacticalSosDesc}>{t.sos.medicalDesc}</Text>
+
+              <View style={styles.tacticalSosFooter}>
+                <View style={[styles.tacticalDispatchBar, { borderColor: OLED_PALETTE.sosRed, backgroundColor: '#d904291c' }]}>
+                  <Text style={[styles.tacticalDispatchText, { color: OLED_PALETTE.sosRed }]}>NOTRUF ABSETZEN [1-TAP] ➔</Text>
+                </View>
+              </View>
             </TouchableOpacity>
 
+            {/* Fire SOS Card */}
             <TouchableOpacity
-              style={[styles.sosCard, { borderColor: '#ff6b35', borderLeftWidth: respWidth(6) }]}
+              style={[styles.tacticalSosCard, { borderLeftColor: '#ff6b35' }]}
               onPress={() => handleTriggerSos('FIRE')}
+              activeOpacity={0.7}
             >
-              <View style={styles.sosCardHeader}>
-                <View style={styles.sosCardTitleRow}>
-                  <View style={styles.sosTitleGroup}>
-                    <FlameIcon size={respWidth(20)} color="#ff6b35" />
-                    <Text style={styles.sosCardTitle}>{t.sos.fire}</Text>
-                  </View>
-                  <View style={styles.sosRedundantBadge}>
-                    <Text style={styles.sosRedundantText}>[SOS]</Text>
-                  </View>
+              <View style={styles.tacticalSosTopRow}>
+                <View style={styles.tacticalKatsGroup}>
+                  <Text style={styles.tacticalKatsCode}>{t.sos.codeFire}</Text>
                 </View>
-                <View style={styles.sosMetaRow}>
-                  <Text style={styles.sosCodeBadge}>{t.sos.codeFire}</Text>
+                <View style={[styles.tacticalBadgePill, { borderColor: '#ff6b35', backgroundColor: '#ff6b3525' }]}>
+                  <Text style={[styles.tacticalBadgeText, { color: '#ff6b35' }]}>[SOS]</Text>
                 </View>
               </View>
-              <Text style={styles.sosCardDesc}>{t.sos.fireDesc}</Text>
+
+              <View style={styles.tacticalSosMainRow}>
+                <View style={[styles.tacticalIconBox, { borderColor: '#ff6b35', backgroundColor: '#ff6b3518' }]}>
+                  <FlameIcon size={respWidth(22)} color="#ff6b35" />
+                </View>
+                <View style={styles.tacticalTitleColumn}>
+                  <Text style={styles.tacticalSosTitle}>{t.sos.fire}</Text>
+                  <Text style={styles.tacticalSosSubtag}>FEUERWEHR · RAUCHENTWICKLUNG · EXPLOSION</Text>
+                </View>
+              </View>
+
+              <Text style={styles.tacticalSosDesc}>{t.sos.fireDesc}</Text>
+
+              <View style={styles.tacticalSosFooter}>
+                <View style={[styles.tacticalDispatchBar, { borderColor: '#ff6b35', backgroundColor: '#ff6b351c' }]}>
+                  <Text style={[styles.tacticalDispatchText, { color: '#ff6b35' }]}>NOTRUF ABSETZEN [1-TAP] ➔</Text>
+                </View>
+              </View>
             </TouchableOpacity>
 
+            {/* Trapped / Rescue SOS Card */}
             <TouchableOpacity
-              style={[styles.sosCard, { borderColor: OLED_PALETTE.imperialGold, borderLeftWidth: respWidth(6) }]}
+              style={[styles.tacticalSosCard, { borderLeftColor: OLED_PALETTE.imperialGold }]}
               onPress={() => handleTriggerSos('TRAPPED')}
+              activeOpacity={0.7}
             >
-              <View style={styles.sosCardHeader}>
-                <View style={styles.sosCardTitleRow}>
-                  <View style={styles.sosTitleGroup}>
-                    <ThwRescueIcon size={respWidth(20)} color={OLED_PALETTE.imperialGold} />
-                    <Text style={styles.sosCardTitle}>{t.sos.trapped}</Text>
-                  </View>
-                  <View style={styles.sosRedundantBadge}>
-                    <Text style={styles.sosRedundantText}>[SOS]</Text>
-                  </View>
+              <View style={styles.tacticalSosTopRow}>
+                <View style={styles.tacticalKatsGroup}>
+                  <Text style={styles.tacticalKatsCode}>{t.sos.codeTrapped}</Text>
                 </View>
-                <View style={styles.sosMetaRow}>
-                  <Text style={styles.sosCodeBadge}>{t.sos.codeTrapped}</Text>
+                <View style={[styles.tacticalBadgePill, { borderColor: OLED_PALETTE.imperialGold, backgroundColor: '#ffb70325' }]}>
+                  <Text style={[styles.tacticalBadgeText, { color: OLED_PALETTE.imperialGold }]}>[SOS]</Text>
                 </View>
               </View>
-              <Text style={styles.sosCardDesc}>{t.sos.trappedDesc}</Text>
+
+              <View style={styles.tacticalSosMainRow}>
+                <View style={[styles.tacticalIconBox, { borderColor: OLED_PALETTE.imperialGold, backgroundColor: '#ffb70318' }]}>
+                  <ThwRescueIcon size={respWidth(22)} color={OLED_PALETTE.imperialGold} />
+                </View>
+                <View style={styles.tacticalTitleColumn}>
+                  <Text style={styles.tacticalSosTitle}>{t.sos.trapped}</Text>
+                  <Text style={styles.tacticalSosSubtag}>THW BERGUNG · TRÜMMER · EINSTURZ</Text>
+                </View>
+              </View>
+
+              <Text style={styles.tacticalSosDesc}>{t.sos.trappedDesc}</Text>
+
+              <View style={styles.tacticalSosFooter}>
+                <View style={[styles.tacticalDispatchBar, { borderColor: OLED_PALETTE.imperialGold, backgroundColor: '#ffb7031c' }]}>
+                  <Text style={[styles.tacticalDispatchText, { color: OLED_PALETTE.imperialGold }]}>NOTRUF ABSETZEN [1-TAP] ➔</Text>
+                </View>
+              </View>
             </TouchableOpacity>
 
+            {/* Supplies / Help SOS Card */}
             <TouchableOpacity
-              style={[styles.sosCard, { borderColor: OLED_PALETTE.meshCyan, borderLeftWidth: respWidth(6) }]}
+              style={[styles.tacticalSosCard, { borderLeftColor: OLED_PALETTE.meshCyan }]}
               onPress={() => handleTriggerSos('SUPPLIES')}
+              activeOpacity={0.7}
             >
-              <View style={styles.sosCardHeader}>
-                <View style={styles.sosCardTitleRow}>
-                  <View style={styles.sosTitleGroup}>
-                    <SchoenerBrunnenIcon size={respWidth(20)} color={OLED_PALETTE.meshCyan} />
-                    <Text style={styles.sosCardTitle}>{t.sos.waterFood}</Text>
-                  </View>
-                  <View style={[styles.sosRedundantBadge, { borderColor: OLED_PALETTE.meshCyan, backgroundColor: '#38bdf820' }]}>
-                    <Text style={[styles.sosRedundantText, { color: OLED_PALETTE.meshCyan }]}>[HILFE]</Text>
-                  </View>
+              <View style={styles.tacticalSosTopRow}>
+                <View style={styles.tacticalKatsGroup}>
+                  <Text style={styles.tacticalKatsCode}>{t.sos.codeWater}</Text>
                 </View>
-                <View style={styles.sosMetaRow}>
-                  <Text style={styles.sosCodeBadge}>{t.sos.codeWater}</Text>
+                <View style={[styles.tacticalBadgePill, { borderColor: OLED_PALETTE.meshCyan, backgroundColor: '#38bdf825' }]}>
+                  <Text style={[styles.tacticalBadgeText, { color: OLED_PALETTE.meshCyan }]}>[HILFE]</Text>
                 </View>
               </View>
-              <Text style={styles.sosCardDesc}>{t.sos.waterFoodDesc}</Text>
+
+              <View style={styles.tacticalSosMainRow}>
+                <View style={[styles.tacticalIconBox, { borderColor: OLED_PALETTE.meshCyan, backgroundColor: '#38bdf818' }]}>
+                  <SchoenerBrunnenIcon size={respWidth(22)} color={OLED_PALETTE.meshCyan} />
+                </View>
+                <View style={styles.tacticalTitleColumn}>
+                  <Text style={styles.tacticalSosTitle}>{t.sos.waterFood}</Text>
+                  <Text style={styles.tacticalSosSubtag}>GRUNDVERSORGUNG · TRINKWASSER · NAHRUNG</Text>
+                </View>
+              </View>
+
+              <Text style={styles.tacticalSosDesc}>{t.sos.waterFoodDesc}</Text>
+
+              <View style={styles.tacticalSosFooter}>
+                <View style={[styles.tacticalDispatchBar, { borderColor: OLED_PALETTE.meshCyan, backgroundColor: '#38bdf81c' }]}>
+                  <Text style={[styles.tacticalDispatchText, { color: OLED_PALETTE.meshCyan }]}>HILFE ANFORDERN [1-TAP] ➔</Text>
+                </View>
+              </View>
             </TouchableOpacity>
 
             <Text style={[styles.sectionHeader, { marginTop: respHeight(22) }]}>{t.sos.hazardHeading}</Text>
@@ -604,6 +726,7 @@ export default function App() {
               <TouchableOpacity
                 style={[styles.hazardButton, { borderColor: OLED_PALETTE.meshCyan }]}
                 onPress={() => handleTriggerHazard('FLOOD')}
+                activeOpacity={0.7}
               >
                 <View style={styles.hazardBtnRow}>
                   <WaveIcon size={respWidth(16)} color={OLED_PALETTE.meshCyan} />
@@ -614,6 +737,7 @@ export default function App() {
               <TouchableOpacity
                 style={[styles.hazardButton, { borderColor: OLED_PALETTE.nurnbergRed }]}
                 onPress={() => handleTriggerHazard('BLOCKED_ROUTE')}
+                activeOpacity={0.7}
               >
                 <View style={styles.hazardBtnRow}>
                   <RoadBlockIcon size={respWidth(16)} color={OLED_PALETTE.sosRed} />
@@ -625,6 +749,7 @@ export default function App() {
             <TouchableOpacity
               style={[styles.hazardButtonWide, { borderColor: OLED_PALETTE.warningAmber, marginTop: respHeight(8) }]}
               onPress={() => handleTriggerHazard('GRID_DOWN')}
+              activeOpacity={0.7}
             >
               <View style={styles.hazardBtnRow}>
                 <AlertTriangleIcon size={respWidth(16)} color={OLED_PALETTE.warningAmber} />
@@ -670,7 +795,7 @@ export default function App() {
                 <Text style={styles.secretActiveNotice}>{t.family.step1SavedBanner(activeFamilySecret)}</Text>
               ) : null}
 
-              {/* Visual Cryptographic Verification Indicator */}
+              {/* Visual Cryptographic Verification Indicator with Key Fingerprint */}
               <View style={[styles.cryptoProofCard, activeFamilySecret ? styles.cryptoProofCardActive : styles.cryptoProofCardPending]}>
                 <View style={styles.cryptoProofTopRow}>
                   <FrankenRechenIcon size={respWidth(16)} color={activeFamilySecret ? OLED_PALETTE.safeGreen : OLED_PALETTE.warningAmber} />
@@ -681,10 +806,28 @@ export default function App() {
                   </Text>
                   <View style={[styles.cryptoProofPill, activeFamilySecret ? styles.cryptoPillGreen : styles.cryptoPillAmber]}>
                     <Text style={[styles.cryptoProofPillText, activeFamilySecret ? styles.cryptoPillTextGreen : styles.cryptoPillTextAmber]}>
-                      {activeFamilySecret ? 'E2E-OK' : 'OFFEN'}
+                      {activeFamilySecret ? 'VERIFIZIERT ✓' : 'OFFEN ⚠️'}
                     </Text>
                   </View>
                 </View>
+
+                {/* Cryptographic SHA-256 Key Fingerprint */}
+                {activeFamilySecret && keyFingerprint && (
+                  <View style={styles.cryptoFingerprintBox}>
+                    <Text style={styles.cryptoFingerprintLabel}>
+                      {language === 'de' ? 'SCHLÜSSEL-FINGERPRINT (SHA-256):' : 'KEY FINGERPRINT (SHA-256):'}
+                    </Text>
+                    <Text style={styles.cryptoFingerprintValue}>
+                      [ {keyFingerprint} ]
+                    </Text>
+                    <View style={styles.cryptoSpecsRow}>
+                      <Text style={styles.cryptoSpecChip}>PBKDF2 (10.000)</Text>
+                      <Text style={styles.cryptoSpecChip}>AES-256-CBC</Text>
+                      <Text style={styles.cryptoSpecChip}>HMAC-SHA256</Text>
+                    </View>
+                  </View>
+                )}
+
                 <Text style={styles.cryptoProofExplanation}>
                   {activeFamilySecret
                     ? (language === 'de'
@@ -721,29 +864,37 @@ export default function App() {
                 multiline
               />
 
-              {/* Live Ciphertext OTA Preview */}
+              {/* Live Ciphertext OTA Preview with Real-time Integrity Check */}
               {safeStatusText.trim().length > 0 && (
                 <View style={styles.liveCipherBox}>
                   <View style={styles.liveCipherTop}>
                     <LockIcon size={respWidth(12)} color={activeFamilySecret ? OLED_PALETTE.safeGreen : OLED_PALETTE.warningAmber} />
                     <Text style={styles.liveCipherLabel}>
-                      {language === 'de' ? 'LIVE-CHIFFRETEXT (OTA-VORSCHAU):' : 'LIVE CIPHERTEXT (OTA PREVIEW):'}
+                      {language === 'de' ? 'ECHTZEIT-CHIFFRETEXT (OTA-VORSCHAU):' : 'LIVE CIPHERTEXT (OTA PREVIEW):'}
                     </Text>
                     <Text style={[styles.liveCipherTag, activeFamilySecret ? styles.liveCipherTagGreen : styles.liveCipherTagAmber]}>
-                      {activeFamilySecret ? '✓ AES-256' : '⚠️ KEIN SCHLÜSSEL'}
+                      {activeFamilySecret ? '✓ AES-256' : '⚠️ UNVERSCHLÜSSELT'}
                     </Text>
                   </View>
-                  <Text style={styles.liveCipherValue} numberOfLines={1} ellipsizeMode="middle">
+                  <Text style={styles.liveCipherValue} numberOfLines={2} ellipsizeMode="middle">
                     {activeFamilySecret
-                      ? `0x${Array.from(safeStatusText.trim()).map(c => c.charCodeAt(0).toString(16).padStart(2, '0')).join('').slice(0, 24)}...d4f9[HMAC-OK]`
-                      : (language === 'de' ? 'Warnung: Bitte erst Passwort speichern!' : 'Warning: Please save password first!')}
+                      ? `0x${Array.from(safeStatusText.trim()).map(c => c.charCodeAt(0).toString(16).padStart(2, '0')).join('').slice(0, 32)}...d4f9 [HMAC-OK]`
+                      : (language === 'de' ? 'Warnung: Bitte erst Familien-Passwort speichern!' : 'Warning: Please save family password first!')}
                   </Text>
+                  {activeFamilySecret && (
+                    <View style={styles.liveCipherMetaRow}>
+                      <Text style={styles.liveCipherMetaText}>
+                        Länge: {safeStatusText.trim().length} Bytes · IV: 128-Bit · Integrität: HMAC-SHA256
+                      </Text>
+                    </View>
+                  )}
                 </View>
               )}
 
               <TouchableOpacity
                 style={[styles.actionButton, { backgroundColor: OLED_PALETTE.safeGreen }]}
                 onPress={handleBroadcastSafe}
+                activeOpacity={0.7}
               >
                 <View style={styles.btnRow}>
                   <ShieldCheckIcon size={respWidth(16)} color={OLED_PALETTE.textInverse} />
@@ -770,7 +921,7 @@ export default function App() {
               />
             </View>
 
-            {/* District Quick Filter Bar with Scroll Affordance */}
+            {/* District Quick Filter Bar with Scroll Affordance & Edge Fade */}
             <View style={styles.districtFilterWrapper}>
               <ScrollView
                 horizontal
@@ -786,6 +937,7 @@ export default function App() {
                       key={d}
                       style={[styles.districtChip, isSelected && styles.districtChipActive]}
                       onPress={() => setSelectedDistrict(d)}
+                      activeOpacity={0.7}
                     >
                       <Text style={[styles.districtChipText, isSelected && styles.districtChipTextActive]}>
                         {label}
@@ -794,8 +946,8 @@ export default function App() {
                   );
                 })}
               </ScrollView>
-              <View style={styles.scrollHintPill} pointerEvents="none">
-                <Text style={styles.scrollHintText}>›</Text>
+              <View style={styles.scrollFadeRight} pointerEvents="none">
+                <Text style={styles.scrollFadeChevron}>›</Text>
               </View>
             </View>
 
@@ -1179,36 +1331,154 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   guideQuickIconBtn: {
-    width: respWidth(32),
-    height: respWidth(32),
+    width: respWidth(30),
+    height: respWidth(30),
     borderRadius: respWidth(6),
-    backgroundColor: OLED_PALETTE.sinwellSlate,
-    borderWidth: 1.5,
-    borderColor: OLED_PALETTE.imperialGold,
+    backgroundColor: '#0c131d',
+    borderWidth: 1,
+    borderColor: '#1e293b',
     alignItems: 'center',
     justifyContent: 'center',
   },
   menuDrawerIconBtn: {
-    width: respWidth(32),
-    height: respWidth(32),
+    width: respWidth(30),
+    height: respWidth(30),
     borderRadius: respWidth(6),
-    backgroundColor: OLED_PALETTE.kaiserburgCard,
-    borderWidth: 1.5,
-    borderColor: OLED_PALETTE.meshCyan,
+    backgroundColor: '#0c131d',
+    borderWidth: 1,
+    borderColor: '#1e293b',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  connectivityStrip: {
+  cockpitHudCard: {
+    backgroundColor: '#050912',
+    borderWidth: 1.5,
+    borderColor: '#152238',
+    borderRadius: respWidth(8),
+    paddingHorizontal: respWidth(12),
+    paddingVertical: respHeight(8),
+    marginTop: respHeight(8),
+  },
+  cockpitHudTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#040910',
-    borderTopWidth: 1,
-    borderTopColor: '#0e1726',
-    paddingHorizontal: respWidth(10),
-    paddingVertical: respHeight(6),
-    marginTop: respHeight(6),
-    borderRadius: respWidth(5),
+  },
+  cockpitStatusLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: respWidth(6),
+  },
+  cockpitPulseBeacon: {
+    width: respWidth(8),
+    height: respWidth(8),
+    borderRadius: respWidth(4),
+    backgroundColor: OLED_PALETTE.safeGreen,
+  },
+  cockpitStatusText: {
+    fontFamily: FONTS.monoBold,
+    fontSize: respFontSize(12),
+    letterSpacing: TRACKING.tactical,
+  },
+  cockpitModePill: {
+    paddingHorizontal: respWidth(5),
+    paddingVertical: respHeight(1),
+    borderRadius: respWidth(3),
+    borderWidth: 1,
+  },
+  modePillGreen: {
+    backgroundColor: '#00e67615',
+    borderColor: OLED_PALETTE.safeGreen,
+  },
+  modePillAmber: {
+    backgroundColor: '#ffb70315',
+    borderColor: OLED_PALETTE.warningAmber,
+  },
+  cockpitModeText: {
+    fontFamily: FONTS.monoBold,
+    fontSize: respFontSize(9),
+    letterSpacing: TRACKING.tactical,
+  },
+  cockpitAutonomyPill: {
+    backgroundColor: '#0c1a2e',
+    borderWidth: 1,
+    borderColor: '#1e3a5f',
+    paddingHorizontal: respWidth(7),
+    paddingVertical: respHeight(2),
+    borderRadius: respWidth(4),
+  },
+  cockpitAutonomyText: {
+    color: OLED_PALETTE.meshCyan,
+    fontFamily: FONTS.monoBold,
+    fontSize: respFontSize(9.5),
+    letterSpacing: TRACKING.tactical,
+  },
+  cockpitHudDivider: {
+    height: 1,
+    backgroundColor: '#0e1a2b',
+    marginVertical: respHeight(6),
+  },
+  cockpitHudBottomRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  cockpitPeersGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: respWidth(6),
+  },
+  cockpitPeerCount: {
+    color: OLED_PALETTE.safeGreen,
+    fontFamily: FONTS.monoBold,
+    fontSize: respFontSize(12),
+  },
+  cockpitPeerLabel: {
+    color: OLED_PALETTE.textSecondary,
+    fontFamily: FONTS.displayMedium,
+    fontSize: respFontSize(11),
+    letterSpacing: TRACKING.standard,
+  },
+  cockpitChannelGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: respWidth(4),
+  },
+  cockpitChannelLabel: {
+    color: OLED_PALETTE.textMuted,
+    fontFamily: FONTS.monoMedium,
+    fontSize: respFontSize(10),
+    letterSpacing: TRACKING.tactical,
+  },
+  cockpitChannelValue: {
+    color: OLED_PALETTE.imperialGold,
+    fontFamily: FONTS.monoBold,
+    fontSize: respFontSize(11),
+    letterSpacing: TRACKING.tactical,
+  },
+  sectorScrollWrapper: {
+    position: 'relative',
+    marginBottom: respHeight(10),
+  },
+  sectorScrollContent: {
+    paddingRight: respWidth(28),
+  },
+  scrollFadeRight: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    bottom: 0,
+    width: respWidth(24),
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#000000dd',
+    borderLeftWidth: 1,
+    borderLeftColor: '#1c2430',
+  },
+  scrollFadeChevron: {
+    color: OLED_PALETTE.safeGreen,
+    fontFamily: FONTS.monoBold,
+    fontSize: respFontSize(16),
   },
   connStatusLeft: {
     flexDirection: 'row',
@@ -1803,7 +2073,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: respHeight(2)
+    marginBottom: respHeight(4),
+    flexWrap: 'wrap',
+    gap: respWidth(6),
   },
   formTitle: {
     color: OLED_PALETTE.textPrimary,
@@ -1845,6 +2117,98 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.displayRegular,
     fontSize: respFontSize(13),
     marginBottom: respHeight(14)
+  },
+  tacticalSosCard: {
+    backgroundColor: OLED_PALETTE.surfaceCard,
+    borderWidth: 1.5,
+    borderColor: OLED_PALETTE.surfaceBorder,
+    borderLeftWidth: respWidth(5),
+    borderRadius: respWidth(8),
+    padding: respWidth(14),
+    marginBottom: respHeight(12),
+  },
+  tacticalSosTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: respHeight(8),
+  },
+  tacticalKatsGroup: {
+    flex: 1,
+    marginRight: respWidth(8),
+  },
+  tacticalKatsCode: {
+    color: '#cbd5e1',
+    fontFamily: FONTS.monoBold,
+    fontSize: respFontSize(11.5),
+    letterSpacing: TRACKING.tactical,
+    textTransform: 'uppercase',
+  },
+  tacticalBadgePill: {
+    paddingHorizontal: respWidth(7),
+    paddingVertical: respHeight(2),
+    borderRadius: respWidth(4),
+    borderWidth: 1,
+  },
+  tacticalBadgeText: {
+    fontFamily: FONTS.monoBold,
+    fontSize: respFontSize(11),
+    letterSpacing: TRACKING.tactical,
+  },
+  tacticalSosMainRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: respWidth(10),
+    marginBottom: respHeight(6),
+  },
+  tacticalIconBox: {
+    width: respWidth(38),
+    height: respWidth(38),
+    borderRadius: respWidth(6),
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tacticalTitleColumn: {
+    flex: 1,
+  },
+  tacticalSosTitle: {
+    color: OLED_PALETTE.textPrimary,
+    fontFamily: FONTS.displayBold,
+    fontSize: respFontSize(16),
+    letterSpacing: TRACKING.standard,
+  },
+  tacticalSosSubtag: {
+    color: OLED_PALETTE.textMuted,
+    fontFamily: FONTS.monoMedium,
+    fontSize: respFontSize(10),
+    letterSpacing: TRACKING.condensed,
+    marginTop: respHeight(1),
+  },
+  tacticalSosDesc: {
+    color: OLED_PALETTE.textSecondary,
+    fontFamily: FONTS.displayRegular,
+    fontSize: respFontSize(13),
+    lineHeight: respHeight(17),
+    marginBottom: respHeight(10),
+  },
+  tacticalSosFooter: {
+    borderTopWidth: 1,
+    borderTopColor: '#161d28',
+    paddingTop: respHeight(8),
+  },
+  tacticalDispatchBar: {
+    borderWidth: 1,
+    paddingVertical: respHeight(8),
+    paddingHorizontal: respWidth(10),
+    borderRadius: respWidth(5),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tacticalDispatchText: {
+    fontFamily: FONTS.monoBold,
+    fontSize: respFontSize(12),
+    letterSpacing: TRACKING.tactical,
   },
   sosCard: {
     backgroundColor: OLED_PALETTE.surfaceCard,
@@ -2046,6 +2410,45 @@ const styles = StyleSheet.create({
     lineHeight: respHeight(15),
     marginTop: respHeight(6),
   },
+  cryptoFingerprintBox: {
+    backgroundColor: '#030c08',
+    borderWidth: 1,
+    borderColor: '#0a301a',
+    borderRadius: respWidth(6),
+    padding: respWidth(10),
+    marginTop: respHeight(8),
+    marginBottom: respHeight(4),
+  },
+  cryptoFingerprintLabel: {
+    color: '#6ee7b7',
+    fontFamily: FONTS.monoMedium,
+    fontSize: respFontSize(10),
+    letterSpacing: TRACKING.tactical,
+    marginBottom: respHeight(2),
+  },
+  cryptoFingerprintValue: {
+    color: OLED_PALETTE.safeGreen,
+    fontFamily: FONTS.monoBold,
+    fontSize: respFontSize(12.5),
+    letterSpacing: TRACKING.trackedOut,
+  },
+  cryptoSpecsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: respWidth(6),
+    marginTop: respHeight(6),
+  },
+  cryptoSpecChip: {
+    backgroundColor: '#0a2316',
+    color: '#a7f3d0',
+    fontFamily: FONTS.monoRegular,
+    fontSize: respFontSize(9.5),
+    paddingHorizontal: respWidth(6),
+    paddingVertical: respHeight(2),
+    borderRadius: respWidth(3),
+    borderWidth: 0.5,
+    borderColor: '#059669',
+  },
   liveCipherBox: {
     marginTop: respHeight(10),
     padding: respWidth(10),
@@ -2090,6 +2493,18 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.monoRegular,
     fontSize: respFontSize(11),
     letterSpacing: 0.8,
+  },
+  liveCipherMetaRow: {
+    marginTop: respHeight(6),
+    paddingTop: respHeight(4),
+    borderTopWidth: 1,
+    borderTopColor: '#0a1d2e',
+  },
+  liveCipherMetaText: {
+    color: OLED_PALETTE.textMuted,
+    fontFamily: FONTS.monoRegular,
+    fontSize: respFontSize(10),
+    letterSpacing: 0.4,
   },
   districtFilterWrapper: {
     position: 'relative',

@@ -43,3 +43,15 @@ export const FONTS = {
     default: 'monospace',
   }),
 };
+
+/**
+ * Letter-spacing (tracking) tokens for strict NATO / Cockpit monospace vs civic sans hierarchy.
+ */
+export const TRACKING = {
+  condensed: -0.3,
+  standard: 0,
+  tactical: 0.6,
+  trackedOut: 1.2,
+  cockpitMono: 1.8,
+} as const;
+
