@@ -4,18 +4,18 @@ import { getTranslations, TRANSLATIONS } from '../src/i18n/translations';
 describe('Bilingual i18n Subsystem', () => {
   it('loads German translations by default', () => {
     const tDe = getTranslations('de');
-    expect(tDe.header.title).toBe('EMERGENCY MESH NÜRNBERG');
+    expect(tDe.header.title).toBe('Emergency Mesh Nürnberg');
     expect(tDe.tabs.familie).toBe('FAMILIE');
     expect(tDe.tabs.orte).toBe('ORTE');
-    expect(tDe.header.packets).toBe('PAKETE');
+    expect(tDe.header.packets).toBe('Pakete');
   });
 
   it('loads English translations when EN is selected', () => {
     const tEn = getTranslations('en');
-    expect(tEn.header.title).toBe('EMERGENCY MESH NUREMBERG');
+    expect(tEn.header.title).toBe('Emergency Mesh Nuremberg');
     expect(tEn.tabs.familie).toBe('FAMILY');
     expect(tEn.tabs.orte).toBe('PLACES');
-    expect(tEn.header.packets).toBe('PACKETS');
+    expect(tEn.header.packets).toBe('Packets');
   });
 
   it('contains consistent translation keys across both languages', () => {

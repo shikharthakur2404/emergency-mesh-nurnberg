@@ -17,6 +17,16 @@ import {
   FONTS,
 } from '../ui/responsive';
 import { getTranslations, Language } from '../i18n/translations';
+import {
+  SettingsIcon,
+  CloseIcon,
+  PhoneIcon,
+  RadioTowerIcon,
+  TruckIcon,
+  HelpCircleIcon,
+  AlertTriangleIcon,
+  NurnbergCrestIcon,
+} from './icons/MeshIcons';
 
 interface TacticalDrawerProps {
   visible: boolean;
@@ -105,6 +115,11 @@ export const TacticalDrawer: React.FC<TacticalDrawerProps> = React.memo(({
           paddingBottom: respHeight(12, height),
           marginBottom: respHeight(16, height),
         },
+        headerTitleRow: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: respWidth(8, width),
+        },
         headerTitle: {
           color: OLED_PALETTE.imperialGold,
           fontFamily: FONTS.displayBold,
@@ -112,8 +127,11 @@ export const TacticalDrawer: React.FC<TacticalDrawerProps> = React.memo(({
           letterSpacing: respWidth(1, width),
         },
         closeBtn: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: respWidth(6, width),
           paddingVertical: respHeight(7, height),
-          paddingHorizontal: respWidth(14, width),
+          paddingHorizontal: respWidth(12, width),
           backgroundColor: OLED_PALETTE.surfaceBorder,
           borderRadius: respWidth(6, width),
         },
@@ -122,16 +140,27 @@ export const TacticalDrawer: React.FC<TacticalDrawerProps> = React.memo(({
           fontFamily: FONTS.displayBold,
           fontSize: respFontSize(13, width),
         },
+        btnRow: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: respWidth(8, width),
+        },
         scrollContent: {
           maxHeight: respHeight(620, height),
+        },
+        sectionHeadingRow: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: respWidth(7, width),
+          marginTop: respHeight(16, height),
+          marginBottom: respHeight(6, height),
         },
         sectionHeading: {
           color: OLED_PALETTE.meshCyan,
           fontFamily: FONTS.displayBold,
           fontSize: respFontSize(15, width),
           letterSpacing: respWidth(0.8, width),
-          marginTop: respHeight(16, height),
-          marginBottom: respHeight(6, height),
         },
         sectionSub: {
           color: OLED_PALETTE.textSecondary,
@@ -237,6 +266,31 @@ export const TacticalDrawer: React.FC<TacticalDrawerProps> = React.memo(({
           fontFamily: FONTS.displayBold,
           fontSize: respFontSize(14, width),
         },
+        civicDisclaimerBox: {
+          backgroundColor: 'rgba(255, 179, 0, 0.08)',
+          borderColor: OLED_PALETTE.warningAmber,
+          borderWidth: respWidth(1, width),
+          borderRadius: respWidth(8, width),
+          padding: respWidth(12, width),
+          marginBottom: respHeight(14, height),
+        },
+        civicDisclaimerHeader: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: respWidth(6, width),
+          marginBottom: respHeight(6, height),
+        },
+        civicDisclaimerTitle: {
+          color: OLED_PALETTE.warningAmber,
+          fontFamily: FONTS.displayBold,
+          fontSize: respFontSize(13, width),
+        },
+        civicDisclaimerText: {
+          color: OLED_PALETTE.textSecondary,
+          fontFamily: FONTS.displayRegular,
+          fontSize: respFontSize(12, width),
+          lineHeight: respHeight(16, height),
+        },
         langSwitchRow: {
           flexDirection: 'row',
           alignItems: 'center',
@@ -289,13 +343,17 @@ export const TacticalDrawer: React.FC<TacticalDrawerProps> = React.memo(({
 
           {/* Drawer Top Header */}
           <View style={styles.headerRow}>
-            <Text style={styles.headerTitle}>⚙️ {t.drawer.title}</Text>
+            <View style={styles.headerTitleRow}>
+              <NurnbergCrestIcon size={respWidth(18, width)} color={OLED_PALETTE.imperialGold} />
+              <Text style={styles.headerTitle}>{t.drawer.title}</Text>
+            </View>
             <TouchableOpacity
               style={styles.closeBtn}
               onPress={onClose}
               accessibilityLabel={t.drawer.closeBtn}
             >
-              <Text style={styles.closeBtnText}>✕ {t.drawer.closeBtn}</Text>
+              <CloseIcon size={respWidth(14, width)} color={OLED_PALETTE.textPrimary} />
+              <Text style={styles.closeBtnText}>{t.drawer.closeBtn}</Text>
             </TouchableOpacity>
           </View>
 
@@ -303,6 +361,15 @@ export const TacticalDrawer: React.FC<TacticalDrawerProps> = React.memo(({
             style={styles.scrollContent}
             showsVerticalScrollIndicator={false}
           >
+            {/* Civic Independence & Emergency 112 Notice */}
+            <View style={styles.civicDisclaimerBox}>
+              <View style={styles.civicDisclaimerHeader}>
+                <AlertTriangleIcon size={respWidth(16, width)} color={OLED_PALETTE.warningAmber} />
+                <Text style={styles.civicDisclaimerTitle}>{t.drawer.civicNoticeTitle}</Text>
+              </View>
+              <Text style={styles.civicDisclaimerText}>{t.drawer.civicNoticeBody}</Text>
+            </View>
+
             {/* Guide Quick Access */}
             <TouchableOpacity
               style={styles.actionButtonGold}
@@ -311,9 +378,12 @@ export const TacticalDrawer: React.FC<TacticalDrawerProps> = React.memo(({
                 onOpenGuide();
               }}
             >
-              <Text style={styles.actionButtonGoldText}>
-                {t.drawer.openGuideBtn}
-              </Text>
+              <View style={styles.btnRow}>
+                <HelpCircleIcon size={respWidth(18, width)} color={OLED_PALETTE.textInverse} />
+                <Text style={styles.actionButtonGoldText}>
+                  {t.drawer.openGuideBtn}
+                </Text>
+              </View>
             </TouchableOpacity>
 
             {/* Language Selection */}
@@ -356,9 +426,10 @@ export const TacticalDrawer: React.FC<TacticalDrawerProps> = React.memo(({
             </View>
 
             {/* Nürnberg Hotlines Section */}
-            <Text style={styles.sectionHeading}>
-              📞 {t.drawer.hotlinesHeader}
-            </Text>
+            <View style={styles.sectionHeadingRow}>
+              <PhoneIcon size={respWidth(16, width)} color={OLED_PALETTE.meshCyan} />
+              <Text style={styles.sectionHeading}>{t.drawer.hotlinesHeader}</Text>
+            </View>
             <Text style={styles.sectionSub}>{t.drawer.hotlinesNote}</Text>
 
             {NURNBERG_HOTLINES.map((h, i) => (
@@ -371,9 +442,10 @@ export const TacticalDrawer: React.FC<TacticalDrawerProps> = React.memo(({
             ))}
 
             {/* Hardware Telemetry Section */}
-            <Text style={styles.sectionHeading}>
-              📡 {t.drawer.telemetryHeader}
-            </Text>
+            <View style={styles.sectionHeadingRow}>
+              <RadioTowerIcon size={respWidth(16, width)} color={OLED_PALETTE.meshCyan} />
+              <Text style={styles.sectionHeading}>{t.drawer.telemetryHeader}</Text>
+            </View>
             <View style={styles.telemetryBox}>
               <View style={styles.telemetryRow}>
                 <Text style={styles.telemetryLabel}>{t.drawer.nodeId}</Text>
@@ -408,9 +480,10 @@ export const TacticalDrawer: React.FC<TacticalDrawerProps> = React.memo(({
             </View>
 
             {/* Delay-Tolerant Carrier Mesh (DTN) Section */}
-            <Text style={styles.sectionHeading}>
-              🚚 {t.drawer.dtnHeader}
-            </Text>
+            <View style={styles.sectionHeadingRow}>
+              <TruckIcon size={respWidth(16, width)} color={OLED_PALETTE.meshCyan} />
+              <Text style={styles.sectionHeading}>{t.drawer.dtnHeader}</Text>
+            </View>
             <Text style={styles.sectionSub}>{t.drawer.dtnSubhead}</Text>
             <View style={styles.telemetryBox}>
               <View style={styles.telemetryRow}>
@@ -435,7 +508,10 @@ export const TacticalDrawer: React.FC<TacticalDrawerProps> = React.memo(({
             </View>
 
             {/* Maintenance / Cache Tools */}
-            <Text style={styles.sectionHeading}>🛠️ {t.drawer.actionsHeader}</Text>
+            <View style={styles.sectionHeadingRow}>
+              <SettingsIcon size={respWidth(16, width)} color={OLED_PALETTE.meshCyan} />
+              <Text style={styles.sectionHeading}>{t.drawer.actionsHeader}</Text>
+            </View>
             <TouchableOpacity
               style={styles.actionButtonMuted}
               onPress={handleClearCache}

@@ -3,7 +3,7 @@
  * Designed for zero-cloud, byte-efficient, P2P disaster coordination.
  */
 
-export type MeshPacketType = 'SAFE' | 'SOS' | 'HAZARD' | 'PING' | 'SYNC_INV' | 'SYNC_DATA';
+export type MeshPacketType = 'SAFE' | 'SOS' | 'HAZARD' | 'PING' | 'SYNC_INV' | 'SYNC_DATA' | 'ATTEST';
 
 export type PacketPriority = 'CRITICAL' | 'HIGH' | 'NORMAL';
 
@@ -14,6 +14,7 @@ export interface BasePacket {
   hop_count: number;   // Total hops traversed so far
   priority?: PacketPriority; // Priority for DTN retention & queue ordering
   dtn_buffered?: boolean;    // Flagged if carried/synced via store-and-forward
+  sender_id?: string;        // Node ID of the originating peer
 }
 
 export interface SafePacket extends BasePacket {
@@ -34,6 +35,7 @@ export interface SosPacket extends BasePacket {
   notes?: string;
   signature?: string;         // Cryptographic integrity signature (anti-spoofing)
   auth_token?: string;        // Node verification token
+  nonce?: number;             // Proof-of-Work anti-spam solution
 }
 
 export type HazardType = 'FLOOD' | 'COLLAPSE' | 'GRID_DOWN' | 'BLOCKED_ROUTE' | 'FIRE';
@@ -46,6 +48,15 @@ export interface HazardPacket extends BasePacket {
   lon: number;
   description: string;
   signature?: string;         // Cryptographic integrity signature (anti-spoofing)
+  auth_token?: string;        // Node verification token
+  nonce?: number;             // Proof-of-Work anti-spam solution
+}
+
+export interface AttestPacket extends BasePacket {
+  type: 'ATTEST';
+  sender_id: string;          // Witness node identifier
+  target_msg_id: string;      // ID of the SOS or Hazard beacon being verified
+  signature?: string;         // Cryptographic integrity signature
   auth_token?: string;        // Node verification token
 }
 
@@ -73,7 +84,14 @@ export interface SyncDataPacket extends BasePacket {
   packets: MeshPacket[];
 }
 
-export type MeshPacket = SafePacket | SosPacket | HazardPacket | PingPacket | SyncInvPacket | SyncDataPacket;
+export type MeshPacket =
+  | SafePacket
+  | SosPacket
+  | HazardPacket
+  | PingPacket
+  | SyncInvPacket
+  | SyncDataPacket
+  | AttestPacket;
 
 export interface PeerNode {
   id: string;
@@ -105,4 +123,7 @@ export interface RouterConfig {
   familySecrets: string[]; // Hashes of family secrets configured on this node
   dtnCapacity?: number;
   dtnSyncIntervalMs?: number;
+  rateLimitBurst?: number;
+  rateLimitRefillIntervalSec?: number;
+  disableRateLimiting?: boolean;
 }

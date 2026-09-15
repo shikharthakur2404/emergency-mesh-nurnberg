@@ -137,6 +137,37 @@ export const NURNBERG_EMERGENCY_POIS: NurnbergEmergencyPoi[] = [
     lon: 11.0671,
     notes: 'Wärmestube & Notunterkunft für Altstadt / Johannis',
     capacity: '400 Personen'
+  },
+  {
+    id: 'poi-water-woehrd',
+    name: 'Nottrinkwasserbrunnen Wöhrder Wiese',
+    category: 'WATER',
+    address: 'Wöhrder Wiese 1, 90489 Nürnberg',
+    district: 'Wöhrd',
+    lat: 49.4520,
+    lon: 11.0890,
+    notes: 'Manuell pumpbarer Trinkwasserbrunnen im Naherholungsgebiet Wöhrd.'
+  },
+  {
+    id: 'poi-shelter-messe',
+    name: 'Katastrophenschutz Notunterkunft Messe Halle 3',
+    category: 'SHELTER',
+    address: 'Messezentrum 1, 90471 Nürnberg',
+    district: 'Langwasser',
+    lat: 49.4168,
+    lon: 11.1152,
+    notes: 'Großkapazitäts-Notunterkunft mit Notstrom- und Feldbettenversorgung.',
+    capacity: '2000+ Personen'
+  },
+  {
+    id: 'poi-fire-wache4',
+    name: 'Berufsfeuerwehr Feuerwache 4 (Südstadt)',
+    category: 'THW_CIVIL_DEFENSE',
+    address: 'Hafenstraße 45, 90451 Nürnberg',
+    district: 'Südstadt',
+    lat: 49.4120,
+    lon: 11.0610,
+    notes: 'Stützpunkt Wasserrettung, Tauchergruppe und Dekontamination.'
   }
 ];
 

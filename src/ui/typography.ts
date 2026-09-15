@@ -1,27 +1,27 @@
 import { Platform } from 'react-native';
 
 /**
- * Emergency Mesh Nürnberg — Tactical Typography System
- * Features:
- * - Rajdhani (Bold, SemiBold, Medium, Regular): High-impact, geometric, tactical sci-fi HUD display font
- * - JetBrains Mono (Bold, SemiBold, Medium, Regular): Precision telemetry, coordinates, packet digests, signatures
+ * Emergency Mesh Nürnberg — Civic Authority Typography System
+ * Dual-Engine Hierarchy:
+ * - Fira Sans Condensed (Bold, SemiBold, Medium, Regular): Official German grotesque DIN-lineage civic typeface
+ * - JetBrains Mono (Bold, SemiBold, Medium, Regular): High-contrast technical telemetry, packet hashes, coordinates
  */
 export const FONTS = {
-  // Display & Headers (Rajdhani)
+  // Display & Civic Authority (DIN-Lineage: Fira Sans Condensed)
   displayBold: Platform.select({
-    android: 'Rajdhani-Bold',
+    android: 'FiraSansCondensed-Bold',
     default: 'System',
   }),
   displaySemiBold: Platform.select({
-    android: 'Rajdhani-SemiBold',
+    android: 'FiraSansCondensed-SemiBold',
     default: 'System',
   }),
   displayMedium: Platform.select({
-    android: 'Rajdhani-Medium',
+    android: 'FiraSansCondensed-Medium',
     default: 'System',
   }),
   displayRegular: Platform.select({
-    android: 'Rajdhani-Regular',
+    android: 'FiraSansCondensed-Regular',
     default: 'System',
   }),
 

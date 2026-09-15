@@ -16,6 +16,18 @@ import {
   FONTS,
 } from '../ui/responsive';
 import { getTranslations, Language } from '../i18n/translations';
+import {
+  CloseIcon,
+  RadioTowerIcon,
+  CrestCastleIcon,
+  NurnbergCrestIcon,
+  FrankenRechenIcon,
+  SchoenerBrunnenIcon,
+  AlertTriangleIcon,
+  ShieldCheckIcon,
+  MapPinIcon,
+  LightbulbIcon,
+} from './icons/MeshIcons';
 
 interface EmergencyGuideModalProps {
   visible: boolean;
@@ -179,6 +191,9 @@ export const EmergencyGuideModal: React.FC<EmergencyGuideModalProps> = React.mem
           marginBottom: respHeight(14, height),
         },
         tipBox: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: respWidth(8, width),
           backgroundColor: OLED_PALETTE.sinwellSlate,
           borderLeftWidth: respWidth(4, width),
           borderLeftColor: OLED_PALETTE.meshCyan,
@@ -186,11 +201,41 @@ export const EmergencyGuideModal: React.FC<EmergencyGuideModalProps> = React.mem
           borderRadius: respWidth(6, width),
           marginVertical: respHeight(8, height),
         },
+        civicNoticeBox: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: respWidth(8, width),
+          backgroundColor: 'rgba(255, 179, 0, 0.12)',
+          borderLeftWidth: respWidth(4, width),
+          borderLeftColor: OLED_PALETTE.warningAmber,
+          padding: respWidth(12, width),
+          borderRadius: respWidth(6, width),
+          marginBottom: respHeight(10, height),
+        },
+        civicNoticeText: {
+          flex: 1,
+          color: OLED_PALETTE.warningAmber,
+          fontFamily: FONTS.monoBold,
+          fontSize: respFontSize(12, width),
+          lineHeight: respHeight(16, height),
+        },
         tipText: {
+          flex: 1,
           color: OLED_PALETTE.meshCyan,
           fontFamily: FONTS.monoRegular,
           fontSize: respFontSize(13, width),
           lineHeight: respHeight(18, height),
+        },
+        iconContainer: {
+          width: respWidth(46, width),
+          height: respWidth(46, width),
+          borderRadius: respWidth(8, width),
+          backgroundColor: '#0a101d',
+          borderWidth: 1,
+          borderColor: OLED_PALETTE.surfaceBorder,
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginRight: respWidth(12, width),
         },
         navFooterRow: {
           flexDirection: 'row',
@@ -234,6 +279,23 @@ export const EmergencyGuideModal: React.FC<EmergencyGuideModalProps> = React.mem
     [width, height, currentStep, totalSteps]
   );
 
+  const renderStepIcon = useCallback((step: number) => {
+    switch (step) {
+      case 0:
+        return <RadioTowerIcon size={respWidth(28, width)} color={OLED_PALETTE.meshCyan} />;
+      case 1:
+        return <NurnbergCrestIcon size={respWidth(28, width)} color={OLED_PALETTE.imperialGold} />;
+      case 2:
+        return <AlertTriangleIcon size={respWidth(28, width)} color={OLED_PALETTE.sosRed} />;
+      case 3:
+        return <FrankenRechenIcon size={respWidth(28, width)} color={OLED_PALETTE.imperialGold} />;
+      case 4:
+        return <SchoenerBrunnenIcon size={respWidth(28, width)} color={OLED_PALETTE.safeGreen} />;
+      default:
+        return <RadioTowerIcon size={respWidth(28, width)} color={OLED_PALETTE.meshCyan} />;
+    }
+  }, [width]);
+
   return (
     <Modal
       visible={visible}
@@ -251,7 +313,7 @@ export const EmergencyGuideModal: React.FC<EmergencyGuideModalProps> = React.mem
               onPress={handleClose}
               accessibilityLabel={t.guide.closeBtn}
             >
-              <Text style={styles.closeIconText}>✕</Text>
+              <CloseIcon size={respWidth(16, width)} color={OLED_PALETTE.textPrimary} />
             </TouchableOpacity>
           </View>
 
@@ -280,14 +342,28 @@ export const EmergencyGuideModal: React.FC<EmergencyGuideModalProps> = React.mem
             </View>
 
             <View style={styles.iconHeaderRow}>
-              <Text style={styles.largeIcon}>{activeStep.icon}</Text>
+              <View style={styles.iconContainer}>
+                {renderStepIcon(currentStep)}
+              </View>
               <Text style={styles.stepTitle}>{activeStep.title}</Text>
             </View>
 
             <Text style={styles.stepDesc}>{activeStep.desc}</Text>
 
+            {currentStep === 0 && (
+              <View style={styles.civicNoticeBox}>
+                <AlertTriangleIcon size={respWidth(16, width)} color={OLED_PALETTE.warningAmber} />
+                <Text style={styles.civicNoticeText}>
+                  {language === 'de'
+                    ? '⚠️ ZIVILES NOTFALLNETZ: Keine behördliche App der Stadt Nürnberg. Bei funktionierendem Mobilfunk oder Festnetz immer zuerst 112 wählen!'
+                    : '⚠️ CIVILIAN EMERGENCY MESH: Not an official app of the City of Nuremberg. If cellular or landline service is available, always dial 112 first!'}
+                </Text>
+              </View>
+            )}
+
             <View style={styles.tipBox}>
-              <Text style={styles.tipText}>💡 {activeStep.tip}</Text>
+              <LightbulbIcon size={respWidth(16, width)} color={OLED_PALETTE.imperialGold} />
+              <Text style={styles.tipText}>{activeStep.tip}</Text>
             </View>
           </ScrollView>
 

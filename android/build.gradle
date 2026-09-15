@@ -6,6 +6,7 @@ buildscript {
         targetSdkVersion = 34
         ndkVersion = "27.1.12297006"
         kotlinVersion = "2.0.21"
+        REACT_NATIVE_NODE_MODULES_DIR = new File(rootProject.projectDir, "../node_modules/react-native")
     }
     repositories {
         google()
@@ -19,3 +20,12 @@ buildscript {
 }
 
 apply plugin: "com.facebook.react.rootproject"
+
+allprojects {
+    tasks.withType(Exec).configureEach {
+        def currentPath = environment['PATH'] ?: System.getenv('PATH') ?: ''
+        if (!currentPath.contains('/opt/homebrew/bin')) {
+            environment 'PATH', "/opt/homebrew/bin:/usr/local/bin:${currentPath}"
+        }
+    }
+}

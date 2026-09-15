@@ -36,6 +36,8 @@ export interface MeshState {
   activeFamilySecret: string;
   offlinePois: NurnbergEmergencyPoi[];
   language: Language;
+  attestations: Record<string, number>;
+  mutedSenders: string[];
   stats: {
     totalReceived: number;
     relayedCount: number;
@@ -49,6 +51,8 @@ export interface MeshState {
   sendSafeStatus: (text: string, alias?: string) => Promise<SafePacket | null>;
   sendSosBeacon: (category: SosCategory, lat: number, lon: number, notes?: string) => Promise<SosPacket | null>;
   sendHazardAlert: (type: HazardType, lat: number, lon: number, desc: string) => Promise<HazardPacket | null>;
+  attestBeacon: (targetMsgId: string) => Promise<void>;
+  toggleMuteSender: (senderId: string) => void;
   updatePeers: (peers: PeerNode[]) => void;
   clearHistory: () => void;
 }
@@ -62,6 +66,8 @@ export const useMeshStore = create<MeshState>((set, get) => ({
   activeFamilySecret: '',
   offlinePois: NURNBERG_EMERGENCY_POIS,
   language: 'de',
+  attestations: {},
+  mutedSenders: [],
   stats: {
     totalReceived: 0,
     relayedCount: 0,
@@ -77,12 +83,20 @@ export const useMeshStore = create<MeshState>((set, get) => ({
 
     router.subscribe((packet, meta) => {
       set((state) => {
-        const nextPackets = [packet, ...state.packets.slice(0, 99)]; // Keep latest 100
+        const nextPackets =
+          packet.type === 'ATTEST' ? state.packets : [packet, ...state.packets.slice(0, 99)];
+
         const nextStats = {
           totalReceived: router.totalReceivedCount,
           relayedCount: router.relayedPacketsCount,
-          droppedDuplicates: router.droppedLoopPacketsCount
+          droppedDuplicates: router.droppedLoopPacketsCount,
         };
+
+        const targetId = packet.type === 'ATTEST' ? packet.target_msg_id : packet.msg_id;
+        const nextAttestations =
+          meta.witnessCount !== undefined
+            ? { ...state.attestations, [targetId]: meta.witnessCount }
+            : state.attestations;
 
         if (packet.type === 'SAFE' && meta.decryptedText) {
           const entry: DecryptedSafeEntry = {
@@ -90,18 +104,20 @@ export const useMeshStore = create<MeshState>((set, get) => ({
             senderAlias: packet.sender_alias || 'Family Member',
             plaintext: meta.decryptedText,
             timestamp: packet.timestamp,
-            hopCount: packet.hop_count
+            hopCount: packet.hop_count,
           };
           return {
             packets: nextPackets,
             decryptedFamilyMessages: [entry, ...state.decryptedFamilyMessages],
-            stats: nextStats
+            attestations: nextAttestations,
+            stats: nextStats,
           };
         }
 
         return {
           packets: nextPackets,
-          stats: nextStats
+          attestations: nextAttestations,
+          stats: nextStats,
         };
       });
     });
@@ -159,6 +175,31 @@ export const useMeshStore = create<MeshState>((set, get) => ({
     return packet;
   },
 
+  attestBeacon: async (targetMsgId: string) => {
+    const { router } = get();
+    if (!router) return;
+
+    await router.broadcastAttestation(targetMsgId);
+    set((state) => ({
+      attestations: {
+        ...state.attestations,
+        [targetMsgId]: router.getWitnessCount(targetMsgId),
+      },
+    }));
+  },
+
+  toggleMuteSender: (senderId: string) => {
+    const { router } = get();
+    if (!router) return;
+
+    if (router.isNodeMuted(senderId)) {
+      router.unmuteNode(senderId);
+    } else {
+      router.muteNode(senderId);
+    }
+    set({ mutedSenders: router.getMutedNodes() });
+  },
+
   updatePeers: (peers: PeerNode[]) => {
     set({ connectedPeers: peers });
   },
@@ -167,7 +208,8 @@ export const useMeshStore = create<MeshState>((set, get) => ({
     set({
       packets: [],
       decryptedFamilyMessages: [],
-      stats: { totalReceived: 0, relayedCount: 0, droppedDuplicates: 0 }
+      attestations: {},
+      stats: { totalReceived: 0, relayedCount: 0, droppedDuplicates: 0 },
     });
-  }
+  },
 }));

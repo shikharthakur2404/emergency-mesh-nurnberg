@@ -26,12 +26,14 @@ export function respHeight(px: number, windowHeight = 844): number {
 
 /**
  * Calculates responsive font size scaled proportionally with accessibility limits.
+ * Clamped between 80% and 140% of base size to preserve viewport layout while
+ * respecting high-readability accessibility scaling.
  */
-export function respFontSize(size: number, windowWidth = 390): number {
-  const scale = windowWidth / BASE_WIDTH;
+export function respFontSize(size: number, windowWidth = 390, fontScale = 1.0): number {
+  const scale = (windowWidth / BASE_WIDTH) * fontScale;
   const newSize = size * scale;
-  // Bounded between 80% and 130% of base size to prevent clipping
-  return Math.round(Math.min(Math.max(newSize, size * 0.8), size * 1.3));
+  // Bounded between 80% and 140% of base size to prevent clipping
+  return Math.round(Math.min(Math.max(newSize, size * 0.8), size * 1.4));
 }
 
 /**
@@ -46,23 +48,23 @@ export const OLED_PALETTE = {
   surfaceBorderActive: '#333333',
 
   // Signal Accents
-  sosRed: '#ff2a2a',
-  sosRedGlow: 'rgba(255, 42, 42, 0.25)',
+  sosRed: '#d90429',             // Unified with authentic Franconian Red
+  sosRedGlow: 'rgba(217, 4, 41, 0.25)',
   safeGreen: '#00e676',
   safeGreenGlow: 'rgba(0, 230, 118, 0.2)',
   warningAmber: '#ffb300',
-  meshCyan: '#00e5ff',
+  meshCyan: '#38bdf8',           // Desaturated technical telemetry cyan (non-neon)
 
-  // Nürnberg & Franconian Tactical Accents
+  // Nürnberg & Franconian Civic Authority Heraldry
   nurnbergRed: '#d90429',        // Official Franconian / Nürnberg Red
   nurnbergRedDark: '#4a0008',
   imperialGold: '#ffb703',       // Kaiserburg Imperial Gold
   imperialGoldMuted: '#664900',
   sinwellSlate: '#0f172a',       // Sinwellturm Fortress Slate
-  kaiserburgCard: '#070b12',     // Deep tactical OLED card surface
-  hudBorderCyan: '#0d3240',      // Cyber HUD subtle border
+  kaiserburgCard: '#070b12',     // Deep OLED card surface
+  hudBorderCyan: '#162a36',      // Subtle telemetry border
   hudGoldBorder: '#423106',      // Imperial gold border
-  franconianWhite: '#f8f9fa',    // Crisp silver-white
+  franconianWhite: '#f8f9fa',    // Crisp civic white
 
   // Text Hierarchy
   textPrimary: '#ffffff',

@@ -8,6 +8,8 @@
     "android": "react-native run-android",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:android": "cd android && ./gradlew testDebugUnitTest",
+    "test:all": "vitest run && cd android && ./gradlew testDebugUnitTest",
     "typecheck": "tsc --noEmit",
     "build": "tsc"
   },
@@ -26,6 +28,7 @@
     "crypto-js": "^4.2.0",
     "react": "^18.3.1",
     "react-native": "^0.77.1",
+    "react-native-svg": "^15.15.5",
     "zustand": "^5.0.3"
   },
   "devDependencies": {
