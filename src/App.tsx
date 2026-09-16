@@ -17,7 +17,8 @@ import {
   StatusBar,
   ScrollView,
   Alert,
-  Animated
+  Animated,
+  useWindowDimensions
 } from 'react-native';
 import CryptoJS from 'crypto-js';
 import {
@@ -89,6 +90,8 @@ export default function App() {
   const [isRadioActive, setIsRadioActive] = useState(false);
   const [guideVisible, setGuideVisible] = useState(false);
   const [drawerVisible, setDrawerVisible] = useState(false);
+  const { width: w, height: h } = useWindowDimensions();
+  const styles = useAppStyles();
 
   const {
     nodeId,
@@ -279,7 +282,7 @@ export default function App() {
           <View style={styles.brandRow}>
             {/* Nürnberg Imperial Crest Emblem */}
             <View style={styles.crestBadge}>
-              <NurnbergCrestIcon size={respWidth(22)} color={OLED_PALETTE.imperialGold} />
+              <NurnbergCrestIcon size={respWidth(22, w)} color={OLED_PALETTE.imperialGold} />
             </View>
             <View style={styles.titleColumn}>
               <View style={styles.titleRow}>
@@ -306,7 +309,7 @@ export default function App() {
               onPress={() => setGuideVisible(true)}
               accessibilityLabel={t.civilianStatus.guideBtn}
             >
-              <HelpCircleIcon size={respWidth(15)} color="#8b9cb5" />
+              <HelpCircleIcon size={respWidth(15, w)} color="#8b9cb5" />
             </TouchableOpacity>
 
             {/* Tactical Diagnostics & Hotlines Drawer Button (Subdued Auxiliary Control) */}
@@ -315,7 +318,7 @@ export default function App() {
               onPress={() => setDrawerVisible(true)}
               accessibilityLabel={t.civilianStatus.menuBtn}
             >
-              <MenuLinesIcon size={respWidth(15)} color="#8b9cb5" />
+              <MenuLinesIcon size={respWidth(15, w)} color="#8b9cb5" />
             </TouchableOpacity>
           </View>
         </View>
@@ -325,7 +328,7 @@ export default function App() {
           <View style={styles.cockpitHudTopRow}>
             <View style={styles.cockpitStatusLeft}>
               <Animated.View style={[styles.cockpitPulseBeacon, { opacity: pulseAnim }]} />
-              <SignalBarsIcon size={respWidth(13)} color={isRadioActive ? OLED_PALETTE.safeGreen : OLED_PALETTE.warningAmber} />
+              <SignalBarsIcon size={respWidth(13, w)} color={isRadioActive ? OLED_PALETTE.safeGreen : OLED_PALETTE.warningAmber} />
               <Text style={[styles.cockpitStatusText, isRadioActive ? styles.connTextGreen : styles.connTextAmber]}>
                 {isRadioActive ? 'P2P-FUNK AKTIV' : 'RADIO-SIMULATION'}
               </Text>
@@ -370,7 +373,7 @@ export default function App() {
           onPress={() => setActiveTab('FEED')}
         >
           <RadioTowerIcon
-            size={respWidth(15)}
+            size={respWidth(15, w)}
             color={activeTab === 'FEED' ? OLED_PALETTE.imperialGold : OLED_PALETTE.textMuted}
           />
           <Text style={[styles.tabText, activeTab === 'FEED' && styles.tabTextActiveRadar]}>
@@ -383,7 +386,7 @@ export default function App() {
           onPress={() => setActiveTab('SOS')}
         >
           <AlertTriangleIcon
-            size={respWidth(15)}
+            size={respWidth(15, w)}
             color={activeTab === 'SOS' ? OLED_PALETTE.sosRed : OLED_PALETTE.textMuted}
           />
           <Text style={[styles.tabText, activeTab === 'SOS' && styles.tabTextActiveSos]}>
@@ -396,7 +399,7 @@ export default function App() {
           onPress={() => setActiveTab('FAMILY')}
         >
           <ShieldCheckIcon
-            size={respWidth(15)}
+            size={respWidth(15, w)}
             color={activeTab === 'FAMILY' ? OLED_PALETTE.imperialGold : OLED_PALETTE.textMuted}
           />
           <Text style={[styles.tabText, activeTab === 'FAMILY' && styles.tabTextActiveFamily]}>
@@ -409,7 +412,7 @@ export default function App() {
           onPress={() => setActiveTab('POIS')}
         >
           <MapPinIcon
-            size={respWidth(15)}
+            size={respWidth(15, w)}
             color={activeTab === 'POIS' ? OLED_PALETTE.safeGreen : OLED_PALETTE.textMuted}
           />
           <Text style={[styles.tabText, activeTab === 'POIS' && styles.tabTextActivePlaces]}>
@@ -465,7 +468,7 @@ export default function App() {
               <View style={styles.familyBanner}>
                 <View style={styles.familyBannerHeader}>
                   <View style={styles.familyBannerHeaderLeft}>
-                    <ShieldCheckIcon size={respWidth(16)} color={OLED_PALETTE.imperialGold} />
+                    <ShieldCheckIcon size={respWidth(16, w)} color={OLED_PALETTE.imperialGold} />
                     <Text style={styles.familyBannerTitle}>{t.feed.decryptedTitle}</Text>
                   </View>
                   <View style={styles.kaiserburgTag}>
@@ -475,7 +478,7 @@ export default function App() {
                 {decryptedFamilyMessages.map((msg, idx) => (
                   <View key={msg.msgId || idx} style={styles.familyBannerItem}>
                     <View style={styles.familySenderRow}>
-                      <ShieldCheckIcon size={respWidth(13)} color={OLED_PALETTE.imperialGold} />
+                      <ShieldCheckIcon size={respWidth(13, w)} color={OLED_PALETTE.imperialGold} />
                       <Text style={styles.familyBannerSender}>
                         {msg.senderAlias} ({msg.hopCount === 0 ? t.feed.direct : `${msg.hopCount} ${t.feed.hopsSuffix}`}):
                       </Text>
@@ -489,7 +492,7 @@ export default function App() {
             <View style={styles.streamHeaderRow}>
               <Text style={styles.sectionHeader}>{t.feed.title}</Text>
               <View style={styles.signalBadge}>
-                <CheckCircleIcon size={respWidth(12)} color={OLED_PALETTE.safeGreen} />
+                <CheckCircleIcon size={respWidth(12, w)} color={OLED_PALETTE.safeGreen} />
                 <Text style={styles.streamSignalBadge}>{t.feed.signalGood}</Text>
               </View>
             </View>
@@ -497,7 +500,7 @@ export default function App() {
             {packets.length === 0 ? (
               <View style={styles.emptyFeedContainer}>
                 <View style={styles.emptyState}>
-                  <CrestCastleIcon size={respWidth(36)} color={OLED_PALETTE.imperialGold} />
+                  <CrestCastleIcon size={respWidth(36, w)} color={OLED_PALETTE.imperialGold} />
                   <Text style={styles.emptyStateText}>{t.feed.emptyTitle}</Text>
                   <Text style={styles.emptyStateSubtext}>{t.feed.emptySubtitle}</Text>
                 </View>
@@ -522,7 +525,7 @@ export default function App() {
                       style={styles.quickActionBtnSos}
                       onPress={() => setActiveTab('SOS')}
                     >
-                      <AlertTriangleIcon size={respWidth(18)} color={OLED_PALETTE.sosRed} />
+                      <AlertTriangleIcon size={respWidth(18, w)} color={OLED_PALETTE.sosRed} />
                       <Text style={styles.quickActionBtnText}>{t.tabs.sos}</Text>
                       <Text style={styles.quickActionBtnSub}>Notruf auslösen</Text>
                     </TouchableOpacity>
@@ -531,7 +534,7 @@ export default function App() {
                       style={styles.quickActionBtnFam}
                       onPress={() => setActiveTab('FAMILY')}
                     >
-                      <ShieldCheckIcon size={respWidth(18)} color={OLED_PALETTE.imperialGold} />
+                      <ShieldCheckIcon size={respWidth(18, w)} color={OLED_PALETTE.imperialGold} />
                       <Text style={styles.quickActionBtnText}>{t.tabs.familie}</Text>
                       <Text style={styles.quickActionBtnSub}>Status sichern</Text>
                     </TouchableOpacity>
@@ -540,7 +543,7 @@ export default function App() {
                       style={styles.quickActionBtnPoi}
                       onPress={() => setActiveTab('POIS')}
                     >
-                      <MapPinIcon size={respWidth(18)} color={OLED_PALETTE.safeGreen} />
+                      <MapPinIcon size={respWidth(18, w)} color={OLED_PALETTE.safeGreen} />
                       <Text style={styles.quickActionBtnText}>{t.tabs.orte}</Text>
                       <Text style={styles.quickActionBtnSub}>Brunnen & Hilfe</Text>
                     </TouchableOpacity>
@@ -572,14 +575,14 @@ export default function App() {
           <ScrollView style={styles.formContainer} keyboardShouldPersistTaps="handled">
             {/* Statutory 112 Priority Directive Banner */}
             <View style={styles.sosEmergency112Banner}>
-              <AlertTriangleIcon size={respWidth(18)} color={OLED_PALETTE.warningAmber} />
+              <AlertTriangleIcon size={respWidth(18, w)} color={OLED_PALETTE.warningAmber} />
               <Text style={styles.sosEmergency112Text}>{t.sos.emergency112Banner}</Text>
             </View>
 
             <View style={styles.sosTitleRow}>
               <Text style={styles.formTitle}>{t.sos.title}</Text>
               <View style={styles.katsBadge}>
-                <KatsSireneIcon size={respWidth(13)} color={OLED_PALETTE.nurnbergRed} />
+                <KatsSireneIcon size={respWidth(13, w)} color={OLED_PALETTE.nurnbergRed} />
                 <Text style={styles.katsBadgeText}>KATS-DEFCON 1</Text>
               </View>
             </View>
@@ -602,7 +605,7 @@ export default function App() {
 
               <View style={styles.tacticalSosMainRow}>
                 <View style={[styles.tacticalIconBox, { borderColor: OLED_PALETTE.sosRed, backgroundColor: '#d9042918' }]}>
-                  <MedicalCrossIcon size={respWidth(22)} color={OLED_PALETTE.sosRed} />
+                  <MedicalCrossIcon size={respWidth(22, w)} color={OLED_PALETTE.sosRed} />
                 </View>
                 <View style={styles.tacticalTitleColumn}>
                   <Text style={styles.tacticalSosTitle}>{t.sos.medical}</Text>
@@ -636,7 +639,7 @@ export default function App() {
 
               <View style={styles.tacticalSosMainRow}>
                 <View style={[styles.tacticalIconBox, { borderColor: '#ff6b35', backgroundColor: '#ff6b3518' }]}>
-                  <FlameIcon size={respWidth(22)} color="#ff6b35" />
+                  <FlameIcon size={respWidth(22, w)} color="#ff6b35" />
                 </View>
                 <View style={styles.tacticalTitleColumn}>
                   <Text style={styles.tacticalSosTitle}>{t.sos.fire}</Text>
@@ -670,7 +673,7 @@ export default function App() {
 
               <View style={styles.tacticalSosMainRow}>
                 <View style={[styles.tacticalIconBox, { borderColor: OLED_PALETTE.imperialGold, backgroundColor: '#ffb70318' }]}>
-                  <ThwRescueIcon size={respWidth(22)} color={OLED_PALETTE.imperialGold} />
+                  <ThwRescueIcon size={respWidth(22, w)} color={OLED_PALETTE.imperialGold} />
                 </View>
                 <View style={styles.tacticalTitleColumn}>
                   <Text style={styles.tacticalSosTitle}>{t.sos.trapped}</Text>
@@ -704,7 +707,7 @@ export default function App() {
 
               <View style={styles.tacticalSosMainRow}>
                 <View style={[styles.tacticalIconBox, { borderColor: OLED_PALETTE.meshCyan, backgroundColor: '#38bdf818' }]}>
-                  <SchoenerBrunnenIcon size={respWidth(22)} color={OLED_PALETTE.meshCyan} />
+                  <SchoenerBrunnenIcon size={respWidth(22, w)} color={OLED_PALETTE.meshCyan} />
                 </View>
                 <View style={styles.tacticalTitleColumn}>
                   <Text style={styles.tacticalSosTitle}>{t.sos.waterFood}</Text>
@@ -721,7 +724,7 @@ export default function App() {
               </View>
             </TouchableOpacity>
 
-            <Text style={[styles.sectionHeader, { marginTop: respHeight(22) }]}>{t.sos.hazardHeading}</Text>
+            <Text style={[styles.sectionHeader, { marginTop: respHeight(22, h) }]}>{t.sos.hazardHeading}</Text>
             <View style={styles.hazardGrid}>
               <TouchableOpacity
                 style={[styles.hazardButton, { borderColor: OLED_PALETTE.meshCyan }]}
@@ -729,7 +732,7 @@ export default function App() {
                 activeOpacity={0.7}
               >
                 <View style={styles.hazardBtnRow}>
-                  <WaveIcon size={respWidth(16)} color={OLED_PALETTE.meshCyan} />
+                  <WaveIcon size={respWidth(16, w)} color={OLED_PALETTE.meshCyan} />
                   <Text style={styles.hazardButtonText}>{t.sos.hazardFlood}</Text>
                 </View>
                 <Text style={styles.hazardButtonSub}>Pegnitz-Pegel Altstadt</Text>
@@ -740,19 +743,19 @@ export default function App() {
                 activeOpacity={0.7}
               >
                 <View style={styles.hazardBtnRow}>
-                  <RoadBlockIcon size={respWidth(16)} color={OLED_PALETTE.sosRed} />
+                  <RoadBlockIcon size={respWidth(16, w)} color={OLED_PALETTE.sosRed} />
                   <Text style={styles.hazardButtonText}>{t.sos.hazardBlocked}</Text>
                 </View>
                 <Text style={styles.hazardButtonSub}>A73 Frankenschnellweg</Text>
               </TouchableOpacity>
             </View>
             <TouchableOpacity
-              style={[styles.hazardButtonWide, { borderColor: OLED_PALETTE.warningAmber, marginTop: respHeight(8) }]}
+              style={[styles.hazardButtonWide, { borderColor: OLED_PALETTE.warningAmber, marginTop: respHeight(8, h) }]}
               onPress={() => handleTriggerHazard('GRID_DOWN')}
               activeOpacity={0.7}
             >
               <View style={styles.hazardBtnRow}>
-                <AlertTriangleIcon size={respWidth(16)} color={OLED_PALETTE.warningAmber} />
+                <AlertTriangleIcon size={respWidth(16, w)} color={OLED_PALETTE.warningAmber} />
                 <Text style={styles.hazardButtonText}>{t.sos.hazardRing}</Text>
               </View>
               <Text style={styles.hazardButtonSub}>Nordostbahnhof / Südstadt Ring</Text>
@@ -772,10 +775,10 @@ export default function App() {
             <Text style={styles.formSubtitle}>{t.family.subtitle}</Text>
 
             {/* Secret Setup Card */}
-            <View style={[styles.card, { borderLeftColor: OLED_PALETTE.imperialGold, borderLeftWidth: respWidth(4) }]}>
+            <View style={[styles.card, { borderLeftColor: OLED_PALETTE.imperialGold, borderLeftWidth: respWidth(4, w) }]}>
               <View style={styles.cardHeaderRow}>
                 <View style={styles.cardHeaderLeft}>
-                  <ShieldCheckIcon size={respWidth(16)} color={OLED_PALETTE.imperialGold} />
+                  <ShieldCheckIcon size={respWidth(16, w)} color={OLED_PALETTE.imperialGold} />
                   <Text style={styles.cardLabel}>{t.family.step1Title}</Text>
                 </View>
                 <Text style={styles.cipherLabel}>AES-256-CBC</Text>
@@ -798,7 +801,7 @@ export default function App() {
               {/* Visual Cryptographic Verification Indicator with Key Fingerprint */}
               <View style={[styles.cryptoProofCard, activeFamilySecret ? styles.cryptoProofCardActive : styles.cryptoProofCardPending]}>
                 <View style={styles.cryptoProofTopRow}>
-                  <FrankenRechenIcon size={respWidth(16)} color={activeFamilySecret ? OLED_PALETTE.safeGreen : OLED_PALETTE.warningAmber} />
+                  <FrankenRechenIcon size={respWidth(16, w)} color={activeFamilySecret ? OLED_PALETTE.safeGreen : OLED_PALETTE.warningAmber} />
                   <Text style={[styles.cryptoProofStatusText, activeFamilySecret ? styles.cryptoStatusGreen : styles.cryptoStatusAmber]}>
                     {activeFamilySecret
                       ? (language === 'de' ? 'AES-256-CBC VERSCHLÜSSELUNG AKTIV' : 'AES-256-CBC ENCRYPTION ACTIVE')
@@ -841,10 +844,10 @@ export default function App() {
             </View>
 
             {/* Broadcast Status Card */}
-            <View style={[styles.card, { marginTop: respHeight(16), borderLeftColor: OLED_PALETTE.safeGreen, borderLeftWidth: respWidth(4) }]}>
+            <View style={[styles.card, { marginTop: respHeight(16, h), borderLeftColor: OLED_PALETTE.safeGreen, borderLeftWidth: respWidth(4, w) }]}>
               <View style={styles.cardHeaderRow}>
                 <View style={styles.cardHeaderLeft}>
-                  <CheckCircleIcon size={respWidth(16)} color={OLED_PALETTE.safeGreen} />
+                  <CheckCircleIcon size={respWidth(16, w)} color={OLED_PALETTE.safeGreen} />
                   <Text style={styles.cardLabel}>{t.family.step2Title}</Text>
                 </View>
               </View>
@@ -856,7 +859,7 @@ export default function App() {
                 onChangeText={setSenderAlias}
               />
               <TextInput
-                style={[styles.input, { height: respHeight(80), textAlignVertical: 'top' }]}
+                style={[styles.input, { height: respHeight(80, h), textAlignVertical: 'top' }]}
                 placeholder={t.family.statusPlaceholder}
                 placeholderTextColor={OLED_PALETTE.textMuted}
                 value={safeStatusText}
@@ -868,7 +871,7 @@ export default function App() {
               {safeStatusText.trim().length > 0 && (
                 <View style={styles.liveCipherBox}>
                   <View style={styles.liveCipherTop}>
-                    <LockIcon size={respWidth(12)} color={activeFamilySecret ? OLED_PALETTE.safeGreen : OLED_PALETTE.warningAmber} />
+                    <LockIcon size={respWidth(12, w)} color={activeFamilySecret ? OLED_PALETTE.safeGreen : OLED_PALETTE.warningAmber} />
                     <Text style={styles.liveCipherLabel}>
                       {language === 'de' ? 'ECHTZEIT-CHIFFRETEXT (OTA-VORSCHAU):' : 'LIVE CIPHERTEXT (OTA PREVIEW):'}
                     </Text>
@@ -897,7 +900,7 @@ export default function App() {
                 activeOpacity={0.7}
               >
                 <View style={styles.btnRow}>
-                  <ShieldCheckIcon size={respWidth(16)} color={OLED_PALETTE.textInverse} />
+                  <ShieldCheckIcon size={respWidth(16, w)} color={OLED_PALETTE.textInverse} />
                   <Text style={[styles.actionButtonText, { color: OLED_PALETTE.textInverse }]}>
                     {t.family.sendBtn}
                   </Text>
@@ -911,7 +914,7 @@ export default function App() {
         {activeTab === 'POIS' && (
           <View style={styles.feedContainer}>
             <View style={styles.searchBarContainer}>
-              <SearchIcon size={respWidth(16)} color={OLED_PALETTE.textMuted} />
+              <SearchIcon size={respWidth(16, w)} color={OLED_PALETTE.textMuted} />
               <TextInput
                 style={styles.searchInput}
                 placeholder={t.orte.searchPlaceholder}
@@ -956,7 +959,7 @@ export default function App() {
               keyExtractor={(item) => item.id}
               renderItem={({ item }) => <PoiCard poi={item} t={t} />}
               keyboardShouldPersistTaps="handled"
-              contentContainerStyle={{ paddingBottom: respHeight(20) }}
+              contentContainerStyle={{ paddingBottom: respHeight(20, h) }}
               ListFooterComponent={
                 <View style={styles.dataSourceContainer}>
                   <Text style={styles.dataSourceText}>{t.orte.dataSource}</Text>
@@ -994,6 +997,1541 @@ export default function App() {
   );
 }
 
+// ── OLED STYLESHEET (dynamic — recomputes on dimension change) ──
+
+function useAppStyles() {
+  const { width: w, height: h } = useWindowDimensions();
+  return useMemo(
+    () => StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: OLED_PALETTE.background
+  },
+  franconianAccentBar: {
+    flexDirection: 'row',
+    height: respHeight(3, h),
+    width: '100%'
+  },
+  franconianRedSegment: {
+    flex: 2,
+    backgroundColor: OLED_PALETTE.nurnbergRed
+  },
+  franconianWhiteSegment: {
+    flex: 1,
+    backgroundColor: OLED_PALETTE.franconianWhite
+  },
+  franconianGoldSegment: {
+    flex: 1,
+    backgroundColor: OLED_PALETTE.imperialGold
+  },
+  header: {
+    paddingHorizontal: respWidth(16, w),
+    paddingTop: respHeight(10, h),
+    paddingBottom: respHeight(12, h),
+    borderBottomWidth: 1,
+    borderBottomColor: OLED_PALETTE.surfaceBorder
+  },
+  headerTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between'
+  },
+  brandRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: respWidth(8, w),
+    flex: 1,
+    marginRight: respWidth(6, w),
+  },
+  titleColumn: {
+    flex: 1,
+  },
+  crestBadge: {
+    width: respWidth(38, w),
+    height: respWidth(38, w),
+    borderRadius: respWidth(7, w),
+    backgroundColor: '#16080a',
+    borderWidth: 1.5,
+    borderColor: OLED_PALETTE.nurnbergRed,
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  crestIcon: {
+    fontSize: respFontSize(19, w)
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: respWidth(4, w)
+  },
+  pulseDot: {
+    width: respWidth(7, w),
+    height: respWidth(7, w),
+    borderRadius: respWidth(4, w),
+  },
+  dotGreen: {
+    backgroundColor: OLED_PALETTE.safeGreen,
+  },
+  dotAmber: {
+    backgroundColor: OLED_PALETTE.warningAmber,
+  },
+  statusTag: {
+    paddingHorizontal: respWidth(5, w),
+    paddingVertical: respHeight(1, h),
+    borderRadius: respWidth(3, w),
+    borderWidth: 1,
+    marginLeft: respWidth(4, w),
+  },
+  statusTagGreen: {
+    backgroundColor: '#00e67615',
+    borderColor: OLED_PALETTE.safeGreen,
+  },
+  statusTagAmber: {
+    backgroundColor: '#ffb70315',
+    borderColor: OLED_PALETTE.warningAmber,
+  },
+  statusTagText: {
+    fontFamily: FONTS.monoBold,
+    fontSize: respFontSize(9.5, w),
+  },
+  statusTextGreen: {
+    color: OLED_PALETTE.safeGreen,
+  },
+  statusTextAmber: {
+    color: OLED_PALETTE.warningAmber,
+  },
+  headerTitle: {
+    color: OLED_PALETTE.textPrimary,
+    fontFamily: FONTS.displayBold,
+    fontSize: respFontSize(14.2, w),
+    letterSpacing: respWidth(0.3, w),
+  },
+  civicBadgeRow: {
+    marginVertical: respHeight(2, h),
+  },
+  civicBadgeText: {
+    color: OLED_PALETTE.warningAmber,
+    fontFamily: FONTS.monoBold,
+    fontSize: respFontSize(10, w),
+    letterSpacing: respWidth(0.5, w),
+  },
+  headerSectorSub: {
+    color: OLED_PALETTE.imperialGold,
+    fontFamily: FONTS.displayBold,
+    fontSize: respFontSize(11, w),
+    letterSpacing: respWidth(0.3, w),
+    marginTop: respHeight(1, h),
+  },
+  headerRightRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: respWidth(8, w),
+    flexShrink: 0,
+  },
+  guideQuickIconBtn: {
+    width: respWidth(30, w),
+    height: respWidth(30, w),
+    borderRadius: respWidth(6, w),
+    backgroundColor: '#0c131d',
+    borderWidth: 1,
+    borderColor: '#1e293b',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  menuDrawerIconBtn: {
+    width: respWidth(30, w),
+    height: respWidth(30, w),
+    borderRadius: respWidth(6, w),
+    backgroundColor: '#0c131d',
+    borderWidth: 1,
+    borderColor: '#1e293b',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cockpitHudCard: {
+    backgroundColor: '#050912',
+    borderWidth: 1.5,
+    borderColor: '#152238',
+    borderRadius: respWidth(8, w),
+    paddingHorizontal: respWidth(12, w),
+    paddingVertical: respHeight(8, h),
+    marginTop: respHeight(8, h),
+  },
+  cockpitHudTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  cockpitStatusLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: respWidth(6, w),
+  },
+  cockpitPulseBeacon: {
+    width: respWidth(8, w),
+    height: respWidth(8, w),
+    borderRadius: respWidth(4, w),
+    backgroundColor: OLED_PALETTE.safeGreen,
+  },
+  cockpitStatusText: {
+    fontFamily: FONTS.monoBold,
+    fontSize: respFontSize(12, w),
+    letterSpacing: TRACKING.tactical,
+  },
+  cockpitModePill: {
+    paddingHorizontal: respWidth(5, w),
+    paddingVertical: respHeight(1, h),
+    borderRadius: respWidth(3, w),
+    borderWidth: 1,
+  },
+  modePillGreen: {
+    backgroundColor: '#00e67615',
+    borderColor: OLED_PALETTE.safeGreen,
+  },
+  modePillAmber: {
+    backgroundColor: '#ffb70315',
+    borderColor: OLED_PALETTE.warningAmber,
+  },
+  cockpitModeText: {
+    fontFamily: FONTS.monoBold,
+    fontSize: respFontSize(9, w),
+    letterSpacing: TRACKING.tactical,
+  },
+  cockpitAutonomyPill: {
+    backgroundColor: '#0c1a2e',
+    borderWidth: 1,
+    borderColor: '#1e3a5f',
+    paddingHorizontal: respWidth(7, w),
+    paddingVertical: respHeight(2, h),
+    borderRadius: respWidth(4, w),
+  },
+  cockpitAutonomyText: {
+    color: OLED_PALETTE.meshCyan,
+    fontFamily: FONTS.monoBold,
+    fontSize: respFontSize(9.5, w),
+    letterSpacing: TRACKING.tactical,
+  },
+  cockpitHudDivider: {
+    height: 1,
+    backgroundColor: '#0e1a2b',
+    marginVertical: respHeight(6, h),
+  },
+  cockpitHudBottomRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  cockpitPeersGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: respWidth(6, w),
+  },
+  cockpitPeerCount: {
+    color: OLED_PALETTE.safeGreen,
+    fontFamily: FONTS.monoBold,
+    fontSize: respFontSize(12, w),
+  },
+  cockpitPeerLabel: {
+    color: OLED_PALETTE.textSecondary,
+    fontFamily: FONTS.displayMedium,
+    fontSize: respFontSize(11, w),
+    letterSpacing: TRACKING.standard,
+  },
+  cockpitChannelGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: respWidth(4, w),
+  },
+  cockpitChannelLabel: {
+    color: OLED_PALETTE.textMuted,
+    fontFamily: FONTS.monoMedium,
+    fontSize: respFontSize(10, w),
+    letterSpacing: TRACKING.tactical,
+  },
+  cockpitChannelValue: {
+    color: OLED_PALETTE.imperialGold,
+    fontFamily: FONTS.monoBold,
+    fontSize: respFontSize(11, w),
+    letterSpacing: TRACKING.tactical,
+  },
+  sectorScrollWrapper: {
+    position: 'relative',
+    marginBottom: respHeight(10, h),
+  },
+  sectorScrollContent: {
+    paddingRight: respWidth(28, w),
+  },
+  scrollFadeRight: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    bottom: 0,
+    width: respWidth(24, w),
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#000000dd',
+    borderLeftWidth: 1,
+    borderLeftColor: '#1c2430',
+  },
+  scrollFadeChevron: {
+    color: OLED_PALETTE.safeGreen,
+    fontFamily: FONTS.monoBold,
+    fontSize: respFontSize(16, w),
+  },
+  connStatusLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: respWidth(6, w),
+  },
+  pulseDotLarge: {
+    width: respWidth(8, w),
+    height: respWidth(8, w),
+    borderRadius: respWidth(4, w),
+  },
+  connStatusText: {
+    fontFamily: FONTS.displayBold,
+    fontSize: respFontSize(12, w),
+    letterSpacing: respWidth(0.5, w),
+  },
+  connTextGreen: {
+    color: OLED_PALETTE.safeGreen,
+  },
+  connTextAmber: {
+    color: OLED_PALETTE.warningAmber,
+  },
+  connStatusRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: respWidth(6, w),
+  },
+  peerPill: {
+    backgroundColor: '#00e5ff18',
+    borderWidth: 1,
+    borderColor: '#00e5ff60',
+    paddingHorizontal: respWidth(7, w),
+    paddingVertical: respHeight(2, h),
+    borderRadius: respWidth(4, w),
+  },
+  peerPillText: {
+    color: OLED_PALETTE.meshCyan,
+    fontFamily: FONTS.monoBold,
+    fontSize: respFontSize(10.5, w),
+  },
+  autonomyPill: {
+    backgroundColor: '#ffb70318',
+    borderWidth: 1,
+    borderColor: '#ffb70360',
+    paddingHorizontal: respWidth(6, w),
+    paddingVertical: respHeight(2, h),
+    borderRadius: respWidth(4, w),
+  },
+  autonomyPillText: {
+    color: OLED_PALETTE.imperialGold,
+    fontFamily: FONTS.monoBold,
+    fontSize: respFontSize(10, w),
+  },
+  tabBar: {
+    flexDirection: 'row',
+    borderBottomWidth: respWidth(1, w),
+    borderBottomColor: OLED_PALETTE.surfaceBorder,
+    backgroundColor: '#030508',
+  },
+  tabButton: {
+    flex: 1,
+    paddingVertical: respHeight(11, h),
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: respWidth(5, w),
+    borderBottomWidth: respWidth(2.5, w),
+    borderBottomColor: 'transparent',
+  },
+  tabButtonActiveRadar: {
+    borderBottomColor: OLED_PALETTE.imperialGold,
+    backgroundColor: '#ffb70312',
+  },
+  tabButtonActiveSos: {
+    borderBottomColor: OLED_PALETTE.nurnbergRed,
+    backgroundColor: '#d9042918',
+  },
+  tabButtonActiveFamily: {
+    borderBottomColor: OLED_PALETTE.imperialGold,
+    backgroundColor: '#ffb70318',
+  },
+  tabButtonActivePlaces: {
+    borderBottomColor: OLED_PALETTE.safeGreen,
+    backgroundColor: '#00e67612',
+  },
+  tabText: {
+    color: OLED_PALETTE.textMuted,
+    fontFamily: FONTS.displaySemiBold,
+    fontSize: respFontSize(13, w),
+  },
+  tabTextActiveRadar: {
+    color: OLED_PALETTE.imperialGold,
+    fontFamily: FONTS.displayBold,
+    fontSize: respFontSize(13, w),
+  },
+  tabTextActiveSos: {
+    color: OLED_PALETTE.sosRed,
+    fontFamily: FONTS.displayBold,
+    fontSize: respFontSize(13, w),
+  },
+  tabTextActiveFamily: {
+    color: OLED_PALETTE.imperialGold,
+    fontFamily: FONTS.displayBold,
+    fontSize: respFontSize(13, w),
+  },
+  tabTextActivePlaces: {
+    color: OLED_PALETTE.safeGreen,
+    fontFamily: FONTS.displayBold,
+    fontSize: respFontSize(13, w),
+  },
+  content: {
+    flex: 1,
+    padding: respWidth(14, w)
+  },
+  feedContainer: {
+    flex: 1
+  },
+  sectorBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    backgroundColor: '#060a10',
+    paddingVertical: respHeight(8, h),
+    paddingHorizontal: respWidth(10, w),
+    borderRadius: respWidth(6, w),
+    borderWidth: 1,
+    borderColor: '#0f172a',
+    marginBottom: respHeight(12, h)
+  },
+  sectorChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: respWidth(5, w)
+  },
+  sectorDotGreen: {
+    width: respWidth(6, w),
+    height: respWidth(6, w),
+    borderRadius: respWidth(3, w),
+    backgroundColor: OLED_PALETTE.safeGreen
+  },
+  sectorDotAmber: {
+    width: respWidth(6, w),
+    height: respWidth(6, w),
+    borderRadius: respWidth(3, w),
+    backgroundColor: OLED_PALETTE.warningAmber
+  },
+  sectorChipText: {
+    color: OLED_PALETTE.textSecondary,
+    fontFamily: FONTS.monoBold,
+    fontSize: respFontSize(11, w),
+  },
+  streamHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: respHeight(8, h)
+  },
+  sectionHeader: {
+    color: OLED_PALETTE.textSecondary,
+    fontFamily: FONTS.displayBold,
+    fontSize: respFontSize(13, w),
+    letterSpacing: 1.2
+  },
+  streamSignalBadge: {
+    color: OLED_PALETTE.safeGreen,
+    fontFamily: FONTS.monoBold,
+    fontSize: respFontSize(12, w),
+  },
+  emptyFeedContainer: {
+    flex: 1,
+    justifyContent: 'space-between',
+    marginTop: respHeight(10, h),
+    paddingBottom: respHeight(6, h),
+  },
+  quickDockContainer: {
+    marginTop: 'auto',
+    paddingTop: respHeight(10, h),
+  },
+  quickDockLabel: {
+    color: OLED_PALETTE.textMuted,
+    fontFamily: FONTS.monoBold,
+    fontSize: respFontSize(10.5, w),
+    letterSpacing: 1,
+    marginBottom: respHeight(6, h),
+  },
+  emptyState: {
+    padding: respWidth(20, w),
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: OLED_PALETTE.kaiserburgCard,
+    borderRadius: respWidth(10, w),
+    borderWidth: 1.5,
+    borderColor: OLED_PALETTE.surfaceBorder,
+  },
+  emptyStateIcon: {
+    fontSize: respFontSize(34, w),
+    marginBottom: respHeight(6, h)
+  },
+  emptyStateText: {
+    color: OLED_PALETTE.textSecondary,
+    fontFamily: FONTS.displayBold,
+    fontSize: respFontSize(15, w),
+    textAlign: 'center'
+  },
+  emptyStateSubtext: {
+    color: OLED_PALETTE.textMuted,
+    fontFamily: FONTS.displayRegular,
+    fontSize: respFontSize(12, w),
+    lineHeight: respHeight(16, h),
+    marginTop: respHeight(4, h),
+    textAlign: 'center'
+  },
+  tacticalNodeCard: {
+    backgroundColor: OLED_PALETTE.kaiserburgCard,
+    borderWidth: 1.5,
+    borderColor: OLED_PALETTE.hudBorderCyan,
+    borderRadius: respWidth(10, w),
+    padding: respWidth(12, w),
+  },
+  tacticalCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: OLED_PALETTE.surfaceBorder,
+    paddingBottom: respHeight(6, h),
+    marginBottom: respHeight(8, h),
+  },
+  tacticalCardTitle: {
+    color: OLED_PALETTE.meshCyan,
+    fontFamily: FONTS.displayBold,
+    fontSize: respFontSize(13, w),
+    letterSpacing: respWidth(0.6, w),
+  },
+  tacticalCardLiveBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: respWidth(5, w),
+    backgroundColor: '#00e67615',
+    borderWidth: 1,
+    borderColor: OLED_PALETTE.safeGreen,
+    paddingHorizontal: respWidth(7, w),
+    paddingVertical: respHeight(2, h),
+    borderRadius: respWidth(4, w),
+  },
+  tacticalLiveDot: {
+    width: respWidth(6, w),
+    height: respWidth(6, w),
+    borderRadius: respWidth(3, w),
+    backgroundColor: OLED_PALETTE.safeGreen,
+  },
+  tacticalLiveText: {
+    color: OLED_PALETTE.safeGreen,
+    fontFamily: FONTS.monoBold,
+    fontSize: respFontSize(10, w),
+  },
+  tacticalGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: respWidth(8, w),
+  },
+  tacticalGridItem: {
+    width: '48%',
+    backgroundColor: OLED_PALETTE.surfaceCard,
+    padding: respWidth(8, w),
+    borderRadius: respWidth(6, w),
+    borderWidth: 1,
+    borderColor: OLED_PALETTE.surfaceBorder,
+  },
+  tacticalGridLabel: {
+    color: OLED_PALETTE.textSecondary,
+    fontFamily: FONTS.displayBold,
+    fontSize: respFontSize(11, w),
+    letterSpacing: respWidth(0.4, w),
+  },
+  tacticalGridVal: {
+    color: OLED_PALETTE.textPrimary,
+    fontFamily: FONTS.monoBold,
+    fontSize: respFontSize(11.5, w),
+    marginTop: respHeight(2, h),
+  },
+  tacticalGridValGold: {
+    color: OLED_PALETTE.imperialGold,
+    fontFamily: FONTS.monoBold,
+    fontSize: respFontSize(11.5, w),
+    marginTop: respHeight(2, h),
+  },
+  tacticalGridValGreen: {
+    color: OLED_PALETTE.safeGreen,
+    fontFamily: FONTS.monoBold,
+    fontSize: respFontSize(11.5, w),
+    marginTop: respHeight(2, h),
+  },
+  quickActionRow: {
+    flexDirection: 'row',
+    gap: respWidth(8, w),
+    marginTop: respHeight(2, h),
+  },
+  quickActionBtnSos: {
+    flex: 1,
+    backgroundColor: '#1f070a',
+    borderWidth: 1.5,
+    borderColor: OLED_PALETTE.nurnbergRed,
+    paddingVertical: respHeight(10, h),
+    paddingHorizontal: respWidth(6, w),
+    borderRadius: respWidth(8, w),
+    alignItems: 'center',
+  },
+  quickActionBtnFam: {
+    flex: 1,
+    backgroundColor: '#1f1604',
+    borderWidth: 1.5,
+    borderColor: OLED_PALETTE.imperialGold,
+    paddingVertical: respHeight(10, h),
+    paddingHorizontal: respWidth(6, w),
+    borderRadius: respWidth(8, w),
+    alignItems: 'center',
+  },
+  quickActionBtnPoi: {
+    flex: 1,
+    backgroundColor: '#041d11',
+    borderWidth: 1.5,
+    borderColor: OLED_PALETTE.safeGreen,
+    paddingVertical: respHeight(10, h),
+    paddingHorizontal: respWidth(6, w),
+    borderRadius: respWidth(8, w),
+    alignItems: 'center',
+  },
+  quickActionBtnText: {
+    color: OLED_PALETTE.textPrimary,
+    fontFamily: FONTS.displayBold,
+    fontSize: respFontSize(12, w),
+  },
+  quickActionBtnSub: {
+    color: OLED_PALETTE.textMuted,
+    fontFamily: FONTS.displayMedium,
+    fontSize: respFontSize(10, w),
+    marginTop: respHeight(2, h),
+  },
+  familyBanner: {
+    backgroundColor: '#051b10',
+    borderWidth: 1,
+    borderColor: OLED_PALETTE.imperialGoldMuted,
+    borderLeftWidth: respWidth(4, w),
+    borderLeftColor: OLED_PALETTE.imperialGold,
+    padding: respWidth(12, w),
+    borderRadius: respWidth(8, w),
+    marginBottom: respHeight(12, h)
+  },
+  familyBannerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: respHeight(4, h)
+  },
+  familyBannerTitle: {
+    color: OLED_PALETTE.imperialGold,
+    fontFamily: FONTS.displayBold,
+    fontSize: respFontSize(13, w),
+    letterSpacing: 0.5
+  },
+  kaiserburgTag: {
+    backgroundColor: '#00e67615',
+    borderWidth: 1,
+    borderColor: OLED_PALETTE.safeGreen,
+    paddingHorizontal: respWidth(6, w),
+    paddingVertical: respHeight(2, h),
+    borderRadius: respWidth(4, w),
+  },
+  familyBannerItem: {
+    marginTop: respHeight(4, h)
+  },
+  familyBannerSender: {
+    color: OLED_PALETTE.textPrimary,
+    fontFamily: FONTS.displayBold,
+    fontSize: respFontSize(13, w)
+  },
+  familyBannerText: {
+    color: '#d4edda',
+    fontFamily: FONTS.displayMedium,
+    fontSize: respFontSize(14, w),
+    marginTop: respHeight(2, h)
+  },
+  packetCard: {
+    backgroundColor: OLED_PALETTE.kaiserburgCard,
+    borderWidth: 1.5,
+    borderColor: OLED_PALETTE.surfaceBorder,
+    borderLeftWidth: respWidth(4, w),
+    borderRadius: respWidth(8, w),
+    padding: respWidth(12, w),
+    marginBottom: respHeight(10, h)
+  },
+  packetHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: respHeight(6, h)
+  },
+  packetHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: respWidth(8, w)
+  },
+  packetTypeBadge: {
+    fontFamily: FONTS.monoBold,
+    fontSize: respFontSize(11, w),
+    paddingHorizontal: respWidth(7, w),
+    paddingVertical: respHeight(2, h),
+    borderRadius: respWidth(4, w),
+    overflow: 'hidden'
+  },
+  packetSectorTag: {
+    color: OLED_PALETTE.textMuted,
+    fontFamily: FONTS.monoMedium,
+    fontSize: respFontSize(11, w),
+  },
+  packetHops: {
+    color: OLED_PALETTE.textMuted,
+    fontFamily: FONTS.monoRegular,
+    fontSize: respFontSize(11, w),
+  },
+  packetBody: {
+    marginTop: respHeight(4, h)
+  },
+  sosAlertTitle: {
+    color: OLED_PALETTE.nurnbergRed,
+    fontFamily: FONTS.displayBold,
+    fontSize: respFontSize(16, w)
+  },
+  safeSender: {
+    color: OLED_PALETTE.imperialGold,
+    fontFamily: FONTS.displayBold,
+    fontSize: respFontSize(14, w)
+  },
+  encryptedPayload: {
+    color: OLED_PALETTE.textMuted,
+    fontFamily: FONTS.monoRegular,
+    fontSize: respFontSize(12, w),
+    marginTop: respHeight(3, h)
+  },
+  hazardTitle: {
+    color: OLED_PALETTE.warningAmber,
+    fontFamily: FONTS.displayBold,
+    fontSize: respFontSize(15, w)
+  },
+  packetDesc: {
+    color: OLED_PALETTE.textPrimary,
+    fontFamily: FONTS.displayMedium,
+    fontSize: respFontSize(14, w),
+    marginTop: respHeight(3, h)
+  },
+  gpsCoords: {
+    color: OLED_PALETTE.textMuted,
+    fontFamily: FONTS.monoRegular,
+    fontSize: respFontSize(11, w),
+    marginTop: respHeight(4, h),
+  },
+  mutedPacketCard: {
+    borderLeftColor: OLED_PALETTE.textMuted,
+    backgroundColor: '#0a0a0a',
+    opacity: 0.7,
+    paddingVertical: respHeight(8, h),
+  },
+  mutedSenderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  mutedSenderText: {
+    color: OLED_PALETTE.textMuted,
+    fontFamily: FONTS.monoRegular,
+    fontSize: respFontSize(12, w),
+  },
+  unmuteBtn: {
+    paddingHorizontal: respWidth(8, w),
+    paddingVertical: respHeight(4, h),
+    backgroundColor: OLED_PALETTE.surfaceBorder,
+    borderRadius: respWidth(4, w),
+  },
+  unmuteBtnText: {
+    color: OLED_PALETTE.meshCyan,
+    fontFamily: FONTS.monoBold,
+    fontSize: respFontSize(11, w),
+  },
+  witnessBadge: {
+    paddingHorizontal: respWidth(6, w),
+    paddingVertical: respHeight(2, h),
+    borderRadius: respWidth(3, w),
+    borderWidth: respWidth(1, w),
+    marginLeft: respWidth(6, w),
+  },
+  witnessBadgeUnconfirmed: {
+    backgroundColor: 'rgba(255, 179, 0, 0.1)',
+    borderColor: OLED_PALETTE.warningAmber,
+  },
+  witnessBadgeVerified: {
+    backgroundColor: 'rgba(34, 197, 94, 0.15)',
+    borderColor: OLED_PALETTE.safeGreen,
+  },
+  witnessBadgeText: {
+    fontFamily: FONTS.monoBold,
+    fontSize: respFontSize(10, w),
+  },
+  witnessTextUnconfirmed: {
+    color: OLED_PALETTE.warningAmber,
+  },
+  witnessTextVerified: {
+    color: OLED_PALETTE.safeGreen,
+  },
+  cardActionsRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    gap: respWidth(10, w),
+    marginTop: respHeight(8, h),
+    paddingTop: respHeight(8, h),
+    borderTopWidth: respWidth(1, w),
+    borderTopColor: OLED_PALETTE.surfaceBorder,
+  },
+  vouchBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: respWidth(4, w),
+    paddingHorizontal: respWidth(10, w),
+    paddingVertical: respHeight(4, h),
+    borderRadius: respWidth(4, w),
+    backgroundColor: 'rgba(34, 197, 94, 0.12)',
+    borderWidth: respWidth(1, w),
+    borderColor: OLED_PALETTE.safeGreen,
+  },
+  vouchBtnText: {
+    color: OLED_PALETTE.safeGreen,
+    fontFamily: FONTS.monoBold,
+    fontSize: respFontSize(11, w),
+  },
+  muteBtn: {
+    paddingHorizontal: respWidth(8, w),
+    paddingVertical: respHeight(4, h),
+    borderRadius: respWidth(4, w),
+    backgroundColor: 'rgba(239, 68, 68, 0.08)',
+    borderWidth: respWidth(1, w),
+    borderColor: 'rgba(239, 68, 68, 0.3)',
+  },
+  muteBtnText: {
+    color: OLED_PALETTE.textMuted,
+    fontFamily: FONTS.monoRegular,
+    fontSize: respFontSize(11, w),
+  },
+  sosEmergency112Banner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: respWidth(10, w),
+    backgroundColor: 'rgba(255, 179, 0, 0.12)',
+    borderWidth: respWidth(1.5, w),
+    borderColor: OLED_PALETTE.warningAmber,
+    borderRadius: respWidth(8, w),
+    padding: respWidth(12, w),
+    marginBottom: respHeight(14, h),
+  },
+  sosEmergency112Text: {
+    flex: 1,
+    color: OLED_PALETTE.warningAmber,
+    fontFamily: FONTS.displayMedium,
+    fontSize: respFontSize(13, w),
+    lineHeight: respHeight(18, h),
+  },
+  dataSourceContainer: {
+    padding: respWidth(14, w),
+    marginTop: respHeight(10, h),
+    marginBottom: respHeight(30, h),
+    backgroundColor: '#0a0d14',
+    borderWidth: respWidth(1, w),
+    borderColor: OLED_PALETTE.surfaceBorder,
+    borderRadius: respWidth(8, w),
+  },
+  dataSourceText: {
+    color: OLED_PALETTE.textMuted,
+    fontFamily: FONTS.monoRegular,
+    fontSize: respFontSize(11, w),
+    lineHeight: respHeight(16, h),
+  },
+  formContainer: {
+    flex: 1
+  },
+  sosTitleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: respHeight(2, h)
+  },
+  familyTitleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: respHeight(4, h),
+    flexWrap: 'wrap',
+    gap: respWidth(6, w),
+  },
+  formTitle: {
+    color: OLED_PALETTE.textPrimary,
+    fontFamily: FONTS.displayBold,
+    fontSize: respFontSize(17, w),
+    letterSpacing: 0.5
+  },
+  katsBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: respWidth(4, w),
+    backgroundColor: '#38060b',
+    borderWidth: 1,
+    borderColor: OLED_PALETTE.nurnbergRed,
+    paddingHorizontal: respWidth(8, w),
+    paddingVertical: respHeight(3, h),
+    borderRadius: respWidth(4, w)
+  },
+  katsBadgeText: {
+    color: OLED_PALETTE.nurnbergRed,
+    fontFamily: FONTS.monoBold,
+    fontSize: respFontSize(11, w),
+  },
+  vaultTag: {
+    backgroundColor: '#261b00',
+    borderWidth: 1,
+    borderColor: OLED_PALETTE.imperialGold,
+    paddingHorizontal: respWidth(8, w),
+    paddingVertical: respHeight(3, h),
+    borderRadius: respWidth(4, w)
+  },
+  vaultTagText: {
+    color: OLED_PALETTE.imperialGold,
+    fontFamily: FONTS.monoBold,
+    fontSize: respFontSize(11, w),
+  },
+  formSubtitle: {
+    color: OLED_PALETTE.textMuted,
+    fontFamily: FONTS.displayRegular,
+    fontSize: respFontSize(13, w),
+    marginBottom: respHeight(14, h)
+  },
+  tacticalSosCard: {
+    backgroundColor: OLED_PALETTE.surfaceCard,
+    borderWidth: 1.5,
+    borderColor: OLED_PALETTE.surfaceBorder,
+    borderLeftWidth: respWidth(5, w),
+    borderRadius: respWidth(8, w),
+    padding: respWidth(14, w),
+    marginBottom: respHeight(12, h),
+  },
+  tacticalSosTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: respHeight(8, h),
+  },
+  tacticalKatsGroup: {
+    flex: 1,
+    marginRight: respWidth(8, w),
+  },
+  tacticalKatsCode: {
+    color: '#cbd5e1',
+    fontFamily: FONTS.monoBold,
+    fontSize: respFontSize(11.5, w),
+    letterSpacing: TRACKING.tactical,
+    textTransform: 'uppercase',
+  },
+  tacticalBadgePill: {
+    paddingHorizontal: respWidth(7, w),
+    paddingVertical: respHeight(2, h),
+    borderRadius: respWidth(4, w),
+    borderWidth: 1,
+  },
+  tacticalBadgeText: {
+    fontFamily: FONTS.monoBold,
+    fontSize: respFontSize(11, w),
+    letterSpacing: TRACKING.tactical,
+  },
+  tacticalSosMainRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: respWidth(10, w),
+    marginBottom: respHeight(6, h),
+  },
+  tacticalIconBox: {
+    width: respWidth(38, w),
+    height: respWidth(38, w),
+    borderRadius: respWidth(6, w),
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tacticalTitleColumn: {
+    flex: 1,
+  },
+  tacticalSosTitle: {
+    color: OLED_PALETTE.textPrimary,
+    fontFamily: FONTS.displayBold,
+    fontSize: respFontSize(16, w),
+    letterSpacing: TRACKING.standard,
+  },
+  tacticalSosSubtag: {
+    color: OLED_PALETTE.textMuted,
+    fontFamily: FONTS.monoMedium,
+    fontSize: respFontSize(10, w),
+    letterSpacing: TRACKING.condensed,
+    marginTop: respHeight(1, h),
+  },
+  tacticalSosDesc: {
+    color: OLED_PALETTE.textSecondary,
+    fontFamily: FONTS.displayRegular,
+    fontSize: respFontSize(13, w),
+    lineHeight: respHeight(17, h),
+    marginBottom: respHeight(10, h),
+  },
+  tacticalSosFooter: {
+    borderTopWidth: 1,
+    borderTopColor: '#161d28',
+    paddingTop: respHeight(8, h),
+  },
+  tacticalDispatchBar: {
+    borderWidth: 1,
+    paddingVertical: respHeight(8, h),
+    paddingHorizontal: respWidth(10, w),
+    borderRadius: respWidth(5, w),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tacticalDispatchText: {
+    fontFamily: FONTS.monoBold,
+    fontSize: respFontSize(12, w),
+    letterSpacing: TRACKING.tactical,
+  },
+  sosCard: {
+    backgroundColor: OLED_PALETTE.surfaceCard,
+    borderWidth: 1.5,
+    borderRadius: respWidth(10, w),
+    padding: respWidth(14, w),
+    marginBottom: respHeight(12, h)
+  },
+  sosCardHeader: {
+    marginBottom: respHeight(4, h),
+  },
+  sosCardTitleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: respWidth(8, w),
+  },
+  sosTitleGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: respWidth(8, w),
+    flex: 1,
+  },
+  sosMetaRow: {
+    marginTop: respHeight(2, h),
+    marginLeft: respWidth(28, w),
+  },
+  sosCardTitle: {
+    color: OLED_PALETTE.textPrimary,
+    fontFamily: FONTS.displayBold,
+    fontSize: respFontSize(16, w),
+  },
+  sosCodeBadge: {
+    color: OLED_PALETTE.textMuted,
+    fontFamily: FONTS.monoBold,
+    fontSize: respFontSize(11.5, w),
+    letterSpacing: respWidth(0.3, w),
+  },
+  sosCardDesc: {
+    color: OLED_PALETTE.textMuted,
+    fontFamily: FONTS.displayRegular,
+    fontSize: respFontSize(13, w),
+    marginTop: respHeight(4, h),
+    marginLeft: respWidth(28, w),
+  },
+  hazardGrid: {
+    flexDirection: 'row',
+    gap: respWidth(8, w)
+  },
+  hazardButton: {
+    flex: 1,
+    backgroundColor: OLED_PALETTE.surfaceCard,
+    borderWidth: 1.5,
+    padding: respWidth(12, w),
+    borderRadius: respWidth(8, w),
+    alignItems: 'center'
+  },
+  hazardButtonWide: {
+    backgroundColor: OLED_PALETTE.surfaceCard,
+    borderWidth: 1.5,
+    padding: respWidth(12, w),
+    borderRadius: respWidth(8, w),
+    alignItems: 'center'
+  },
+  hazardButtonText: {
+    color: OLED_PALETTE.textPrimary,
+    fontFamily: FONTS.displayBold,
+    fontSize: respFontSize(14, w)
+  },
+  hazardButtonSub: {
+    color: OLED_PALETTE.textMuted,
+    fontFamily: FONTS.displayMedium,
+    fontSize: respFontSize(12, w),
+    marginTop: respHeight(3, h)
+  },
+  card: {
+    backgroundColor: OLED_PALETTE.surfaceCard,
+    borderWidth: 1.5,
+    borderColor: OLED_PALETTE.surfaceBorder,
+    padding: respWidth(14, w),
+    borderRadius: respWidth(10, w)
+  },
+  cardHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: respHeight(8, h)
+  },
+  cardLabel: {
+    color: OLED_PALETTE.textPrimary,
+    fontFamily: FONTS.displayBold,
+    fontSize: respFontSize(15, w)
+  },
+  cipherLabel: {
+    color: OLED_PALETTE.imperialGold,
+    fontFamily: FONTS.monoBold,
+    fontSize: respFontSize(12, w),
+  },
+  input: {
+    backgroundColor: '#0c0f14',
+    borderWidth: 1.5,
+    borderColor: OLED_PALETTE.surfaceBorder,
+    color: OLED_PALETTE.textPrimary,
+    fontFamily: FONTS.monoMedium,
+    paddingHorizontal: respWidth(12, w),
+    paddingVertical: respHeight(10, h),
+    borderRadius: respWidth(6, w),
+    fontSize: respFontSize(14, w),
+    marginBottom: respHeight(10, h)
+  },
+  actionButton: {
+    backgroundColor: OLED_PALETTE.meshCyan,
+    paddingVertical: respHeight(12, h),
+    borderRadius: respWidth(6, w),
+    alignItems: 'center'
+  },
+  actionButtonGold: {
+    backgroundColor: OLED_PALETTE.imperialGold,
+    paddingVertical: respHeight(12, h),
+    borderRadius: respWidth(6, w),
+    alignItems: 'center'
+  },
+  actionButtonText: {
+    color: OLED_PALETTE.textInverse,
+    fontFamily: FONTS.displayBold,
+    fontSize: respFontSize(15, w)
+  },
+  actionButtonGoldText: {
+    color: OLED_PALETTE.textInverse,
+    fontFamily: FONTS.displayBold,
+    fontSize: respFontSize(15, w)
+  },
+  secretActiveNotice: {
+    color: OLED_PALETTE.safeGreen,
+    fontFamily: FONTS.monoMedium,
+    fontSize: respFontSize(12, w),
+    marginTop: respHeight(6, h),
+  },
+  cryptoProofCard: {
+    marginTop: respHeight(12, h),
+    padding: respWidth(12, w),
+    borderRadius: respWidth(8, w),
+    borderWidth: 1.5,
+  },
+  cryptoProofCardActive: {
+    backgroundColor: '#041d11',
+    borderColor: OLED_PALETTE.safeGreen,
+  },
+  cryptoProofCardPending: {
+    backgroundColor: '#1f1604',
+    borderColor: OLED_PALETTE.warningAmber,
+  },
+  cryptoProofTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: respWidth(8, w),
+  },
+  cryptoProofStatusText: {
+    flex: 1,
+    fontFamily: FONTS.monoBold,
+    fontSize: respFontSize(11.5, w),
+    letterSpacing: 0.5,
+  },
+  cryptoStatusGreen: {
+    color: OLED_PALETTE.safeGreen,
+  },
+  cryptoStatusAmber: {
+    color: OLED_PALETTE.warningAmber,
+  },
+  cryptoProofPill: {
+    paddingHorizontal: respWidth(8, w),
+    paddingVertical: respHeight(2, h),
+    borderRadius: respWidth(4, w),
+    borderWidth: 1,
+  },
+  cryptoPillGreen: {
+    backgroundColor: '#00e67622',
+    borderColor: OLED_PALETTE.safeGreen,
+  },
+  cryptoPillAmber: {
+    backgroundColor: '#ffb70322',
+    borderColor: OLED_PALETTE.warningAmber,
+  },
+  cryptoProofPillText: {
+    fontFamily: FONTS.monoBold,
+    fontSize: respFontSize(10, w),
+  },
+  cryptoPillTextGreen: {
+    color: OLED_PALETTE.safeGreen,
+  },
+  cryptoPillTextAmber: {
+    color: OLED_PALETTE.warningAmber,
+  },
+  cryptoProofExplanation: {
+    color: OLED_PALETTE.textSecondary,
+    fontFamily: FONTS.displayRegular,
+    fontSize: respFontSize(11, w),
+    lineHeight: respHeight(15, h),
+    marginTop: respHeight(6, h),
+  },
+  cryptoFingerprintBox: {
+    backgroundColor: '#030c08',
+    borderWidth: 1,
+    borderColor: '#0a301a',
+    borderRadius: respWidth(6, w),
+    padding: respWidth(10, w),
+    marginTop: respHeight(8, h),
+    marginBottom: respHeight(4, h),
+  },
+  cryptoFingerprintLabel: {
+    color: '#6ee7b7',
+    fontFamily: FONTS.monoMedium,
+    fontSize: respFontSize(10, w),
+    letterSpacing: TRACKING.tactical,
+    marginBottom: respHeight(2, h),
+  },
+  cryptoFingerprintValue: {
+    color: OLED_PALETTE.safeGreen,
+    fontFamily: FONTS.monoBold,
+    fontSize: respFontSize(12.5, w),
+    letterSpacing: TRACKING.trackedOut,
+  },
+  cryptoSpecsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: respWidth(6, w),
+    marginTop: respHeight(6, h),
+  },
+  cryptoSpecChip: {
+    backgroundColor: '#0a2316',
+    color: '#a7f3d0',
+    fontFamily: FONTS.monoRegular,
+    fontSize: respFontSize(9.5, w),
+    paddingHorizontal: respWidth(6, w),
+    paddingVertical: respHeight(2, h),
+    borderRadius: respWidth(3, w),
+    borderWidth: 0.5,
+    borderColor: '#059669',
+  },
+  liveCipherBox: {
+    marginTop: respHeight(10, h),
+    padding: respWidth(10, w),
+    borderRadius: respWidth(6, w),
+    backgroundColor: '#050c14',
+    borderWidth: 1,
+    borderColor: OLED_PALETTE.hudBorderCyan,
+  },
+  liveCipherTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: respWidth(6, w),
+    marginBottom: respHeight(4, h),
+  },
+  liveCipherLabel: {
+    color: OLED_PALETTE.textMuted,
+    fontFamily: FONTS.monoBold,
+    fontSize: respFontSize(10, w),
+    flex: 1,
+    letterSpacing: 0.5,
+  },
+  liveCipherTag: {
+    fontFamily: FONTS.monoBold,
+    fontSize: respFontSize(10, w),
+    paddingHorizontal: respWidth(6, w),
+    paddingVertical: respHeight(1, h),
+    borderRadius: respWidth(3, w),
+    borderWidth: 1,
+  },
+  liveCipherTagGreen: {
+    color: OLED_PALETTE.safeGreen,
+    borderColor: OLED_PALETTE.safeGreen,
+    backgroundColor: '#00e67618',
+  },
+  liveCipherTagAmber: {
+    color: OLED_PALETTE.warningAmber,
+    borderColor: OLED_PALETTE.warningAmber,
+    backgroundColor: '#ffb70318',
+  },
+  liveCipherValue: {
+    color: OLED_PALETTE.meshCyan,
+    fontFamily: FONTS.monoRegular,
+    fontSize: respFontSize(11, w),
+    letterSpacing: 0.8,
+  },
+  liveCipherMetaRow: {
+    marginTop: respHeight(6, h),
+    paddingTop: respHeight(4, h),
+    borderTopWidth: 1,
+    borderTopColor: '#0a1d2e',
+  },
+  liveCipherMetaText: {
+    color: OLED_PALETTE.textMuted,
+    fontFamily: FONTS.monoRegular,
+    fontSize: respFontSize(10, w),
+    letterSpacing: 0.4,
+  },
+  districtFilterWrapper: {
+    position: 'relative',
+    marginBottom: respHeight(10, h),
+  },
+  districtFilterScroll: {
+    flexGrow: 0,
+  },
+  districtFilterContent: {
+    paddingRight: respWidth(32, w),
+  },
+  scrollHintPill: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    bottom: 0,
+    width: respWidth(24, w),
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#000000dd',
+    borderLeftWidth: 1,
+    borderLeftColor: OLED_PALETTE.surfaceBorder,
+    borderTopRightRadius: respWidth(6, w),
+    borderBottomRightRadius: respWidth(6, w),
+  },
+  scrollHintText: {
+    color: OLED_PALETTE.safeGreen,
+    fontFamily: FONTS.monoBold,
+    fontSize: respFontSize(16, w),
+    lineHeight: respFontSize(18, w),
+  },
+  districtChip: {
+    paddingHorizontal: respWidth(14, w),
+    paddingVertical: respHeight(7, h),
+    borderRadius: respWidth(6, w),
+    backgroundColor: OLED_PALETTE.surfaceCard,
+    borderWidth: 1.5,
+    borderColor: OLED_PALETTE.surfaceBorder,
+    marginRight: respWidth(8, w)
+  },
+  districtChipActive: {
+    borderColor: OLED_PALETTE.safeGreen,
+    backgroundColor: '#00e67618'
+  },
+  districtChipText: {
+    color: OLED_PALETTE.textMuted,
+    fontFamily: FONTS.displaySemiBold,
+    fontSize: respFontSize(13, w),
+  },
+  districtChipTextActive: {
+    color: OLED_PALETTE.safeGreen,
+    fontFamily: FONTS.displayBold,
+    fontSize: respFontSize(13, w)
+  },
+  poiCard: {
+    backgroundColor: OLED_PALETTE.kaiserburgCard,
+    borderWidth: 1.5,
+    borderColor: OLED_PALETTE.surfaceBorder,
+    padding: respWidth(12, w),
+    borderRadius: respWidth(8, w),
+    marginBottom: respHeight(10, h)
+  },
+  poiHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center'
+  },
+  poiTitleGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: respWidth(8, w),
+    flex: 1,
+  },
+  poiName: {
+    color: OLED_PALETTE.textPrimary,
+    fontFamily: FONTS.displayBold,
+    fontSize: respFontSize(16, w),
+    flex: 1
+  },
+  poiTag: {
+    fontFamily: FONTS.monoBold,
+    fontSize: respFontSize(11, w),
+    borderWidth: 1,
+    paddingHorizontal: respWidth(7, w),
+    paddingVertical: respHeight(2, h),
+    borderRadius: respWidth(4, w),
+    marginLeft: respWidth(8, w)
+  },
+  poiMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: respWidth(8, w),
+    marginTop: respHeight(4, h)
+  },
+  poiDistrictBadge: {
+    color: OLED_PALETTE.imperialGold,
+    fontFamily: FONTS.monoBold,
+    fontSize: respFontSize(12, w),
+  },
+  poiDistanceChip: {
+    color: OLED_PALETTE.textMuted,
+    fontFamily: FONTS.monoMedium,
+    fontSize: respFontSize(12, w),
+  },
+  poiAddress: {
+    color: OLED_PALETTE.textSecondary,
+    fontFamily: FONTS.displayMedium,
+    fontSize: respFontSize(13, w),
+    marginTop: respHeight(3, h)
+  },
+  poiNotes: {
+    color: OLED_PALETTE.textMuted,
+    fontFamily: FONTS.displayRegular,
+    fontSize: respFontSize(12, w),
+    marginTop: respHeight(4, h)
+  },
+  poiCapacity: {
+    color: OLED_PALETTE.meshCyan,
+    fontFamily: FONTS.monoMedium,
+    fontSize: respFontSize(12, w),
+    marginTop: respHeight(3, h),
+  },
+  poiRadio: {
+    color: OLED_PALETTE.imperialGold,
+    fontFamily: FONTS.monoMedium,
+    fontSize: respFontSize(12, w),
+    marginTop: respHeight(3, h),
+  },
+  familyBannerHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: respWidth(6, w),
+  },
+  familySenderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: respWidth(6, w),
+  },
+  signalBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: respWidth(4, w),
+  },
+  kaiserburgTagText: {
+    color: OLED_PALETTE.safeGreen,
+    fontFamily: FONTS.monoBold,
+    fontSize: respFontSize(11, w),
+  },
+  sosTitleLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: respWidth(8, w),
+    flex: 1,
+  },
+  sosRedundantBadge: {
+    paddingHorizontal: respWidth(6, w),
+    paddingVertical: respHeight(1, h),
+    borderRadius: respWidth(3, w),
+    borderWidth: 1,
+    borderColor: OLED_PALETTE.nurnbergRed,
+    backgroundColor: '#d9042918',
+    marginLeft: respWidth(6, w),
+  },
+  sosRedundantText: {
+    color: OLED_PALETTE.nurnbergRed,
+    fontFamily: FONTS.monoBold,
+    fontSize: respFontSize(10.5, w),
+  },
+  hazardBtnRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: respWidth(6, w),
+  },
+  cardHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: respWidth(8, w),
+  },
+  btnRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: respWidth(8, w),
+  },
+  searchBarContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: respWidth(8, w),
+    backgroundColor: '#0c0f14',
+    borderWidth: 1.5,
+    borderColor: OLED_PALETTE.surfaceBorder,
+    borderRadius: respWidth(6, w),
+    paddingHorizontal: respWidth(10, w),
+    marginBottom: respHeight(8, h),
+  },
+  searchInput: {
+    flex: 1,
+    color: OLED_PALETTE.textPrimary,
+    fontFamily: FONTS.monoMedium,
+    paddingVertical: respHeight(10, h),
+    fontSize: respFontSize(14, w),
+  },
+  packetBodyRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: respWidth(6, w),
+  },
+  gpsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: respWidth(5, w),
+    marginTop: respHeight(4, h),
+  },
+  poiDistanceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: respWidth(4, w),
+  },
+  poiRadioRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: respWidth(4, w),
+    marginTop: respHeight(3, h),
+  },
+  }),
+    [w, h]
+  );
+}
+
 // ── SUBCOMPONENTS ──
 
 interface PacketCardProps {
@@ -1013,6 +2551,8 @@ const PacketCard = React.memo(({
   onAttest,
   onToggleMute,
 }: PacketCardProps) => {
+  const styles = useAppStyles();
+  const { width: w } = useWindowDimensions();
   if (packet.type === 'ATTEST') {
     return null;
   }
@@ -1081,12 +2621,12 @@ const PacketCard = React.memo(({
       {isSos && (
         <View style={styles.packetBody}>
           <View style={styles.packetBodyRow}>
-            <AlertTriangleIcon size={respWidth(16)} color={OLED_PALETTE.sosRed} />
+            <AlertTriangleIcon size={respWidth(16, w)} color={OLED_PALETTE.sosRed} />
             <Text style={styles.sosAlertTitle}>[SOS] {t.feed.categoryLabel}: {(packet as any).category}</Text>
           </View>
           <Text style={styles.packetDesc}>{(packet as any).notes || 'Help requested'}</Text>
           <View style={styles.gpsRow}>
-            <MapPinIcon size={respWidth(12)} color={OLED_PALETTE.textMuted} />
+            <MapPinIcon size={respWidth(12, w)} color={OLED_PALETTE.textMuted} />
             <Text style={styles.gpsCoords}>
               {(packet as any).lat.toFixed(4)}°N, {(packet as any).lon.toFixed(4)}°E (Nürnberg)
             </Text>
@@ -1097,7 +2637,7 @@ const PacketCard = React.memo(({
       {isSafe && (
         <View style={styles.packetBody}>
           <View style={styles.packetBodyRow}>
-            <ShieldCheckIcon size={respWidth(16)} color={OLED_PALETTE.imperialGold} />
+            <ShieldCheckIcon size={respWidth(16, w)} color={OLED_PALETTE.imperialGold} />
             <Text style={styles.safeSender}>[SICHER] {t.feed.sender}: {(packet as any).sender_alias || t.feed.anonymous}</Text>
           </View>
           <Text style={styles.encryptedPayload}>
@@ -1109,7 +2649,7 @@ const PacketCard = React.memo(({
       {isHazard && (
         <View style={styles.packetBody}>
           <View style={styles.packetBodyRow}>
-            <AlertOctagonIcon size={respWidth(16)} color={OLED_PALETTE.warningAmber} />
+            <AlertOctagonIcon size={respWidth(16, w)} color={OLED_PALETTE.warningAmber} />
             <Text style={styles.hazardTitle}>[GEFAHR] {t.feed.hazardLabel}: {(packet as any).hazard_type}</Text>
           </View>
           <Text style={styles.packetDesc}>{(packet as any).description}</Text>
@@ -1124,7 +2664,7 @@ const PacketCard = React.memo(({
             onPress={() => onAttest(packet.msg_id)}
             accessibilityLabel={t.feed.attestBtn}
           >
-            <CheckCircleIcon size={respWidth(12)} color={OLED_PALETTE.safeGreen} />
+            <CheckCircleIcon size={respWidth(12, w)} color={OLED_PALETTE.safeGreen} />
             <Text style={styles.vouchBtnText}>{t.feed.attestBtn}</Text>
           </TouchableOpacity>
 
@@ -1142,6 +2682,8 @@ const PacketCard = React.memo(({
 });
 
 const PoiCard = React.memo(({ poi, t }: { poi: NurnbergEmergencyPoi; t: ReturnType<typeof getTranslations> }) => {
+  const styles = useAppStyles();
+  const { width: w } = useWindowDimensions();
   const isHospital = poi.category === 'HOSPITAL';
   const isWater = poi.category === 'WATER';
   const isShelter = poi.category === 'SHELTER';
@@ -1157,18 +2699,18 @@ const PoiCard = React.memo(({ poi, t }: { poi: NurnbergEmergencyPoi; t: ReturnTy
 
   const renderPoiCategoryIcon = () => {
     if (isHospital) {
-      return <MedicalCrossIcon size={respWidth(16)} color={OLED_PALETTE.nurnbergRed} />;
+      return <MedicalCrossIcon size={respWidth(16, w)} color={OLED_PALETTE.nurnbergRed} />;
     }
     if (isWater) {
-      return <SchoenerBrunnenIcon size={respWidth(16)} color={OLED_PALETTE.meshCyan} />;
+      return <SchoenerBrunnenIcon size={respWidth(16, w)} color={OLED_PALETTE.meshCyan} />;
     }
     if (isShelter) {
-      return <NurnbergStadttorIcon size={respWidth(16)} color={OLED_PALETTE.warningAmber} />;
+      return <NurnbergStadttorIcon size={respWidth(16, w)} color={OLED_PALETTE.warningAmber} />;
     }
     if (isThw) {
-      return <ThwRescueIcon size={respWidth(16)} color={OLED_PALETTE.imperialGold} />;
+      return <ThwRescueIcon size={respWidth(16, w)} color={OLED_PALETTE.imperialGold} />;
     }
-    return <MapPinIcon size={respWidth(16)} color={OLED_PALETTE.safeGreen} />;
+    return <MapPinIcon size={respWidth(16, w)} color={OLED_PALETTE.safeGreen} />;
   };
 
   return (
@@ -1185,7 +2727,7 @@ const PoiCard = React.memo(({ poi, t }: { poi: NurnbergEmergencyPoi; t: ReturnTy
       <View style={styles.poiMetaRow}>
         <Text style={styles.poiDistrictBadge}>[{poi.district}]</Text>
         <View style={styles.poiDistanceRow}>
-          <MapPinIcon size={respWidth(12)} color={OLED_PALETTE.textMuted} />
+          <MapPinIcon size={respWidth(12, w)} color={OLED_PALETTE.textMuted} />
           <Text style={styles.poiDistanceChip}>{distance} zum Hauptmarkt</Text>
         </View>
       </View>
@@ -1194,1539 +2736,10 @@ const PoiCard = React.memo(({ poi, t }: { poi: NurnbergEmergencyPoi; t: ReturnTy
       {poi.capacity && <Text style={styles.poiCapacity}>{t.orte.capacityLabel}: {poi.capacity}</Text>}
       {poi.radioFrequency && (
         <View style={styles.poiRadioRow}>
-          <RadioTowerIcon size={respWidth(12)} color={OLED_PALETTE.imperialGold} />
+          <RadioTowerIcon size={respWidth(12, w)} color={OLED_PALETTE.imperialGold} />
           <Text style={styles.poiRadio}>{poi.radioFrequency}</Text>
         </View>
       )}
     </View>
   );
-});
-
-// ── OLED STYLESHEET ──
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: OLED_PALETTE.background
-  },
-  franconianAccentBar: {
-    flexDirection: 'row',
-    height: respHeight(3),
-    width: '100%'
-  },
-  franconianRedSegment: {
-    flex: 2,
-    backgroundColor: OLED_PALETTE.nurnbergRed
-  },
-  franconianWhiteSegment: {
-    flex: 1,
-    backgroundColor: OLED_PALETTE.franconianWhite
-  },
-  franconianGoldSegment: {
-    flex: 1,
-    backgroundColor: OLED_PALETTE.imperialGold
-  },
-  header: {
-    paddingHorizontal: respWidth(16),
-    paddingTop: respHeight(10),
-    paddingBottom: respHeight(12),
-    borderBottomWidth: 1,
-    borderBottomColor: OLED_PALETTE.surfaceBorder
-  },
-  headerTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between'
-  },
-  brandRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: respWidth(8),
-    flex: 1,
-    marginRight: respWidth(6),
-  },
-  titleColumn: {
-    flex: 1,
-  },
-  crestBadge: {
-    width: respWidth(38),
-    height: respWidth(38),
-    borderRadius: respWidth(7),
-    backgroundColor: '#16080a',
-    borderWidth: 1.5,
-    borderColor: OLED_PALETTE.nurnbergRed,
-    alignItems: 'center',
-    justifyContent: 'center'
-  },
-  crestIcon: {
-    fontSize: respFontSize(19)
-  },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: respWidth(4)
-  },
-  pulseDot: {
-    width: respWidth(7),
-    height: respWidth(7),
-    borderRadius: respWidth(4),
-  },
-  dotGreen: {
-    backgroundColor: OLED_PALETTE.safeGreen,
-  },
-  dotAmber: {
-    backgroundColor: OLED_PALETTE.warningAmber,
-  },
-  statusTag: {
-    paddingHorizontal: respWidth(5),
-    paddingVertical: respHeight(1),
-    borderRadius: respWidth(3),
-    borderWidth: 1,
-    marginLeft: respWidth(4),
-  },
-  statusTagGreen: {
-    backgroundColor: '#00e67615',
-    borderColor: OLED_PALETTE.safeGreen,
-  },
-  statusTagAmber: {
-    backgroundColor: '#ffb70315',
-    borderColor: OLED_PALETTE.warningAmber,
-  },
-  statusTagText: {
-    fontFamily: FONTS.monoBold,
-    fontSize: respFontSize(9.5),
-  },
-  statusTextGreen: {
-    color: OLED_PALETTE.safeGreen,
-  },
-  statusTextAmber: {
-    color: OLED_PALETTE.warningAmber,
-  },
-  headerTitle: {
-    color: OLED_PALETTE.textPrimary,
-    fontFamily: FONTS.displayBold,
-    fontSize: respFontSize(14.2),
-    letterSpacing: respWidth(0.3),
-  },
-  civicBadgeRow: {
-    marginVertical: respHeight(2),
-  },
-  civicBadgeText: {
-    color: OLED_PALETTE.warningAmber,
-    fontFamily: FONTS.monoBold,
-    fontSize: respFontSize(10),
-    letterSpacing: respWidth(0.5),
-  },
-  headerSectorSub: {
-    color: OLED_PALETTE.imperialGold,
-    fontFamily: FONTS.displayBold,
-    fontSize: respFontSize(11),
-    letterSpacing: respWidth(0.3),
-    marginTop: respHeight(1),
-  },
-  headerRightRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: respWidth(8),
-    flexShrink: 0,
-  },
-  guideQuickIconBtn: {
-    width: respWidth(30),
-    height: respWidth(30),
-    borderRadius: respWidth(6),
-    backgroundColor: '#0c131d',
-    borderWidth: 1,
-    borderColor: '#1e293b',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  menuDrawerIconBtn: {
-    width: respWidth(30),
-    height: respWidth(30),
-    borderRadius: respWidth(6),
-    backgroundColor: '#0c131d',
-    borderWidth: 1,
-    borderColor: '#1e293b',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cockpitHudCard: {
-    backgroundColor: '#050912',
-    borderWidth: 1.5,
-    borderColor: '#152238',
-    borderRadius: respWidth(8),
-    paddingHorizontal: respWidth(12),
-    paddingVertical: respHeight(8),
-    marginTop: respHeight(8),
-  },
-  cockpitHudTopRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  cockpitStatusLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: respWidth(6),
-  },
-  cockpitPulseBeacon: {
-    width: respWidth(8),
-    height: respWidth(8),
-    borderRadius: respWidth(4),
-    backgroundColor: OLED_PALETTE.safeGreen,
-  },
-  cockpitStatusText: {
-    fontFamily: FONTS.monoBold,
-    fontSize: respFontSize(12),
-    letterSpacing: TRACKING.tactical,
-  },
-  cockpitModePill: {
-    paddingHorizontal: respWidth(5),
-    paddingVertical: respHeight(1),
-    borderRadius: respWidth(3),
-    borderWidth: 1,
-  },
-  modePillGreen: {
-    backgroundColor: '#00e67615',
-    borderColor: OLED_PALETTE.safeGreen,
-  },
-  modePillAmber: {
-    backgroundColor: '#ffb70315',
-    borderColor: OLED_PALETTE.warningAmber,
-  },
-  cockpitModeText: {
-    fontFamily: FONTS.monoBold,
-    fontSize: respFontSize(9),
-    letterSpacing: TRACKING.tactical,
-  },
-  cockpitAutonomyPill: {
-    backgroundColor: '#0c1a2e',
-    borderWidth: 1,
-    borderColor: '#1e3a5f',
-    paddingHorizontal: respWidth(7),
-    paddingVertical: respHeight(2),
-    borderRadius: respWidth(4),
-  },
-  cockpitAutonomyText: {
-    color: OLED_PALETTE.meshCyan,
-    fontFamily: FONTS.monoBold,
-    fontSize: respFontSize(9.5),
-    letterSpacing: TRACKING.tactical,
-  },
-  cockpitHudDivider: {
-    height: 1,
-    backgroundColor: '#0e1a2b',
-    marginVertical: respHeight(6),
-  },
-  cockpitHudBottomRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  cockpitPeersGroup: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: respWidth(6),
-  },
-  cockpitPeerCount: {
-    color: OLED_PALETTE.safeGreen,
-    fontFamily: FONTS.monoBold,
-    fontSize: respFontSize(12),
-  },
-  cockpitPeerLabel: {
-    color: OLED_PALETTE.textSecondary,
-    fontFamily: FONTS.displayMedium,
-    fontSize: respFontSize(11),
-    letterSpacing: TRACKING.standard,
-  },
-  cockpitChannelGroup: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: respWidth(4),
-  },
-  cockpitChannelLabel: {
-    color: OLED_PALETTE.textMuted,
-    fontFamily: FONTS.monoMedium,
-    fontSize: respFontSize(10),
-    letterSpacing: TRACKING.tactical,
-  },
-  cockpitChannelValue: {
-    color: OLED_PALETTE.imperialGold,
-    fontFamily: FONTS.monoBold,
-    fontSize: respFontSize(11),
-    letterSpacing: TRACKING.tactical,
-  },
-  sectorScrollWrapper: {
-    position: 'relative',
-    marginBottom: respHeight(10),
-  },
-  sectorScrollContent: {
-    paddingRight: respWidth(28),
-  },
-  scrollFadeRight: {
-    position: 'absolute',
-    right: 0,
-    top: 0,
-    bottom: 0,
-    width: respWidth(24),
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#000000dd',
-    borderLeftWidth: 1,
-    borderLeftColor: '#1c2430',
-  },
-  scrollFadeChevron: {
-    color: OLED_PALETTE.safeGreen,
-    fontFamily: FONTS.monoBold,
-    fontSize: respFontSize(16),
-  },
-  connStatusLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: respWidth(6),
-  },
-  pulseDotLarge: {
-    width: respWidth(8),
-    height: respWidth(8),
-    borderRadius: respWidth(4),
-  },
-  connStatusText: {
-    fontFamily: FONTS.displayBold,
-    fontSize: respFontSize(12),
-    letterSpacing: respWidth(0.5),
-  },
-  connTextGreen: {
-    color: OLED_PALETTE.safeGreen,
-  },
-  connTextAmber: {
-    color: OLED_PALETTE.warningAmber,
-  },
-  connStatusRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: respWidth(6),
-  },
-  peerPill: {
-    backgroundColor: '#00e5ff18',
-    borderWidth: 1,
-    borderColor: '#00e5ff60',
-    paddingHorizontal: respWidth(7),
-    paddingVertical: respHeight(2),
-    borderRadius: respWidth(4),
-  },
-  peerPillText: {
-    color: OLED_PALETTE.meshCyan,
-    fontFamily: FONTS.monoBold,
-    fontSize: respFontSize(10.5),
-  },
-  autonomyPill: {
-    backgroundColor: '#ffb70318',
-    borderWidth: 1,
-    borderColor: '#ffb70360',
-    paddingHorizontal: respWidth(6),
-    paddingVertical: respHeight(2),
-    borderRadius: respWidth(4),
-  },
-  autonomyPillText: {
-    color: OLED_PALETTE.imperialGold,
-    fontFamily: FONTS.monoBold,
-    fontSize: respFontSize(10),
-  },
-  tabBar: {
-    flexDirection: 'row',
-    borderBottomWidth: respWidth(1),
-    borderBottomColor: OLED_PALETTE.surfaceBorder,
-    backgroundColor: '#030508',
-  },
-  tabButton: {
-    flex: 1,
-    paddingVertical: respHeight(11),
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexDirection: 'row',
-    gap: respWidth(5),
-    borderBottomWidth: respWidth(2.5),
-    borderBottomColor: 'transparent',
-  },
-  tabButtonActiveRadar: {
-    borderBottomColor: OLED_PALETTE.imperialGold,
-    backgroundColor: '#ffb70312',
-  },
-  tabButtonActiveSos: {
-    borderBottomColor: OLED_PALETTE.nurnbergRed,
-    backgroundColor: '#d9042918',
-  },
-  tabButtonActiveFamily: {
-    borderBottomColor: OLED_PALETTE.imperialGold,
-    backgroundColor: '#ffb70318',
-  },
-  tabButtonActivePlaces: {
-    borderBottomColor: OLED_PALETTE.safeGreen,
-    backgroundColor: '#00e67612',
-  },
-  tabText: {
-    color: OLED_PALETTE.textMuted,
-    fontFamily: FONTS.displaySemiBold,
-    fontSize: respFontSize(13),
-  },
-  tabTextActiveRadar: {
-    color: OLED_PALETTE.imperialGold,
-    fontFamily: FONTS.displayBold,
-    fontSize: respFontSize(13),
-  },
-  tabTextActiveSos: {
-    color: OLED_PALETTE.sosRed,
-    fontFamily: FONTS.displayBold,
-    fontSize: respFontSize(13),
-  },
-  tabTextActiveFamily: {
-    color: OLED_PALETTE.imperialGold,
-    fontFamily: FONTS.displayBold,
-    fontSize: respFontSize(13),
-  },
-  tabTextActivePlaces: {
-    color: OLED_PALETTE.safeGreen,
-    fontFamily: FONTS.displayBold,
-    fontSize: respFontSize(13),
-  },
-  content: {
-    flex: 1,
-    padding: respWidth(14)
-  },
-  feedContainer: {
-    flex: 1
-  },
-  sectorBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    backgroundColor: '#060a10',
-    paddingVertical: respHeight(8),
-    paddingHorizontal: respWidth(10),
-    borderRadius: respWidth(6),
-    borderWidth: 1,
-    borderColor: '#0f172a',
-    marginBottom: respHeight(12)
-  },
-  sectorChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: respWidth(5)
-  },
-  sectorDotGreen: {
-    width: respWidth(6),
-    height: respWidth(6),
-    borderRadius: respWidth(3),
-    backgroundColor: OLED_PALETTE.safeGreen
-  },
-  sectorDotAmber: {
-    width: respWidth(6),
-    height: respWidth(6),
-    borderRadius: respWidth(3),
-    backgroundColor: OLED_PALETTE.warningAmber
-  },
-  sectorChipText: {
-    color: OLED_PALETTE.textSecondary,
-    fontFamily: FONTS.monoBold,
-    fontSize: respFontSize(11),
-  },
-  streamHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: respHeight(8)
-  },
-  sectionHeader: {
-    color: OLED_PALETTE.textSecondary,
-    fontFamily: FONTS.displayBold,
-    fontSize: respFontSize(13),
-    letterSpacing: 1.2
-  },
-  streamSignalBadge: {
-    color: OLED_PALETTE.safeGreen,
-    fontFamily: FONTS.monoBold,
-    fontSize: respFontSize(12),
-  },
-  emptyFeedContainer: {
-    flex: 1,
-    justifyContent: 'space-between',
-    marginTop: respHeight(10),
-    paddingBottom: respHeight(6),
-  },
-  quickDockContainer: {
-    marginTop: 'auto',
-    paddingTop: respHeight(10),
-  },
-  quickDockLabel: {
-    color: OLED_PALETTE.textMuted,
-    fontFamily: FONTS.monoBold,
-    fontSize: respFontSize(10.5),
-    letterSpacing: 1,
-    marginBottom: respHeight(6),
-  },
-  emptyState: {
-    padding: respWidth(20),
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: OLED_PALETTE.kaiserburgCard,
-    borderRadius: respWidth(10),
-    borderWidth: 1.5,
-    borderColor: OLED_PALETTE.surfaceBorder,
-  },
-  emptyStateIcon: {
-    fontSize: respFontSize(34),
-    marginBottom: respHeight(6)
-  },
-  emptyStateText: {
-    color: OLED_PALETTE.textSecondary,
-    fontFamily: FONTS.displayBold,
-    fontSize: respFontSize(15),
-    textAlign: 'center'
-  },
-  emptyStateSubtext: {
-    color: OLED_PALETTE.textMuted,
-    fontFamily: FONTS.displayRegular,
-    fontSize: respFontSize(12),
-    lineHeight: respHeight(16),
-    marginTop: respHeight(4),
-    textAlign: 'center'
-  },
-  tacticalNodeCard: {
-    backgroundColor: OLED_PALETTE.kaiserburgCard,
-    borderWidth: 1.5,
-    borderColor: OLED_PALETTE.hudBorderCyan,
-    borderRadius: respWidth(10),
-    padding: respWidth(12),
-  },
-  tacticalCardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: OLED_PALETTE.surfaceBorder,
-    paddingBottom: respHeight(6),
-    marginBottom: respHeight(8),
-  },
-  tacticalCardTitle: {
-    color: OLED_PALETTE.meshCyan,
-    fontFamily: FONTS.displayBold,
-    fontSize: respFontSize(13),
-    letterSpacing: respWidth(0.6),
-  },
-  tacticalCardLiveBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: respWidth(5),
-    backgroundColor: '#00e67615',
-    borderWidth: 1,
-    borderColor: OLED_PALETTE.safeGreen,
-    paddingHorizontal: respWidth(7),
-    paddingVertical: respHeight(2),
-    borderRadius: respWidth(4),
-  },
-  tacticalLiveDot: {
-    width: respWidth(6),
-    height: respWidth(6),
-    borderRadius: respWidth(3),
-    backgroundColor: OLED_PALETTE.safeGreen,
-  },
-  tacticalLiveText: {
-    color: OLED_PALETTE.safeGreen,
-    fontFamily: FONTS.monoBold,
-    fontSize: respFontSize(10),
-  },
-  tacticalGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    gap: respWidth(8),
-  },
-  tacticalGridItem: {
-    width: '48%',
-    backgroundColor: OLED_PALETTE.surfaceCard,
-    padding: respWidth(8),
-    borderRadius: respWidth(6),
-    borderWidth: 1,
-    borderColor: OLED_PALETTE.surfaceBorder,
-  },
-  tacticalGridLabel: {
-    color: OLED_PALETTE.textSecondary,
-    fontFamily: FONTS.displayBold,
-    fontSize: respFontSize(11),
-    letterSpacing: respWidth(0.4),
-  },
-  tacticalGridVal: {
-    color: OLED_PALETTE.textPrimary,
-    fontFamily: FONTS.monoBold,
-    fontSize: respFontSize(11.5),
-    marginTop: respHeight(2),
-  },
-  tacticalGridValGold: {
-    color: OLED_PALETTE.imperialGold,
-    fontFamily: FONTS.monoBold,
-    fontSize: respFontSize(11.5),
-    marginTop: respHeight(2),
-  },
-  tacticalGridValGreen: {
-    color: OLED_PALETTE.safeGreen,
-    fontFamily: FONTS.monoBold,
-    fontSize: respFontSize(11.5),
-    marginTop: respHeight(2),
-  },
-  quickActionRow: {
-    flexDirection: 'row',
-    gap: respWidth(8),
-    marginTop: respHeight(2),
-  },
-  quickActionBtnSos: {
-    flex: 1,
-    backgroundColor: '#1f070a',
-    borderWidth: 1.5,
-    borderColor: OLED_PALETTE.nurnbergRed,
-    paddingVertical: respHeight(10),
-    paddingHorizontal: respWidth(6),
-    borderRadius: respWidth(8),
-    alignItems: 'center',
-  },
-  quickActionBtnFam: {
-    flex: 1,
-    backgroundColor: '#1f1604',
-    borderWidth: 1.5,
-    borderColor: OLED_PALETTE.imperialGold,
-    paddingVertical: respHeight(10),
-    paddingHorizontal: respWidth(6),
-    borderRadius: respWidth(8),
-    alignItems: 'center',
-  },
-  quickActionBtnPoi: {
-    flex: 1,
-    backgroundColor: '#041d11',
-    borderWidth: 1.5,
-    borderColor: OLED_PALETTE.safeGreen,
-    paddingVertical: respHeight(10),
-    paddingHorizontal: respWidth(6),
-    borderRadius: respWidth(8),
-    alignItems: 'center',
-  },
-  quickActionBtnText: {
-    color: OLED_PALETTE.textPrimary,
-    fontFamily: FONTS.displayBold,
-    fontSize: respFontSize(12),
-  },
-  quickActionBtnSub: {
-    color: OLED_PALETTE.textMuted,
-    fontFamily: FONTS.displayMedium,
-    fontSize: respFontSize(10),
-    marginTop: respHeight(2),
-  },
-  familyBanner: {
-    backgroundColor: '#051b10',
-    borderWidth: 1,
-    borderColor: OLED_PALETTE.imperialGoldMuted,
-    borderLeftWidth: respWidth(4),
-    borderLeftColor: OLED_PALETTE.imperialGold,
-    padding: respWidth(12),
-    borderRadius: respWidth(8),
-    marginBottom: respHeight(12)
-  },
-  familyBannerHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: respHeight(4)
-  },
-  familyBannerTitle: {
-    color: OLED_PALETTE.imperialGold,
-    fontFamily: FONTS.displayBold,
-    fontSize: respFontSize(13),
-    letterSpacing: 0.5
-  },
-  kaiserburgTag: {
-    backgroundColor: '#00e67615',
-    borderWidth: 1,
-    borderColor: OLED_PALETTE.safeGreen,
-    paddingHorizontal: respWidth(6),
-    paddingVertical: respHeight(2),
-    borderRadius: respWidth(4),
-  },
-  familyBannerItem: {
-    marginTop: respHeight(4)
-  },
-  familyBannerSender: {
-    color: OLED_PALETTE.textPrimary,
-    fontFamily: FONTS.displayBold,
-    fontSize: respFontSize(13)
-  },
-  familyBannerText: {
-    color: '#d4edda',
-    fontFamily: FONTS.displayMedium,
-    fontSize: respFontSize(14),
-    marginTop: respHeight(2)
-  },
-  packetCard: {
-    backgroundColor: OLED_PALETTE.kaiserburgCard,
-    borderWidth: 1.5,
-    borderColor: OLED_PALETTE.surfaceBorder,
-    borderLeftWidth: respWidth(4),
-    borderRadius: respWidth(8),
-    padding: respWidth(12),
-    marginBottom: respHeight(10)
-  },
-  packetHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: respHeight(6)
-  },
-  packetHeaderLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: respWidth(8)
-  },
-  packetTypeBadge: {
-    fontFamily: FONTS.monoBold,
-    fontSize: respFontSize(11),
-    paddingHorizontal: respWidth(7),
-    paddingVertical: respHeight(2),
-    borderRadius: respWidth(4),
-    overflow: 'hidden'
-  },
-  packetSectorTag: {
-    color: OLED_PALETTE.textMuted,
-    fontFamily: FONTS.monoMedium,
-    fontSize: respFontSize(11),
-  },
-  packetHops: {
-    color: OLED_PALETTE.textMuted,
-    fontFamily: FONTS.monoRegular,
-    fontSize: respFontSize(11),
-  },
-  packetBody: {
-    marginTop: respHeight(4)
-  },
-  sosAlertTitle: {
-    color: OLED_PALETTE.nurnbergRed,
-    fontFamily: FONTS.displayBold,
-    fontSize: respFontSize(16)
-  },
-  safeSender: {
-    color: OLED_PALETTE.imperialGold,
-    fontFamily: FONTS.displayBold,
-    fontSize: respFontSize(14)
-  },
-  encryptedPayload: {
-    color: OLED_PALETTE.textMuted,
-    fontFamily: FONTS.monoRegular,
-    fontSize: respFontSize(12),
-    marginTop: respHeight(3)
-  },
-  hazardTitle: {
-    color: OLED_PALETTE.warningAmber,
-    fontFamily: FONTS.displayBold,
-    fontSize: respFontSize(15)
-  },
-  packetDesc: {
-    color: OLED_PALETTE.textPrimary,
-    fontFamily: FONTS.displayMedium,
-    fontSize: respFontSize(14),
-    marginTop: respHeight(3)
-  },
-  gpsCoords: {
-    color: OLED_PALETTE.textMuted,
-    fontFamily: FONTS.monoRegular,
-    fontSize: respFontSize(11),
-    marginTop: respHeight(4),
-  },
-  mutedPacketCard: {
-    borderLeftColor: OLED_PALETTE.textMuted,
-    backgroundColor: '#0a0a0a',
-    opacity: 0.7,
-    paddingVertical: respHeight(8),
-  },
-  mutedSenderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  mutedSenderText: {
-    color: OLED_PALETTE.textMuted,
-    fontFamily: FONTS.monoRegular,
-    fontSize: respFontSize(12),
-  },
-  unmuteBtn: {
-    paddingHorizontal: respWidth(8),
-    paddingVertical: respHeight(4),
-    backgroundColor: OLED_PALETTE.surfaceBorder,
-    borderRadius: respWidth(4),
-  },
-  unmuteBtnText: {
-    color: OLED_PALETTE.meshCyan,
-    fontFamily: FONTS.monoBold,
-    fontSize: respFontSize(11),
-  },
-  witnessBadge: {
-    paddingHorizontal: respWidth(6),
-    paddingVertical: respHeight(2),
-    borderRadius: respWidth(3),
-    borderWidth: respWidth(1),
-    marginLeft: respWidth(6),
-  },
-  witnessBadgeUnconfirmed: {
-    backgroundColor: 'rgba(255, 179, 0, 0.1)',
-    borderColor: OLED_PALETTE.warningAmber,
-  },
-  witnessBadgeVerified: {
-    backgroundColor: 'rgba(34, 197, 94, 0.15)',
-    borderColor: OLED_PALETTE.safeGreen,
-  },
-  witnessBadgeText: {
-    fontFamily: FONTS.monoBold,
-    fontSize: respFontSize(10),
-  },
-  witnessTextUnconfirmed: {
-    color: OLED_PALETTE.warningAmber,
-  },
-  witnessTextVerified: {
-    color: OLED_PALETTE.safeGreen,
-  },
-  cardActionsRow: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-    gap: respWidth(10),
-    marginTop: respHeight(8),
-    paddingTop: respHeight(8),
-    borderTopWidth: respWidth(1),
-    borderTopColor: OLED_PALETTE.surfaceBorder,
-  },
-  vouchBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: respWidth(4),
-    paddingHorizontal: respWidth(10),
-    paddingVertical: respHeight(4),
-    borderRadius: respWidth(4),
-    backgroundColor: 'rgba(34, 197, 94, 0.12)',
-    borderWidth: respWidth(1),
-    borderColor: OLED_PALETTE.safeGreen,
-  },
-  vouchBtnText: {
-    color: OLED_PALETTE.safeGreen,
-    fontFamily: FONTS.monoBold,
-    fontSize: respFontSize(11),
-  },
-  muteBtn: {
-    paddingHorizontal: respWidth(8),
-    paddingVertical: respHeight(4),
-    borderRadius: respWidth(4),
-    backgroundColor: 'rgba(239, 68, 68, 0.08)',
-    borderWidth: respWidth(1),
-    borderColor: 'rgba(239, 68, 68, 0.3)',
-  },
-  muteBtnText: {
-    color: OLED_PALETTE.textMuted,
-    fontFamily: FONTS.monoRegular,
-    fontSize: respFontSize(11),
-  },
-  sosEmergency112Banner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: respWidth(10),
-    backgroundColor: 'rgba(255, 179, 0, 0.12)',
-    borderWidth: respWidth(1.5),
-    borderColor: OLED_PALETTE.warningAmber,
-    borderRadius: respWidth(8),
-    padding: respWidth(12),
-    marginBottom: respHeight(14),
-  },
-  sosEmergency112Text: {
-    flex: 1,
-    color: OLED_PALETTE.warningAmber,
-    fontFamily: FONTS.displayMedium,
-    fontSize: respFontSize(13),
-    lineHeight: respHeight(18),
-  },
-  dataSourceContainer: {
-    padding: respWidth(14),
-    marginTop: respHeight(10),
-    marginBottom: respHeight(30),
-    backgroundColor: '#0a0d14',
-    borderWidth: respWidth(1),
-    borderColor: OLED_PALETTE.surfaceBorder,
-    borderRadius: respWidth(8),
-  },
-  dataSourceText: {
-    color: OLED_PALETTE.textMuted,
-    fontFamily: FONTS.monoRegular,
-    fontSize: respFontSize(11),
-    lineHeight: respHeight(16),
-  },
-  formContainer: {
-    flex: 1
-  },
-  sosTitleRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: respHeight(2)
-  },
-  familyTitleRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: respHeight(4),
-    flexWrap: 'wrap',
-    gap: respWidth(6),
-  },
-  formTitle: {
-    color: OLED_PALETTE.textPrimary,
-    fontFamily: FONTS.displayBold,
-    fontSize: respFontSize(17),
-    letterSpacing: 0.5
-  },
-  katsBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: respWidth(4),
-    backgroundColor: '#38060b',
-    borderWidth: 1,
-    borderColor: OLED_PALETTE.nurnbergRed,
-    paddingHorizontal: respWidth(8),
-    paddingVertical: respHeight(3),
-    borderRadius: respWidth(4)
-  },
-  katsBadgeText: {
-    color: OLED_PALETTE.nurnbergRed,
-    fontFamily: FONTS.monoBold,
-    fontSize: respFontSize(11),
-  },
-  vaultTag: {
-    backgroundColor: '#261b00',
-    borderWidth: 1,
-    borderColor: OLED_PALETTE.imperialGold,
-    paddingHorizontal: respWidth(8),
-    paddingVertical: respHeight(3),
-    borderRadius: respWidth(4)
-  },
-  vaultTagText: {
-    color: OLED_PALETTE.imperialGold,
-    fontFamily: FONTS.monoBold,
-    fontSize: respFontSize(11),
-  },
-  formSubtitle: {
-    color: OLED_PALETTE.textMuted,
-    fontFamily: FONTS.displayRegular,
-    fontSize: respFontSize(13),
-    marginBottom: respHeight(14)
-  },
-  tacticalSosCard: {
-    backgroundColor: OLED_PALETTE.surfaceCard,
-    borderWidth: 1.5,
-    borderColor: OLED_PALETTE.surfaceBorder,
-    borderLeftWidth: respWidth(5),
-    borderRadius: respWidth(8),
-    padding: respWidth(14),
-    marginBottom: respHeight(12),
-  },
-  tacticalSosTopRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: respHeight(8),
-  },
-  tacticalKatsGroup: {
-    flex: 1,
-    marginRight: respWidth(8),
-  },
-  tacticalKatsCode: {
-    color: '#cbd5e1',
-    fontFamily: FONTS.monoBold,
-    fontSize: respFontSize(11.5),
-    letterSpacing: TRACKING.tactical,
-    textTransform: 'uppercase',
-  },
-  tacticalBadgePill: {
-    paddingHorizontal: respWidth(7),
-    paddingVertical: respHeight(2),
-    borderRadius: respWidth(4),
-    borderWidth: 1,
-  },
-  tacticalBadgeText: {
-    fontFamily: FONTS.monoBold,
-    fontSize: respFontSize(11),
-    letterSpacing: TRACKING.tactical,
-  },
-  tacticalSosMainRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: respWidth(10),
-    marginBottom: respHeight(6),
-  },
-  tacticalIconBox: {
-    width: respWidth(38),
-    height: respWidth(38),
-    borderRadius: respWidth(6),
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  tacticalTitleColumn: {
-    flex: 1,
-  },
-  tacticalSosTitle: {
-    color: OLED_PALETTE.textPrimary,
-    fontFamily: FONTS.displayBold,
-    fontSize: respFontSize(16),
-    letterSpacing: TRACKING.standard,
-  },
-  tacticalSosSubtag: {
-    color: OLED_PALETTE.textMuted,
-    fontFamily: FONTS.monoMedium,
-    fontSize: respFontSize(10),
-    letterSpacing: TRACKING.condensed,
-    marginTop: respHeight(1),
-  },
-  tacticalSosDesc: {
-    color: OLED_PALETTE.textSecondary,
-    fontFamily: FONTS.displayRegular,
-    fontSize: respFontSize(13),
-    lineHeight: respHeight(17),
-    marginBottom: respHeight(10),
-  },
-  tacticalSosFooter: {
-    borderTopWidth: 1,
-    borderTopColor: '#161d28',
-    paddingTop: respHeight(8),
-  },
-  tacticalDispatchBar: {
-    borderWidth: 1,
-    paddingVertical: respHeight(8),
-    paddingHorizontal: respWidth(10),
-    borderRadius: respWidth(5),
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  tacticalDispatchText: {
-    fontFamily: FONTS.monoBold,
-    fontSize: respFontSize(12),
-    letterSpacing: TRACKING.tactical,
-  },
-  sosCard: {
-    backgroundColor: OLED_PALETTE.surfaceCard,
-    borderWidth: 1.5,
-    borderRadius: respWidth(10),
-    padding: respWidth(14),
-    marginBottom: respHeight(12)
-  },
-  sosCardHeader: {
-    marginBottom: respHeight(4),
-  },
-  sosCardTitleRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: respWidth(8),
-  },
-  sosTitleGroup: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: respWidth(8),
-    flex: 1,
-  },
-  sosMetaRow: {
-    marginTop: respHeight(2),
-    marginLeft: respWidth(28),
-  },
-  sosCardTitle: {
-    color: OLED_PALETTE.textPrimary,
-    fontFamily: FONTS.displayBold,
-    fontSize: respFontSize(16),
-  },
-  sosCodeBadge: {
-    color: OLED_PALETTE.textMuted,
-    fontFamily: FONTS.monoBold,
-    fontSize: respFontSize(11.5),
-    letterSpacing: respWidth(0.3),
-  },
-  sosCardDesc: {
-    color: OLED_PALETTE.textMuted,
-    fontFamily: FONTS.displayRegular,
-    fontSize: respFontSize(13),
-    marginTop: respHeight(4),
-    marginLeft: respWidth(28),
-  },
-  hazardGrid: {
-    flexDirection: 'row',
-    gap: respWidth(8)
-  },
-  hazardButton: {
-    flex: 1,
-    backgroundColor: OLED_PALETTE.surfaceCard,
-    borderWidth: 1.5,
-    padding: respWidth(12),
-    borderRadius: respWidth(8),
-    alignItems: 'center'
-  },
-  hazardButtonWide: {
-    backgroundColor: OLED_PALETTE.surfaceCard,
-    borderWidth: 1.5,
-    padding: respWidth(12),
-    borderRadius: respWidth(8),
-    alignItems: 'center'
-  },
-  hazardButtonText: {
-    color: OLED_PALETTE.textPrimary,
-    fontFamily: FONTS.displayBold,
-    fontSize: respFontSize(14)
-  },
-  hazardButtonSub: {
-    color: OLED_PALETTE.textMuted,
-    fontFamily: FONTS.displayMedium,
-    fontSize: respFontSize(12),
-    marginTop: respHeight(3)
-  },
-  card: {
-    backgroundColor: OLED_PALETTE.surfaceCard,
-    borderWidth: 1.5,
-    borderColor: OLED_PALETTE.surfaceBorder,
-    padding: respWidth(14),
-    borderRadius: respWidth(10)
-  },
-  cardHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: respHeight(8)
-  },
-  cardLabel: {
-    color: OLED_PALETTE.textPrimary,
-    fontFamily: FONTS.displayBold,
-    fontSize: respFontSize(15)
-  },
-  cipherLabel: {
-    color: OLED_PALETTE.imperialGold,
-    fontFamily: FONTS.monoBold,
-    fontSize: respFontSize(12),
-  },
-  input: {
-    backgroundColor: '#0c0f14',
-    borderWidth: 1.5,
-    borderColor: OLED_PALETTE.surfaceBorder,
-    color: OLED_PALETTE.textPrimary,
-    fontFamily: FONTS.monoMedium,
-    paddingHorizontal: respWidth(12),
-    paddingVertical: respHeight(10),
-    borderRadius: respWidth(6),
-    fontSize: respFontSize(14),
-    marginBottom: respHeight(10)
-  },
-  actionButton: {
-    backgroundColor: OLED_PALETTE.meshCyan,
-    paddingVertical: respHeight(12),
-    borderRadius: respWidth(6),
-    alignItems: 'center'
-  },
-  actionButtonGold: {
-    backgroundColor: OLED_PALETTE.imperialGold,
-    paddingVertical: respHeight(12),
-    borderRadius: respWidth(6),
-    alignItems: 'center'
-  },
-  actionButtonText: {
-    color: OLED_PALETTE.textInverse,
-    fontFamily: FONTS.displayBold,
-    fontSize: respFontSize(15)
-  },
-  actionButtonGoldText: {
-    color: OLED_PALETTE.textInverse,
-    fontFamily: FONTS.displayBold,
-    fontSize: respFontSize(15)
-  },
-  secretActiveNotice: {
-    color: OLED_PALETTE.safeGreen,
-    fontFamily: FONTS.monoMedium,
-    fontSize: respFontSize(12),
-    marginTop: respHeight(6),
-  },
-  cryptoProofCard: {
-    marginTop: respHeight(12),
-    padding: respWidth(12),
-    borderRadius: respWidth(8),
-    borderWidth: 1.5,
-  },
-  cryptoProofCardActive: {
-    backgroundColor: '#041d11',
-    borderColor: OLED_PALETTE.safeGreen,
-  },
-  cryptoProofCardPending: {
-    backgroundColor: '#1f1604',
-    borderColor: OLED_PALETTE.warningAmber,
-  },
-  cryptoProofTopRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: respWidth(8),
-  },
-  cryptoProofStatusText: {
-    flex: 1,
-    fontFamily: FONTS.monoBold,
-    fontSize: respFontSize(11.5),
-    letterSpacing: 0.5,
-  },
-  cryptoStatusGreen: {
-    color: OLED_PALETTE.safeGreen,
-  },
-  cryptoStatusAmber: {
-    color: OLED_PALETTE.warningAmber,
-  },
-  cryptoProofPill: {
-    paddingHorizontal: respWidth(8),
-    paddingVertical: respHeight(2),
-    borderRadius: respWidth(4),
-    borderWidth: 1,
-  },
-  cryptoPillGreen: {
-    backgroundColor: '#00e67622',
-    borderColor: OLED_PALETTE.safeGreen,
-  },
-  cryptoPillAmber: {
-    backgroundColor: '#ffb70322',
-    borderColor: OLED_PALETTE.warningAmber,
-  },
-  cryptoProofPillText: {
-    fontFamily: FONTS.monoBold,
-    fontSize: respFontSize(10),
-  },
-  cryptoPillTextGreen: {
-    color: OLED_PALETTE.safeGreen,
-  },
-  cryptoPillTextAmber: {
-    color: OLED_PALETTE.warningAmber,
-  },
-  cryptoProofExplanation: {
-    color: OLED_PALETTE.textSecondary,
-    fontFamily: FONTS.displayRegular,
-    fontSize: respFontSize(11),
-    lineHeight: respHeight(15),
-    marginTop: respHeight(6),
-  },
-  cryptoFingerprintBox: {
-    backgroundColor: '#030c08',
-    borderWidth: 1,
-    borderColor: '#0a301a',
-    borderRadius: respWidth(6),
-    padding: respWidth(10),
-    marginTop: respHeight(8),
-    marginBottom: respHeight(4),
-  },
-  cryptoFingerprintLabel: {
-    color: '#6ee7b7',
-    fontFamily: FONTS.monoMedium,
-    fontSize: respFontSize(10),
-    letterSpacing: TRACKING.tactical,
-    marginBottom: respHeight(2),
-  },
-  cryptoFingerprintValue: {
-    color: OLED_PALETTE.safeGreen,
-    fontFamily: FONTS.monoBold,
-    fontSize: respFontSize(12.5),
-    letterSpacing: TRACKING.trackedOut,
-  },
-  cryptoSpecsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: respWidth(6),
-    marginTop: respHeight(6),
-  },
-  cryptoSpecChip: {
-    backgroundColor: '#0a2316',
-    color: '#a7f3d0',
-    fontFamily: FONTS.monoRegular,
-    fontSize: respFontSize(9.5),
-    paddingHorizontal: respWidth(6),
-    paddingVertical: respHeight(2),
-    borderRadius: respWidth(3),
-    borderWidth: 0.5,
-    borderColor: '#059669',
-  },
-  liveCipherBox: {
-    marginTop: respHeight(10),
-    padding: respWidth(10),
-    borderRadius: respWidth(6),
-    backgroundColor: '#050c14',
-    borderWidth: 1,
-    borderColor: OLED_PALETTE.hudBorderCyan,
-  },
-  liveCipherTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: respWidth(6),
-    marginBottom: respHeight(4),
-  },
-  liveCipherLabel: {
-    color: OLED_PALETTE.textMuted,
-    fontFamily: FONTS.monoBold,
-    fontSize: respFontSize(10),
-    flex: 1,
-    letterSpacing: 0.5,
-  },
-  liveCipherTag: {
-    fontFamily: FONTS.monoBold,
-    fontSize: respFontSize(10),
-    paddingHorizontal: respWidth(6),
-    paddingVertical: respHeight(1),
-    borderRadius: respWidth(3),
-    borderWidth: 1,
-  },
-  liveCipherTagGreen: {
-    color: OLED_PALETTE.safeGreen,
-    borderColor: OLED_PALETTE.safeGreen,
-    backgroundColor: '#00e67618',
-  },
-  liveCipherTagAmber: {
-    color: OLED_PALETTE.warningAmber,
-    borderColor: OLED_PALETTE.warningAmber,
-    backgroundColor: '#ffb70318',
-  },
-  liveCipherValue: {
-    color: OLED_PALETTE.meshCyan,
-    fontFamily: FONTS.monoRegular,
-    fontSize: respFontSize(11),
-    letterSpacing: 0.8,
-  },
-  liveCipherMetaRow: {
-    marginTop: respHeight(6),
-    paddingTop: respHeight(4),
-    borderTopWidth: 1,
-    borderTopColor: '#0a1d2e',
-  },
-  liveCipherMetaText: {
-    color: OLED_PALETTE.textMuted,
-    fontFamily: FONTS.monoRegular,
-    fontSize: respFontSize(10),
-    letterSpacing: 0.4,
-  },
-  districtFilterWrapper: {
-    position: 'relative',
-    marginBottom: respHeight(10),
-  },
-  districtFilterScroll: {
-    flexGrow: 0,
-  },
-  districtFilterContent: {
-    paddingRight: respWidth(32),
-  },
-  scrollHintPill: {
-    position: 'absolute',
-    right: 0,
-    top: 0,
-    bottom: 0,
-    width: respWidth(24),
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#000000dd',
-    borderLeftWidth: 1,
-    borderLeftColor: OLED_PALETTE.surfaceBorder,
-    borderTopRightRadius: respWidth(6),
-    borderBottomRightRadius: respWidth(6),
-  },
-  scrollHintText: {
-    color: OLED_PALETTE.safeGreen,
-    fontFamily: FONTS.monoBold,
-    fontSize: respFontSize(16),
-    lineHeight: respFontSize(18),
-  },
-  districtChip: {
-    paddingHorizontal: respWidth(14),
-    paddingVertical: respHeight(7),
-    borderRadius: respWidth(6),
-    backgroundColor: OLED_PALETTE.surfaceCard,
-    borderWidth: 1.5,
-    borderColor: OLED_PALETTE.surfaceBorder,
-    marginRight: respWidth(8)
-  },
-  districtChipActive: {
-    borderColor: OLED_PALETTE.safeGreen,
-    backgroundColor: '#00e67618'
-  },
-  districtChipText: {
-    color: OLED_PALETTE.textMuted,
-    fontFamily: FONTS.displaySemiBold,
-    fontSize: respFontSize(13),
-  },
-  districtChipTextActive: {
-    color: OLED_PALETTE.safeGreen,
-    fontFamily: FONTS.displayBold,
-    fontSize: respFontSize(13)
-  },
-  poiCard: {
-    backgroundColor: OLED_PALETTE.kaiserburgCard,
-    borderWidth: 1.5,
-    borderColor: OLED_PALETTE.surfaceBorder,
-    padding: respWidth(12),
-    borderRadius: respWidth(8),
-    marginBottom: respHeight(10)
-  },
-  poiHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center'
-  },
-  poiTitleGroup: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: respWidth(8),
-    flex: 1,
-  },
-  poiName: {
-    color: OLED_PALETTE.textPrimary,
-    fontFamily: FONTS.displayBold,
-    fontSize: respFontSize(16),
-    flex: 1
-  },
-  poiTag: {
-    fontFamily: FONTS.monoBold,
-    fontSize: respFontSize(11),
-    borderWidth: 1,
-    paddingHorizontal: respWidth(7),
-    paddingVertical: respHeight(2),
-    borderRadius: respWidth(4),
-    marginLeft: respWidth(8)
-  },
-  poiMetaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: respWidth(8),
-    marginTop: respHeight(4)
-  },
-  poiDistrictBadge: {
-    color: OLED_PALETTE.imperialGold,
-    fontFamily: FONTS.monoBold,
-    fontSize: respFontSize(12),
-  },
-  poiDistanceChip: {
-    color: OLED_PALETTE.textMuted,
-    fontFamily: FONTS.monoMedium,
-    fontSize: respFontSize(12),
-  },
-  poiAddress: {
-    color: OLED_PALETTE.textSecondary,
-    fontFamily: FONTS.displayMedium,
-    fontSize: respFontSize(13),
-    marginTop: respHeight(3)
-  },
-  poiNotes: {
-    color: OLED_PALETTE.textMuted,
-    fontFamily: FONTS.displayRegular,
-    fontSize: respFontSize(12),
-    marginTop: respHeight(4)
-  },
-  poiCapacity: {
-    color: OLED_PALETTE.meshCyan,
-    fontFamily: FONTS.monoMedium,
-    fontSize: respFontSize(12),
-    marginTop: respHeight(3),
-  },
-  poiRadio: {
-    color: OLED_PALETTE.imperialGold,
-    fontFamily: FONTS.monoMedium,
-    fontSize: respFontSize(12),
-    marginTop: respHeight(3),
-  },
-  familyBannerHeaderLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: respWidth(6),
-  },
-  familySenderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: respWidth(6),
-  },
-  signalBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: respWidth(4),
-  },
-  kaiserburgTagText: {
-    color: OLED_PALETTE.safeGreen,
-    fontFamily: FONTS.monoBold,
-    fontSize: respFontSize(11),
-  },
-  sosTitleLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: respWidth(8),
-    flex: 1,
-  },
-  sosRedundantBadge: {
-    paddingHorizontal: respWidth(6),
-    paddingVertical: respHeight(1),
-    borderRadius: respWidth(3),
-    borderWidth: 1,
-    borderColor: OLED_PALETTE.nurnbergRed,
-    backgroundColor: '#d9042918',
-    marginLeft: respWidth(6),
-  },
-  sosRedundantText: {
-    color: OLED_PALETTE.nurnbergRed,
-    fontFamily: FONTS.monoBold,
-    fontSize: respFontSize(10.5),
-  },
-  hazardBtnRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: respWidth(6),
-  },
-  cardHeaderLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: respWidth(8),
-  },
-  btnRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: respWidth(8),
-  },
-  searchBarContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: respWidth(8),
-    backgroundColor: '#0c0f14',
-    borderWidth: 1.5,
-    borderColor: OLED_PALETTE.surfaceBorder,
-    borderRadius: respWidth(6),
-    paddingHorizontal: respWidth(10),
-    marginBottom: respHeight(8),
-  },
-  searchInput: {
-    flex: 1,
-    color: OLED_PALETTE.textPrimary,
-    fontFamily: FONTS.monoMedium,
-    paddingVertical: respHeight(10),
-    fontSize: respFontSize(14),
-  },
-  packetBodyRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: respWidth(6),
-  },
-  gpsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: respWidth(5),
-    marginTop: respHeight(4),
-  },
-  poiDistanceRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: respWidth(4),
-  },
-  poiRadioRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: respWidth(4),
-    marginTop: respHeight(3),
-  },
 });
