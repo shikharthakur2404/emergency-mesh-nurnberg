@@ -28,21 +28,50 @@ import {
   NurnbergCrestIcon,
 } from './icons/MeshIcons';
 
+/**
+ * TacticalDrawer — Civil Defense Diagnostics & Control Panel
+ *
+ * A full-screen modal drawer rendered over the main HUD. Serves three purposes:
+ *   1. **Hotlines** — pre-loaded Nürnberg emergency numbers (112, 110, DLRG, etc.)
+ *      accessible offline without any network lookup.
+ *   2. **Telemetry** — live RF radio status, DTN buffer stats, node ID, and peer count
+ *      for operators diagnosing mesh health.
+ *   3. **Actions** — language switch, guide re-opener, and mesh cache reset.
+ *
+ * Opened via the `≡` header icon in App.tsx. Can also be triggered programmatically
+ * by setting `drawerVisible` state in the parent.
+ */
+
+/** Props for the TacticalDrawer component. */
 interface TacticalDrawerProps {
+  /** Controls drawer visibility. */
   visible: boolean;
+  /** Called when the user closes the drawer (close button or backdrop press). */
   onClose: () => void;
+  /** Active UI language — passed down so hotline labels render in the correct locale. */
   language: Language;
+  /** Callback to switch the app language. Updates `language` state in App. */
   onSelectLanguage: (lang: Language) => void;
+  /** Callback to open the EmergencyGuideModal from within the drawer. */
   onOpenGuide: () => void;
+  /** This node's anonymised mesh ID (e.g. `anon_4f2a`). Displayed in telemetry panel. */
   nodeId: string;
+  /** Whether hardware UDP radio is active. Determines telemetry status colour. */
   isRadioActive: boolean;
+  /** Number of directly connected mesh peers. */
   connectedPeersCount: number;
+  /** Packets relayed on behalf of other nodes (routing contribution metric). */
   relayedCount: number;
+  /** Total packets received since session start. */
   totalPacketsCount: number;
+  /** DTN store-and-forward buffer depth — how many packets are awaiting delivery. */
   dtnBufferedCount?: number;
+  /** Number of epidemic DTN sync rounds completed. */
   dtnSyncCount?: number;
+  /** Clears the mesh dedup cache and local history (useful after network partition events). */
   onClearCache: () => void;
 }
+
 
 const NURNBERG_HOTLINES = [
   { name: 'Feuerwehr & Rettungsdienst', number: '112', type: 'EMERGENCY' },

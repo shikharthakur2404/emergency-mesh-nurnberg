@@ -1,3 +1,14 @@
+/**
+ * DiagnosticsDisclosure — Collapsible Mesh Radio & Telemetry Panel
+ *
+ * Shown on the Radar tab when the packet stream is empty. Renders a compact collapsed
+ * header with channel name and radio status; expands to show a full telemetry grid:
+ * node ID, GPS sector, radio mode, DTN buffer depth, and sync count.
+ *
+ * Designed for offline-first crash diagnostics — all data is local, no network calls.
+ * Uses accessibilityRole="button" and accessibilityState so screen readers announce
+ * the expand/collapse state correctly.
+ */
 import React, { useState, useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import {
@@ -9,14 +20,22 @@ import {
 } from '../ui/responsive';
 import { ChevronDownIcon, ChevronUpIcon } from './icons/MeshIcons';
 
+/** Props for the DiagnosticsDisclosure component. */
 interface DiagnosticsDisclosureProps {
+  /** Mesh radio channel name displayed in both collapsed and expanded states (e.g. `PEGNITZ-8888`). */
   channelName: string;
+  /** GPS sector string shown in the telemetry grid (e.g. `49.45°N 11.08°E`). */
   gpsCoords: string;
+  /** Number of packets held in the DTN store-and-forward buffer. */
   dtnBufferedCount: number;
+  /** Number of epidemic DTN sync rounds completed this session. */
   dtnSyncCount: number;
+  /** This node's anonymised mesh ID, shown in the telemetry grid. */
   nodeId: string;
+  /** True when the physical UDP hardware radio is active; false in simulation mode. */
   isRadioActive: boolean;
 }
+
 
 export const DiagnosticsDisclosure: React.FC<DiagnosticsDisclosureProps> = React.memo(({
   channelName,

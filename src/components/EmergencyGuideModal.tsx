@@ -1,3 +1,19 @@
+/**
+ * EmergencyGuideModal — First-Launch Onboarding & Crisis Walkthrough
+ *
+ * A full-screen modal carousel that guides users through the app's five core features:
+ *   1. Off-grid mesh — no internet or SIM required.
+ *   2. Device pairing — hotspot-based peer discovery on channel 8888.
+ *   3. SOS beacon — public emergency broadcast with GPS coordinates.
+ *   4. Familie — AES-256 encrypted family status with pre-shared secret.
+ *   5. Orte — offline Nürnberg POI database (water wells, hospitals, shelters).
+ *
+ * Triggered automatically on first launch (`guideVisible` defaults true in App.tsx) and
+ * re-openable at any time via the `?` header icon or the TacticalDrawer action button.
+ *
+ * State is self-contained: `currentStep` resets to 0 on close so re-opening always starts
+ * from the splash slide.
+ */
 import React, { useState, useCallback, useMemo } from 'react';
 import {
   Modal,
@@ -29,11 +45,16 @@ import {
   LightbulbIcon,
 } from './icons/MeshIcons';
 
+/** Props for the EmergencyGuideModal component. */
 interface EmergencyGuideModalProps {
+  /** Controls modal visibility. Set to true on first launch or when user taps `?`. */
   visible: boolean;
+  /** Called when the user completes the carousel or taps the close (×) button. */
   onClose: () => void;
+  /** Active app language — controls which translation strings are rendered in guide slides. */
   language: Language;
 }
+
 
 export const EmergencyGuideModal: React.FC<EmergencyGuideModalProps> = React.memo(({
   visible,

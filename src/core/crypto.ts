@@ -1,43 +1,50 @@
 /**
  * Emergency Mesh Nürnberg — Cryptographic Engine
  * Zero-leakage family secret pairing, tamper-resistant packet signing, and offline AES encryption.
+ *
+ * Security properties:
+ * - All randomness sourced from crypto.getRandomValues() (CSPRNG) via react-native-get-random-values.
+ *   Import 'react-native-get-random-values' at the app entry point (index.js) before any crypto usage.
+ * - AES-256-CBC with PBKDF2(SHA-256, 10 000 iter) key derivation — brute-force resistant.
+ * - Every message gets a unique 16-byte salt + 16-byte IV — eliminates nonce reuse.
+ * - Public SOS/hazard packets signed with HMAC-SHA256 — prevents mesh relay tampering.
  */
 
 import CryptoJS from 'crypto-js';
 
-// Polyfill global crypto.getRandomValues and CryptoJS.lib.WordArray.random for React Native / Hermes
-if (typeof globalThis !== 'undefined' && (!globalThis.crypto || !globalThis.crypto.getRandomValues)) {
-  const getRandomValues = <T extends ArrayBufferView | null>(array: T): T => {
-    if (array) {
-      const uint8 = new Uint8Array(array.buffer, array.byteOffset, array.byteLength);
-      for (let i = 0; i < uint8.length; i++) {
-        uint8[i] = Math.floor(Math.random() * 256);
-      }
-    }
-    return array;
-  };
-  if (!globalThis.crypto) {
-    (globalThis as any).crypto = { getRandomValues };
-  } else {
-    (globalThis.crypto as any).getRandomValues = getRandomValues;
-  }
+/**
+ * Reads cryptographically secure random bytes using the native crypto.getRandomValues() API.
+ * Requires 'react-native-get-random-values' to be imported at app entry (index.js) before
+ * this module loads — that package installs a Hermes-compatible CSPRNG polyfill on globalThis.
+ *
+ * SECURITY NOTE: Math.random() is NOT used anywhere in this codebase. All randomness is
+ * routed through this helper so we have a single auditable source.
+ *
+ * @param byteCount - Number of random bytes to generate.
+ * @returns Hex string of `byteCount` random bytes.
+ */
+function getSecureRandomHex(byteCount: number): string {
+  const buffer = new Uint8Array(byteCount);
+  globalThis.crypto.getRandomValues(buffer);
+  return Array.from(buffer)
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
 }
 
-try {
-  CryptoJS.lib.WordArray.random(4);
-} catch {
-  (CryptoJS.lib.WordArray as any).random = function (nBytes: number) {
-    const words: number[] = [];
-    for (let i = 0; i < nBytes; i += 4) {
-      words.push(Math.floor(Math.random() * 0x100000000));
-    }
-    return CryptoJS.lib.WordArray.create(words, nBytes);
-  };
-}
+/**
+ * Wraps getSecureRandomHex as a CryptoJS WordArray, required by the CryptoJS encrypt API
+ * for salts and IVs. Overrides CryptoJS.lib.WordArray.random to use CSPRNG instead of its
+ * default Math.random()-based implementation.
+ */
+(CryptoJS.lib.WordArray as any).random = function (nBytes: number): CryptoJS.lib.WordArray {
+  const hex = getSecureRandomHex(nBytes);
+  return CryptoJS.enc.Hex.parse(hex);
+};
 
 /**
  * Computes a deterministic SHA-256 hash of a family group secret.
  * Shared across family devices via offline QR code or manual entry.
+ * Namespace-prefixed to prevent cross-app secret collisions.
  */
 export function hashFamilySecret(secret: string): string {
   const normalized = secret.trim().toLowerCase();
@@ -45,18 +52,21 @@ export function hashFamilySecret(secret: string): string {
 }
 
 /**
- * Generates an 8-character unique hex message ID for deduplication.
+ * Generates a cryptographically random 8-byte hex message ID for packet deduplication.
+ * Uses CSPRNG — not Math.random() — to prevent ID prediction attacks.
  */
 export function generateMsgId(): string {
-  return Math.random().toString(36).substring(2, 10);
+  return getSecureRandomHex(8);
 }
 
 /**
- * Generates an ephemeral anonymous node ID.
+ * Generates a cryptographically random ephemeral node ID.
+ * Anonymised on every app launch — no persistent device fingerprint.
  */
 export function generateNodeId(): string {
-  return `anon_${Math.random().toString(36).substring(2, 6)}`;
+  return `anon_${getSecureRandomHex(4)}`;
 }
+
 
 /**
  * Signs a public emergency payload (SOS / Hazard) with node-bound integrity token.

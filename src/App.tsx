@@ -1,8 +1,22 @@
 /**
- * Emergency Mesh Nürnberg — Main React Native HUD Interface
- * Pure OLED Black (#000000) Civil Defense (Katastrophenschutz) Dashboard
- * Built for Situation A: Total cellular/ISP blackout in Nürnberg.
- * High-tech tactical Kaiserburg / Franconian aesthetic.
+ * Emergency Mesh Nürnberg — Root Application Component
+ *
+ * Renders the four-tab HUD (Radar, SOS, Familie, Orte) for a civilian off-grid
+ * mesh-network communication tool designed for use during full infrastructure failure
+ * (flooding, power grid collapse, cellular/ISP blackout).
+ *
+ * Architecture:
+ * - State managed via Zustand (`useMeshStore`) — no Redux, no context providers.
+ * - Mesh engine: MeshRouter over HybridMeshTransport (physical UDP + virtual bus).
+ * - All styles computed dynamically via `useAppStyles()` — responsive to orientation
+ *   and font scale changes through `useWindowDimensions`.
+ * - i18n: `getTranslations(language)` — supports DE and EN; toggleable at runtime.
+ * - Cryptography: AES-256-CBC + PBKDF2 for family messages; HMAC-SHA256 for SOS signing.
+ *
+ * Security posture:
+ * - No network calls outside the mesh layer — fully offline-capable.
+ * - Demo credentials (`Nbg-Familie-2026`) only present in __DEV__ builds.
+ * - All randomness via CSPRNG (crypto.getRandomValues via react-native-get-random-values).
  */
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
@@ -18,7 +32,7 @@ import {
   ScrollView,
   Alert,
   Animated,
-  useWindowDimensions
+  useWindowDimensions,
 } from 'react-native';
 import CryptoJS from 'crypto-js';
 import {
@@ -81,15 +95,25 @@ type Tab = 'FEED' | 'SOS' | 'FAMILY' | 'POIS';
 const DISTRICT_FILTERS = ['ALL', 'Altstadt', 'Gostenhof', 'Johannis', 'Langwasser', 'Südstadt'] as const;
 
 export default function App() {
+  // ── UI navigation state ──
   const [activeTab, setActiveTab] = useState<Tab>('FEED');
+  /** Controls whether the EmergencyGuideModal carousel is visible. */
+  const [guideVisible, setGuideVisible] = useState(false);
+  /** Controls whether the TacticalDrawer diagnostics panel is visible. */
+  const [drawerVisible, setDrawerVisible] = useState(false);
+
+  // ── Familie tab input state ──
   const [familySecretInput, setFamilySecretInput] = useState('');
   const [safeStatusText, setSafeStatusText] = useState('');
   const [senderAlias, setSenderAlias] = useState('');
+
+  // ── Orte tab filter state ──
   const [poiQuery, setPoiQuery] = useState('');
   const [selectedDistrict, setSelectedDistrict] = useState<string>('ALL');
+
+  /** True when the physical hardware UDP radio is detected and active. False = simulation mode. */
   const [isRadioActive, setIsRadioActive] = useState(false);
-  const [guideVisible, setGuideVisible] = useState(false);
-  const [drawerVisible, setDrawerVisible] = useState(false);
+
   const { width: w, height: h } = useWindowDimensions();
   const styles = useAppStyles();
 
@@ -160,7 +184,9 @@ export default function App() {
         nodeId,
         maxTtl: 15,
         dedupCacheSize: 500,
-        familySecrets: ['Nbg-Familie-2026'] // Default test pairing
+        // DEV ONLY: pre-seed a test family group so devs can test decryption without manual setup.
+        // In production builds (__DEV__ === false) this array is empty — users must set their own secret.
+        familySecrets: __DEV__ ? ['Nbg-Familie-2026'] : [],
       },
       hybridTransport
     );
@@ -169,20 +195,23 @@ export default function App() {
       attachRouter(meshRouter);
       setIsRadioActive(hybridTransport.isHardwareRadioActive());
 
-      // Link mock virtual neighbors across Nürnberg for demo simulation
-      const bus = VirtualNetworkBus.getInstance();
-      const peer1 = new VirtualMeshTransport('peer-altstadt-01');
-      const peer2 = new VirtualMeshTransport('peer-gostenhof-02');
-      peer1.start();
-      peer2.start();
-
-      bus.linkNeighbors(nodeId, 'peer-altstadt-01');
-      bus.linkNeighbors(nodeId, 'peer-gostenhof-02');
+      // DEV ONLY: Link mock virtual neighbours to simulate a live Nürnberg mesh in the emulator.
+      // Stripped entirely from production builds — real hardware peer discovery handles this.
+      if (__DEV__) {
+        const bus = VirtualNetworkBus.getInstance();
+        const peer1 = new VirtualMeshTransport('peer-altstadt-01');
+        const peer2 = new VirtualMeshTransport('peer-gostenhof-02');
+        peer1.start();
+        peer2.start();
+        bus.linkNeighbors(nodeId, 'peer-altstadt-01');
+        bus.linkNeighbors(nodeId, 'peer-gostenhof-02');
+      }
     });
 
     return () => {
       meshRouter.stop();
     };
+
   }, [nodeId, attachRouter]);
 
   // Handlers
