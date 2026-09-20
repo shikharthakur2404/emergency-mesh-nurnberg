@@ -359,18 +359,13 @@ export default function App() {
               <Animated.View style={[styles.cockpitPulseBeacon, { opacity: pulseAnim }]} />
               <SignalBarsIcon size={respWidth(13, w)} color={isRadioActive ? OLED_PALETTE.safeGreen : OLED_PALETTE.warningAmber} />
               <Text style={[styles.cockpitStatusText, isRadioActive ? styles.connTextGreen : styles.connTextAmber]}>
-                {isRadioActive ? 'P2P-FUNK AKTIV' : 'RADIO-SIMULATION'}
+                {isRadioActive ? (language === 'de' ? 'NOTNETZ BEREIT' : 'MESH READY') : (language === 'de' ? 'SIMULATION AKTIV' : 'SIMULATION MODE')}
               </Text>
-              <View style={[styles.cockpitModePill, isRadioActive ? styles.modePillGreen : styles.modePillAmber]}>
-                <Text style={[styles.cockpitModeText, isRadioActive ? styles.connTextGreen : styles.connTextAmber]}>
-                  {isRadioActive ? 'AD-HOC' : 'SIM-BUS'}
-                </Text>
-              </View>
             </View>
 
             <View style={styles.cockpitAutonomyPill}>
               <Text style={styles.cockpitAutonomyText}>
-                {language === 'de' ? 'AUTONOM // OFF-GRID' : '100% OFF-GRID'}
+                {language === 'de' ? '100% OFFLINE' : '100% OFF-GRID'}
               </Text>
             </View>
           </View>
@@ -383,13 +378,13 @@ export default function App() {
                 ⚡ {connectedPeers.length + 2}
               </Text>
               <Text style={styles.cockpitPeerLabel}>
-                {language === 'de' ? 'KNOTEN ERREICHBAR' : 'NODES IN RANGE'}
+                {language === 'de' ? 'GERÄTE IN REICHWEITE' : 'DEVICES IN RANGE'}
               </Text>
             </View>
 
             <View style={styles.cockpitChannelGroup}>
-              <Text style={styles.cockpitChannelLabel}>KANAL:</Text>
-              <Text style={styles.cockpitChannelValue}>PEGNITZ-8888 · 2.4 GHz</Text>
+              <Text style={styles.cockpitChannelLabel}>{language === 'de' ? 'NETZWERK:' : 'NETWORK:'}</Text>
+              <Text style={styles.cockpitChannelValue}>{language === 'de' ? 'Notfunk Nürnberg' : 'Emergency Mesh NBG'}</Text>
             </View>
           </View>
         </View>
@@ -534,20 +529,10 @@ export default function App() {
                   <Text style={styles.emptyStateSubtext}>{t.feed.emptySubtitle}</Text>
                 </View>
 
-                {/* Collapsible Municipal Diagnostics & Radio Status */}
-                <DiagnosticsDisclosure
-                  channelName="PEGNITZ-8888"
-                  gpsCoords="49.45°N 11.08°E"
-                  dtnBufferedCount={router ? router.getStats().dtnBufferedCount : 0}
-                  dtnSyncCount={router ? router.getStats().dtnSyncs : 0}
-                  nodeId={nodeId}
-                  isRadioActive={isRadioActive}
-                />
-
                 {/* Quick Emergency Action Cards - Anchored Dock */}
                 <View style={styles.quickDockContainer}>
                   <Text style={styles.quickDockLabel}>
-                    {language === 'de' ? 'SCHNELL-AKTIONEN // DIREKT-ZUGRIFF' : 'QUICK ACTIONS // DIRECT ACCESS'}
+                    {language === 'de' ? 'SOFORT-HILFE' : 'QUICK ACTIONS'}
                   </Text>
                   <View style={styles.quickActionRow}>
                     <TouchableOpacity
@@ -610,25 +595,18 @@ export default function App() {
 
             <View style={styles.sosTitleRow}>
               <Text style={styles.formTitle}>{t.sos.title}</Text>
-              <View style={styles.katsBadge}>
-                <KatsSireneIcon size={respWidth(13, w)} color={OLED_PALETTE.nurnbergRed} />
-                <Text style={styles.katsBadgeText}>KATS-DEFCON 1</Text>
-              </View>
             </View>
             <Text style={styles.formSubtitle}>{t.sos.subtitle}</Text>
 
-            {/* Medical SOS Card - NATO Tactical Grid (Zero Overlap) */}
+            {/* Medical SOS Card */}
             <TouchableOpacity
               style={[styles.tacticalSosCard, { borderLeftColor: OLED_PALETTE.sosRed }]}
               onPress={() => handleTriggerSos('MEDICAL')}
               activeOpacity={0.7}
             >
               <View style={styles.tacticalSosTopRow}>
-                <View style={styles.tacticalKatsGroup}>
-                  <Text style={styles.tacticalKatsCode}>{t.sos.codeMedical}</Text>
-                </View>
                 <View style={[styles.tacticalBadgePill, { borderColor: OLED_PALETTE.sosRed, backgroundColor: '#d9042925' }]}>
-                  <Text style={[styles.tacticalBadgeText, { color: OLED_PALETTE.sosRed }]}>[SOS]</Text>
+                  <Text style={[styles.tacticalBadgeText, { color: OLED_PALETTE.sosRed }]}>[NOTFALL]</Text>
                 </View>
               </View>
 
@@ -638,7 +616,7 @@ export default function App() {
                 </View>
                 <View style={styles.tacticalTitleColumn}>
                   <Text style={styles.tacticalSosTitle}>{t.sos.medical}</Text>
-                  <Text style={styles.tacticalSosSubtag}>NOTARZT · RETTUNGSDIENST · ERSTE HILFE</Text>
+                  <Text style={styles.tacticalSosSubtag}>NOTARZT · ERSTE HILFE</Text>
                 </View>
               </View>
 
@@ -646,7 +624,9 @@ export default function App() {
 
               <View style={styles.tacticalSosFooter}>
                 <View style={[styles.tacticalDispatchBar, { borderColor: OLED_PALETTE.sosRed, backgroundColor: '#d904291c' }]}>
-                  <Text style={[styles.tacticalDispatchText, { color: OLED_PALETTE.sosRed }]}>NOTRUF ABSETZEN [1-TAP] ➔</Text>
+                  <Text style={[styles.tacticalDispatchText, { color: OLED_PALETTE.sosRed }]}>
+                    {language === 'de' ? 'NOTRUF SENDEN ➔' : 'SEND SOS BEACON ➔'}
+                  </Text>
                 </View>
               </View>
             </TouchableOpacity>
@@ -658,11 +638,8 @@ export default function App() {
               activeOpacity={0.7}
             >
               <View style={styles.tacticalSosTopRow}>
-                <View style={styles.tacticalKatsGroup}>
-                  <Text style={styles.tacticalKatsCode}>{t.sos.codeFire}</Text>
-                </View>
                 <View style={[styles.tacticalBadgePill, { borderColor: '#ff6b35', backgroundColor: '#ff6b3525' }]}>
-                  <Text style={[styles.tacticalBadgeText, { color: '#ff6b35' }]}>[SOS]</Text>
+                  <Text style={[styles.tacticalBadgeText, { color: '#ff6b35' }]}>[NOTFALL]</Text>
                 </View>
               </View>
 
@@ -672,7 +649,7 @@ export default function App() {
                 </View>
                 <View style={styles.tacticalTitleColumn}>
                   <Text style={styles.tacticalSosTitle}>{t.sos.fire}</Text>
-                  <Text style={styles.tacticalSosSubtag}>FEUERWEHR · RAUCHENTWICKLUNG · EXPLOSION</Text>
+                  <Text style={styles.tacticalSosSubtag}>FEUERWEHR · BRAND · RAUCH</Text>
                 </View>
               </View>
 
@@ -680,7 +657,9 @@ export default function App() {
 
               <View style={styles.tacticalSosFooter}>
                 <View style={[styles.tacticalDispatchBar, { borderColor: '#ff6b35', backgroundColor: '#ff6b351c' }]}>
-                  <Text style={[styles.tacticalDispatchText, { color: '#ff6b35' }]}>NOTRUF ABSETZEN [1-TAP] ➔</Text>
+                  <Text style={[styles.tacticalDispatchText, { color: '#ff6b35' }]}>
+                    {language === 'de' ? 'NOTRUF SENDEN ➔' : 'SEND SOS BEACON ➔'}
+                  </Text>
                 </View>
               </View>
             </TouchableOpacity>
@@ -692,11 +671,8 @@ export default function App() {
               activeOpacity={0.7}
             >
               <View style={styles.tacticalSosTopRow}>
-                <View style={styles.tacticalKatsGroup}>
-                  <Text style={styles.tacticalKatsCode}>{t.sos.codeTrapped}</Text>
-                </View>
                 <View style={[styles.tacticalBadgePill, { borderColor: OLED_PALETTE.imperialGold, backgroundColor: '#ffb70325' }]}>
-                  <Text style={[styles.tacticalBadgeText, { color: OLED_PALETTE.imperialGold }]}>[SOS]</Text>
+                  <Text style={[styles.tacticalBadgeText, { color: OLED_PALETTE.imperialGold }]}>[RETTUNG]</Text>
                 </View>
               </View>
 
@@ -706,7 +682,7 @@ export default function App() {
                 </View>
                 <View style={styles.tacticalTitleColumn}>
                   <Text style={styles.tacticalSosTitle}>{t.sos.trapped}</Text>
-                  <Text style={styles.tacticalSosSubtag}>THW BERGUNG · TRÜMMER · EINSTURZ</Text>
+                  <Text style={styles.tacticalSosSubtag}>BERGUNG · TRÜMMER · EINSTURZ</Text>
                 </View>
               </View>
 
@@ -714,7 +690,9 @@ export default function App() {
 
               <View style={styles.tacticalSosFooter}>
                 <View style={[styles.tacticalDispatchBar, { borderColor: OLED_PALETTE.imperialGold, backgroundColor: '#ffb7031c' }]}>
-                  <Text style={[styles.tacticalDispatchText, { color: OLED_PALETTE.imperialGold }]}>NOTRUF ABSETZEN [1-TAP] ➔</Text>
+                  <Text style={[styles.tacticalDispatchText, { color: OLED_PALETTE.imperialGold }]}>
+                    {language === 'de' ? 'NOTRUF SENDEN ➔' : 'SEND SOS BEACON ➔'}
+                  </Text>
                 </View>
               </View>
             </TouchableOpacity>
@@ -726,11 +704,8 @@ export default function App() {
               activeOpacity={0.7}
             >
               <View style={styles.tacticalSosTopRow}>
-                <View style={styles.tacticalKatsGroup}>
-                  <Text style={styles.tacticalKatsCode}>{t.sos.codeWater}</Text>
-                </View>
                 <View style={[styles.tacticalBadgePill, { borderColor: OLED_PALETTE.meshCyan, backgroundColor: '#38bdf825' }]}>
-                  <Text style={[styles.tacticalBadgeText, { color: OLED_PALETTE.meshCyan }]}>[HILFE]</Text>
+                  <Text style={[styles.tacticalBadgeText, { color: OLED_PALETTE.meshCyan }]}>[VERSORGUNG]</Text>
                 </View>
               </View>
 
@@ -740,7 +715,7 @@ export default function App() {
                 </View>
                 <View style={styles.tacticalTitleColumn}>
                   <Text style={styles.tacticalSosTitle}>{t.sos.waterFood}</Text>
-                  <Text style={styles.tacticalSosSubtag}>GRUNDVERSORGUNG · TRINKWASSER · NAHRUNG</Text>
+                  <Text style={styles.tacticalSosSubtag}>TRINKWASSER · NOTNAHRUNG</Text>
                 </View>
               </View>
 
@@ -748,7 +723,9 @@ export default function App() {
 
               <View style={styles.tacticalSosFooter}>
                 <View style={[styles.tacticalDispatchBar, { borderColor: OLED_PALETTE.meshCyan, backgroundColor: '#38bdf81c' }]}>
-                  <Text style={[styles.tacticalDispatchText, { color: OLED_PALETTE.meshCyan }]}>HILFE ANFORDERN [1-TAP] ➔</Text>
+                  <Text style={[styles.tacticalDispatchText, { color: OLED_PALETTE.meshCyan }]}>
+                    {language === 'de' ? 'NOTRUF SENDEN ➔' : 'SEND SOS BEACON ➔'}
+                  </Text>
                 </View>
               </View>
             </TouchableOpacity>
@@ -810,7 +787,7 @@ export default function App() {
                   <ShieldCheckIcon size={respWidth(16, w)} color={OLED_PALETTE.imperialGold} />
                   <Text style={styles.cardLabel}>{t.family.step1Title}</Text>
                 </View>
-                <Text style={styles.cipherLabel}>AES-256-CBC</Text>
+                <Text style={styles.cipherLabel}>🔒 E2E-Schutz</Text>
               </View>
               <TextInput
                 style={styles.input}
@@ -833,12 +810,12 @@ export default function App() {
                   <FrankenRechenIcon size={respWidth(16, w)} color={activeFamilySecret ? OLED_PALETTE.safeGreen : OLED_PALETTE.warningAmber} />
                   <Text style={[styles.cryptoProofStatusText, activeFamilySecret ? styles.cryptoStatusGreen : styles.cryptoStatusAmber]}>
                     {activeFamilySecret
-                      ? (language === 'de' ? 'AES-256-CBC VERSCHLÜSSELUNG AKTIV' : 'AES-256-CBC ENCRYPTION ACTIVE')
-                      : (language === 'de' ? 'TRESOR INAKTIV // KEIN PASSWORT' : 'VAULT INACTIVE // NO SECRET')}
+                      ? (language === 'de' ? 'VERSCHLÜSSELUNG AKTIV' : 'ENCRYPTION ACTIVE')
+                      : (language === 'de' ? 'SCHUTZ INAKTIV // CODEWORT EINGEBEN' : 'PROTECTION INACTIVE // ENTER SECRET')}
                   </Text>
                   <View style={[styles.cryptoProofPill, activeFamilySecret ? styles.cryptoPillGreen : styles.cryptoPillAmber]}>
                     <Text style={[styles.cryptoProofPillText, activeFamilySecret ? styles.cryptoPillTextGreen : styles.cryptoPillTextAmber]}>
-                      {activeFamilySecret ? 'VERIFIZIERT ✓' : 'OFFEN ⚠️'}
+                      {activeFamilySecret ? 'GESCHÜTZT ✓' : 'OFFEN ⚠️'}
                     </Text>
                   </View>
                 </View>
@@ -847,15 +824,15 @@ export default function App() {
                 {activeFamilySecret && keyFingerprint && (
                   <View style={styles.cryptoFingerprintBox}>
                     <Text style={styles.cryptoFingerprintLabel}>
-                      {language === 'de' ? 'SCHLÜSSEL-FINGERPRINT (SHA-256):' : 'KEY FINGERPRINT (SHA-256):'}
+                      {language === 'de' ? 'FAMILIEN-FINGERPRINT (KONTROLLE):' : 'FAMILY FINGERPRINT (VERIFY):'}
                     </Text>
                     <Text style={styles.cryptoFingerprintValue}>
                       [ {keyFingerprint} ]
                     </Text>
                     <View style={styles.cryptoSpecsRow}>
-                      <Text style={styles.cryptoSpecChip}>PBKDF2 (10.000)</Text>
-                      <Text style={styles.cryptoSpecChip}>AES-256-CBC</Text>
-                      <Text style={styles.cryptoSpecChip}>HMAC-SHA256</Text>
+                      <Text style={styles.cryptoSpecChip}>
+                        {language === 'de' ? '🔒 Nur für Ihre Familie lesbar' : '🔒 Only readable by your family'}
+                      </Text>
                     </View>
                   </View>
                 )}
@@ -863,8 +840,8 @@ export default function App() {
                 <Text style={styles.cryptoProofExplanation}>
                   {activeFamilySecret
                     ? (language === 'de'
-                        ? 'Schlüssel kryptografisch abgeleitet (PBKDF2/SHA-256). Zwischenknoten leiten ausschließlich unlesbaren Ciphertext weiter.'
-                        : 'Key derived via PBKDF2/SHA-256. Intermediate mesh relays route encrypted ciphertext only.')
+                        ? 'Ihr Codewort schützt alle Nachrichten. Fremde Telefone können nichts mitlesen.'
+                        : 'Your passphrase secures all check-ins. Other phones cannot read your text.')
                     : (language === 'de'
                         ? 'Wählen Sie oben ein gemeinsames Familien-Passwort. Ohne Passwort können Statusmeldungen nicht verschlüsselt werden.'
                         : 'Enter a shared family secret above. Messages cannot be encrypted without a shared secret.')}
@@ -2623,7 +2600,6 @@ const PacketCard = React.memo(({
           <Text style={[styles.packetTypeBadge, { backgroundColor: `${borderColor}22`, color: borderColor }]}>
             {packet.type}
           </Text>
-          <Text style={styles.packetSectorTag}>// NBG-NET</Text>
           {(isSos || isHazard) && (
             <View
               style={[
@@ -2643,7 +2619,7 @@ const PacketCard = React.memo(({
           )}
         </View>
         <Text style={styles.packetHops}>
-          {packet.hop_count === 0 ? t.feed.direct : `${packet.hop_count} ${t.feed.hopsSuffix}`} · TTL: {packet.ttl}
+          {packet.hop_count === 0 ? t.feed.direct : `${packet.hop_count} ${t.feed.hopsSuffix}`}
         </Text>
       </View>
 
