@@ -18,6 +18,7 @@ import { MeshRouter } from '../core/router';
 import { generateNodeId } from '../core/crypto';
 import { NURNBERG_EMERGENCY_POIS } from '../data/nurnberg-emergency-data';
 import { Language } from '../i18n/translations';
+import { ThemeMode } from '../ui/responsive';
 
 export interface DecryptedSafeEntry {
   msgId: string;
@@ -36,6 +37,7 @@ export interface MeshState {
   activeFamilySecret: string;
   offlinePois: NurnbergEmergencyPoi[];
   language: Language;
+  themeMode: ThemeMode;
   attestations: Record<string, number>;
   mutedSenders: string[];
   stats: {
@@ -47,6 +49,7 @@ export interface MeshState {
   // Actions
   attachRouter: (router: MeshRouter) => void;
   setLanguage: (lang: Language) => void;
+  setThemeMode: (mode: ThemeMode) => void;
   setFamilySecret: (secret: string) => void;
   sendSafeStatus: (text: string, alias?: string) => Promise<SafePacket | null>;
   sendSosBeacon: (category: SosCategory, lat: number, lon: number, notes?: string) => Promise<SosPacket | null>;
@@ -66,6 +69,7 @@ export const useMeshStore = create<MeshState>((set, get) => ({
   activeFamilySecret: '',
   offlinePois: NURNBERG_EMERGENCY_POIS,
   language: 'de',
+  themeMode: 'civic',
   attestations: {},
   mutedSenders: [],
   stats: {
@@ -76,6 +80,10 @@ export const useMeshStore = create<MeshState>((set, get) => ({
 
   setLanguage: (lang: Language) => {
     set({ language: lang });
+  },
+
+  setThemeMode: (mode: ThemeMode) => {
+    set({ themeMode: mode });
   },
 
   attachRouter: (router: MeshRouter) => {

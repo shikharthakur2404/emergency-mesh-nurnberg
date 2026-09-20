@@ -74,4 +74,5 @@ export const OLED_PALETTE = {
 } as const;
 
 export { FONTS, TRACKING } from './typography';
+export * from './theme';
 

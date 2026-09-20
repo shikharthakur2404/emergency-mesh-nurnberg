@@ -189,6 +189,9 @@ export const TRANSLATIONS = {
       cacheClearedAlert: 'Mesh-Cache wurde bereinigt.',
       closeBtn: 'Schließen',
       languageLabel: 'Sprache / Language',
+      themeLabel: 'Erscheinungsbild / Design',
+      themeCivic: 'Bürgernetz (Ruhig / NINA)',
+      themeTactical: 'Taktisch (OLED Monospace)',
       civicNoticeTitle: 'Rechtlicher Hinweis & Unabhängigkeit',
       civicNoticeBody:
         'Emergency Mesh Nürnberg ist ein bürgerschaftliches, unabhängiges Notnetz. Es besteht KEINE Verbindung, Schirmherrschaft oder Beauftragung durch die Stadt Nürnberg oder Einsatzkräfte. Im Notfall stets 112 / 110 wählen, sofern Netz verfügbar ist.',
@@ -319,6 +322,9 @@ export const TRANSLATIONS = {
       cacheClearedAlert: 'Mesh packet cache cleared.',
       closeBtn: 'Close',
       languageLabel: 'Language / Sprache',
+      themeLabel: 'Design & Appearance',
+      themeCivic: 'Civic Mesh (Calm / NINA)',
+      themeTactical: 'Tactical (OLED Monospace)',
       civicNoticeTitle: 'Legal Notice & Civil Independence',
       civicNoticeBody:
         'Emergency Mesh Nuremberg is an independent civilian network. It is NOT an official app of the City of Nuremberg or emergency services. Always call 112 / 110 if service is available.',

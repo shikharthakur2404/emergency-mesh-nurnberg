@@ -41,7 +41,9 @@ import {
   respHeight,
   respFontSize,
   FONTS,
-  TRACKING
+  TRACKING,
+  ThemeMode,
+  getTheme,
 } from './ui/responsive';
 import { useMeshStore, DecryptedSafeEntry } from './state/meshStore';
 import { MeshRouter } from './core/router';
@@ -136,11 +138,14 @@ export default function App() {
     offlinePois,
     language,
     setLanguage,
+    themeMode,
+    setThemeMode,
     stats,
     clearHistory
   } = useMeshStore();
 
   const t = useMemo(() => getTranslations(language), [language]);
+  const theme = useMemo(() => getTheme(themeMode), [themeMode]);
 
   // Cockpit RF Beacon Pulse Animation
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -295,38 +300,49 @@ export default function App() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor={OLED_PALETTE.background} />
+      <StatusBar barStyle="light-content" backgroundColor={theme.background} />
 
-      {/* ── FRANCONIAN TACTICAL TOP ACCENT BAR ── */}
+      {/* ── FRANCONIAN TOP ACCENT BAR ── */}
       <View style={styles.franconianAccentBar}>
         <View style={styles.franconianRedSegment} />
         <View style={styles.franconianWhiteSegment} />
         <View style={styles.franconianRedSegment} />
-        <View style={styles.franconianGoldSegment} />
+        {themeMode === 'tactical' && <View style={styles.franconianGoldSegment} />}
       </View>
 
-      {/* ── OLED HEADER & MUNICIPAL STATUS ── */}
+      {/* ── HEADER & MUNICIPAL STATUS ── */}
       <View style={styles.header}>
         <View style={styles.headerTop}>
           <View style={styles.brandRow}>
             {/* Nürnberg Imperial Crest Emblem */}
             <View style={styles.crestBadge}>
-              <NurnbergCrestIcon size={respWidth(22, w)} color={OLED_PALETTE.imperialGold} />
+              <NurnbergCrestIcon
+                size={respWidth(22, w)}
+                color={themeMode === 'civic' ? theme.nurnbergRed : OLED_PALETTE.imperialGold}
+              />
             </View>
             <View style={styles.titleColumn}>
               <View style={styles.titleRow}>
                 <View style={[styles.pulseDot, isRadioActive ? styles.dotGreen : styles.dotAmber]} />
                 <Text style={styles.headerTitle}>
-                  {t.header.title}
+                  {themeMode === 'civic'
+                    ? (language === 'de' ? 'Notfunk Nürnberg' : 'Emergency Mesh NBG')
+                    : t.header.title}
                 </Text>
                 <View style={[styles.statusTag, isRadioActive ? styles.statusTagGreen : styles.statusTagAmber]}>
                   <Text style={[styles.statusTagText, isRadioActive ? styles.statusTextGreen : styles.statusTextAmber]}>
-                    {isRadioActive ? '[AKTIV]' : '[SIM]'}
+                    {themeMode === 'civic'
+                      ? (isRadioActive ? 'Bereit' : 'Simulation')
+                      : (isRadioActive ? '[AKTIV]' : '[SIM]')}
                   </Text>
                 </View>
               </View>
               <View style={styles.civicBadgeRow}>
-                <Text style={styles.civicBadgeText}>{t.header.civicBadge}</Text>
+                <Text style={styles.civicBadgeText}>
+                  {themeMode === 'civic'
+                    ? (language === 'de' ? 'Ziviles Notfallnetz · Kein Internet nötig' : 'Civilian Mesh · No Internet Required')
+                    : t.header.civicBadge}
+                </Text>
               </View>
             </View>
           </View>
@@ -352,14 +368,20 @@ export default function App() {
           </View>
         </View>
 
-        {/* ── COCKPIT CONNECTIVITY TELEMETRY HUD ── */}
+        {/* ── CONNECTIVITY STATUS BANNER ── */}
         <View style={styles.cockpitHudCard}>
           <View style={styles.cockpitHudTopRow}>
             <View style={styles.cockpitStatusLeft}>
               <Animated.View style={[styles.cockpitPulseBeacon, { opacity: pulseAnim }]} />
-              <SignalBarsIcon size={respWidth(13, w)} color={isRadioActive ? OLED_PALETTE.safeGreen : OLED_PALETTE.warningAmber} />
+              <SignalBarsIcon size={respWidth(13, w)} color={isRadioActive ? theme.safeGreen : theme.warningAmber} />
               <Text style={[styles.cockpitStatusText, isRadioActive ? styles.connTextGreen : styles.connTextAmber]}>
-                {isRadioActive ? (language === 'de' ? 'NOTNETZ BEREIT' : 'MESH READY') : (language === 'de' ? 'SIMULATION AKTIV' : 'SIMULATION MODE')}
+                {themeMode === 'civic'
+                  ? (isRadioActive
+                      ? (language === 'de' ? 'Notnetz einsatzbereit' : 'Mesh network ready')
+                      : (language === 'de' ? 'Simulation aktiv' : 'Simulation mode'))
+                  : (isRadioActive
+                      ? (language === 'de' ? 'NOTNETZ BEREIT' : 'MESH READY')
+                      : (language === 'de' ? 'SIMULATION AKTIV' : 'SIMULATION MODE'))}
               </Text>
             </View>
 
@@ -375,16 +397,25 @@ export default function App() {
           <View style={styles.cockpitHudBottomRow}>
             <View style={styles.cockpitPeersGroup}>
               <Text style={styles.cockpitPeerCount}>
-                ⚡ {connectedPeers.length + 2}
+                {themeMode === 'civic' ? '● ' : '⚡ '}
+                {connectedPeers.length + 2}
               </Text>
               <Text style={styles.cockpitPeerLabel}>
-                {language === 'de' ? 'GERÄTE IN REICHWEITE' : 'DEVICES IN RANGE'}
+                {themeMode === 'civic'
+                  ? (language === 'de' ? 'Nachbarn in Reichweite' : 'Neighbors in range')
+                  : (language === 'de' ? 'GERÄTE IN REICHWEITE' : 'DEVICES IN RANGE')}
               </Text>
             </View>
 
             <View style={styles.cockpitChannelGroup}>
-              <Text style={styles.cockpitChannelLabel}>{language === 'de' ? 'NETZWERK:' : 'NETWORK:'}</Text>
-              <Text style={styles.cockpitChannelValue}>{language === 'de' ? 'Notfunk Nürnberg' : 'Emergency Mesh NBG'}</Text>
+              <Text style={styles.cockpitChannelLabel}>
+                {themeMode === 'civic'
+                  ? (language === 'de' ? 'Netzwerk:' : 'Network:')
+                  : (language === 'de' ? 'NETZWERK:' : 'NETWORK:')}
+              </Text>
+              <Text style={styles.cockpitChannelValue}>
+                {language === 'de' ? 'Notfunk Nürnberg' : 'Emergency Mesh NBG'}
+              </Text>
             </View>
           </View>
         </View>
@@ -398,7 +429,7 @@ export default function App() {
         >
           <RadioTowerIcon
             size={respWidth(15, w)}
-            color={activeTab === 'FEED' ? OLED_PALETTE.imperialGold : OLED_PALETTE.textMuted}
+            color={activeTab === 'FEED' ? (themeMode === 'civic' ? theme.nurnbergRed : OLED_PALETTE.imperialGold) : theme.textMuted}
           />
           <Text style={[styles.tabText, activeTab === 'FEED' && styles.tabTextActiveRadar]}>
             {t.tabs.radar}
@@ -411,7 +442,7 @@ export default function App() {
         >
           <AlertTriangleIcon
             size={respWidth(15, w)}
-            color={activeTab === 'SOS' ? OLED_PALETTE.sosRed : OLED_PALETTE.textMuted}
+            color={activeTab === 'SOS' ? theme.sosRed : theme.textMuted}
           />
           <Text style={[styles.tabText, activeTab === 'SOS' && styles.tabTextActiveSos]}>
             {t.tabs.sos}
@@ -424,7 +455,7 @@ export default function App() {
         >
           <ShieldCheckIcon
             size={respWidth(15, w)}
-            color={activeTab === 'FAMILY' ? OLED_PALETTE.imperialGold : OLED_PALETTE.textMuted}
+            color={activeTab === 'FAMILY' ? (themeMode === 'civic' ? theme.nurnbergRed : OLED_PALETTE.imperialGold) : theme.textMuted}
           />
           <Text style={[styles.tabText, activeTab === 'FAMILY' && styles.tabTextActiveFamily]}>
             {t.tabs.familie}
@@ -437,7 +468,7 @@ export default function App() {
         >
           <MapPinIcon
             size={respWidth(15, w)}
-            color={activeTab === 'POIS' ? OLED_PALETTE.safeGreen : OLED_PALETTE.textMuted}
+            color={activeTab === 'POIS' ? (themeMode === 'civic' ? theme.nurnbergRed : OLED_PALETTE.safeGreen) : theme.textMuted}
           />
           <Text style={[styles.tabText, activeTab === 'POIS' && styles.tabTextActivePlaces]}>
             {t.tabs.orte}
@@ -989,6 +1020,8 @@ export default function App() {
         onClose={() => setDrawerVisible(false)}
         language={language}
         onSelectLanguage={setLanguage}
+        themeMode={themeMode}
+        onSelectThemeMode={setThemeMode}
         onOpenGuide={() => setGuideVisible(true)}
         nodeId={nodeId}
         isRadioActive={isRadioActive}
@@ -1007,11 +1040,15 @@ export default function App() {
 
 function useAppStyles() {
   const { width: w, height: h } = useWindowDimensions();
+  const themeMode = useMeshStore((state) => state.themeMode);
+  const theme = getTheme(themeMode);
+  const isCivic = themeMode === 'civic';
+
   return useMemo(
     () => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: OLED_PALETTE.background
+    backgroundColor: theme.background
   },
   franconianAccentBar: {
     flexDirection: 'row',
@@ -1035,7 +1072,8 @@ function useAppStyles() {
     paddingTop: respHeight(10, h),
     paddingBottom: respHeight(12, h),
     borderBottomWidth: 1,
-    borderBottomColor: OLED_PALETTE.surfaceBorder
+    borderBottomColor: theme.surfaceBorder,
+    backgroundColor: theme.headerBackground,
   },
   headerTop: {
     flexDirection: 'row',
@@ -1055,10 +1093,10 @@ function useAppStyles() {
   crestBadge: {
     width: respWidth(38, w),
     height: respWidth(38, w),
-    borderRadius: respWidth(7, w),
-    backgroundColor: '#16080a',
-    borderWidth: 1.5,
-    borderColor: OLED_PALETTE.nurnbergRed,
+    borderRadius: respWidth(isCivic ? 10 : 7, w),
+    backgroundColor: isCivic ? '#1c1518' : '#16080a',
+    borderWidth: isCivic ? 1 : 1.5,
+    borderColor: isCivic ? theme.nurnbergRed : OLED_PALETTE.nurnbergRed,
     alignItems: 'center',
     justifyContent: 'center'
   },
@@ -1082,9 +1120,9 @@ function useAppStyles() {
     backgroundColor: OLED_PALETTE.warningAmber,
   },
   statusTag: {
-    paddingHorizontal: respWidth(5, w),
+    paddingHorizontal: respWidth(isCivic ? 8 : 5, w),
     paddingVertical: respHeight(1, h),
-    borderRadius: respWidth(3, w),
+    borderRadius: respWidth(isCivic ? 9999 : 3, w),
     borderWidth: 1,
     marginLeft: respWidth(4, w),
   },
@@ -1097,7 +1135,7 @@ function useAppStyles() {
     borderColor: OLED_PALETTE.warningAmber,
   },
   statusTagText: {
-    fontFamily: FONTS.monoBold,
+    fontFamily: isCivic ? FONTS.displayBold : FONTS.monoBold,
     fontSize: respFontSize(9.5, w),
   },
   statusTextGreen: {
@@ -1107,25 +1145,25 @@ function useAppStyles() {
     color: OLED_PALETTE.warningAmber,
   },
   headerTitle: {
-    color: OLED_PALETTE.textPrimary,
+    color: theme.textPrimary,
     fontFamily: FONTS.displayBold,
-    fontSize: respFontSize(14.2, w),
-    letterSpacing: respWidth(0.3, w),
+    fontSize: respFontSize(isCivic ? 15 : 14.2, w),
+    letterSpacing: isCivic ? 0 : respWidth(0.3, w),
   },
   civicBadgeRow: {
-    marginVertical: respHeight(2, h),
+    marginVertical: respHeight(isCivic ? 1 : 2, h),
   },
   civicBadgeText: {
-    color: OLED_PALETTE.warningAmber,
-    fontFamily: FONTS.monoBold,
-    fontSize: respFontSize(10, w),
-    letterSpacing: respWidth(0.5, w),
+    color: isCivic ? theme.textSecondary : OLED_PALETTE.warningAmber,
+    fontFamily: isCivic ? FONTS.displayRegular : FONTS.monoBold,
+    fontSize: respFontSize(isCivic ? 11 : 10, w),
+    letterSpacing: isCivic ? 0 : respWidth(0.5, w),
   },
   headerSectorSub: {
-    color: OLED_PALETTE.imperialGold,
+    color: isCivic ? theme.accentBlue : OLED_PALETTE.imperialGold,
     fontFamily: FONTS.displayBold,
     fontSize: respFontSize(11, w),
-    letterSpacing: respWidth(0.3, w),
+    letterSpacing: isCivic ? 0 : respWidth(0.3, w),
     marginTop: respHeight(1, h),
   },
   headerRightRow: {
@@ -1137,28 +1175,28 @@ function useAppStyles() {
   guideQuickIconBtn: {
     width: respWidth(30, w),
     height: respWidth(30, w),
-    borderRadius: respWidth(6, w),
-    backgroundColor: '#0c131d',
+    borderRadius: respWidth(isCivic ? 8 : 6, w),
+    backgroundColor: isCivic ? theme.surfaceCard : '#0c131d',
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: isCivic ? theme.surfaceBorder : '#1e293b',
     alignItems: 'center',
     justifyContent: 'center',
   },
   menuDrawerIconBtn: {
     width: respWidth(30, w),
     height: respWidth(30, w),
-    borderRadius: respWidth(6, w),
-    backgroundColor: '#0c131d',
+    borderRadius: respWidth(isCivic ? 8 : 6, w),
+    backgroundColor: isCivic ? theme.surfaceCard : '#0c131d',
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: isCivic ? theme.surfaceBorder : '#1e293b',
     alignItems: 'center',
     justifyContent: 'center',
   },
   cockpitHudCard: {
-    backgroundColor: '#050912',
-    borderWidth: 1.5,
-    borderColor: '#152238',
-    borderRadius: respWidth(8, w),
+    backgroundColor: isCivic ? theme.surfaceCard : '#050912',
+    borderWidth: isCivic ? 1 : 1.5,
+    borderColor: isCivic ? theme.surfaceBorder : '#152238',
+    borderRadius: respWidth(isCivic ? 14 : 8, w),
     paddingHorizontal: respWidth(12, w),
     paddingVertical: respHeight(8, h),
     marginTop: respHeight(8, h),
@@ -1180,9 +1218,9 @@ function useAppStyles() {
     backgroundColor: OLED_PALETTE.safeGreen,
   },
   cockpitStatusText: {
-    fontFamily: FONTS.monoBold,
+    fontFamily: isCivic ? FONTS.displayBold : FONTS.monoBold,
     fontSize: respFontSize(12, w),
-    letterSpacing: TRACKING.tactical,
+    letterSpacing: isCivic ? 0 : TRACKING.tactical,
   },
   cockpitModePill: {
     paddingHorizontal: respWidth(5, w),
@@ -1204,22 +1242,22 @@ function useAppStyles() {
     letterSpacing: TRACKING.tactical,
   },
   cockpitAutonomyPill: {
-    backgroundColor: '#0c1a2e',
+    backgroundColor: isCivic ? '#162338' : '#0c1a2e',
     borderWidth: 1,
-    borderColor: '#1e3a5f',
+    borderColor: isCivic ? '#253d5e' : '#1e3a5f',
     paddingHorizontal: respWidth(7, w),
     paddingVertical: respHeight(2, h),
-    borderRadius: respWidth(4, w),
+    borderRadius: respWidth(isCivic ? 9999 : 4, w),
   },
   cockpitAutonomyText: {
-    color: OLED_PALETTE.meshCyan,
-    fontFamily: FONTS.monoBold,
-    fontSize: respFontSize(9.5, w),
-    letterSpacing: TRACKING.tactical,
+    color: isCivic ? theme.accentBlue : OLED_PALETTE.meshCyan,
+    fontFamily: isCivic ? FONTS.displayBold : FONTS.monoBold,
+    fontSize: respFontSize(isCivic ? 10 : 9.5, w),
+    letterSpacing: isCivic ? 0 : TRACKING.tactical,
   },
   cockpitHudDivider: {
     height: 1,
-    backgroundColor: '#0e1a2b',
+    backgroundColor: isCivic ? theme.surfaceBorder : '#0e1a2b',
     marginVertical: respHeight(6, h),
   },
   cockpitHudBottomRow: {
@@ -1233,13 +1271,13 @@ function useAppStyles() {
     gap: respWidth(6, w),
   },
   cockpitPeerCount: {
-    color: OLED_PALETTE.safeGreen,
-    fontFamily: FONTS.monoBold,
-    fontSize: respFontSize(12, w),
+    color: isCivic ? theme.safeGreen : OLED_PALETTE.safeGreen,
+    fontFamily: FONTS.displayBold,
+    fontSize: respFontSize(isCivic ? 13 : 12, w),
   },
   cockpitPeerLabel: {
-    color: OLED_PALETTE.textSecondary,
-    fontFamily: FONTS.displayMedium,
+    color: isCivic ? theme.textSecondary : OLED_PALETTE.textSecondary,
+    fontFamily: isCivic ? FONTS.displayRegular : FONTS.displayMedium,
     fontSize: respFontSize(11, w),
     letterSpacing: TRACKING.standard,
   },
@@ -1249,16 +1287,15 @@ function useAppStyles() {
     gap: respWidth(4, w),
   },
   cockpitChannelLabel: {
-    color: OLED_PALETTE.textMuted,
-    fontFamily: FONTS.monoMedium,
-    fontSize: respFontSize(10, w),
-    letterSpacing: TRACKING.tactical,
+    color: isCivic ? theme.textMuted : OLED_PALETTE.textSecondary,
+    fontFamily: isCivic ? FONTS.displayRegular : FONTS.displayMedium,
+    fontSize: respFontSize(11, w),
   },
   cockpitChannelValue: {
-    color: OLED_PALETTE.imperialGold,
-    fontFamily: FONTS.monoBold,
+    color: isCivic ? theme.textPrimary : OLED_PALETTE.imperialGold,
+    fontFamily: isCivic ? FONTS.displayBold : FONTS.monoBold,
     fontSize: respFontSize(11, w),
-    letterSpacing: TRACKING.tactical,
+    letterSpacing: isCivic ? 0 : TRACKING.tactical,
   },
   sectorScrollWrapper: {
     position: 'relative',
@@ -1339,8 +1376,8 @@ function useAppStyles() {
   tabBar: {
     flexDirection: 'row',
     borderBottomWidth: respWidth(1, w),
-    borderBottomColor: OLED_PALETTE.surfaceBorder,
-    backgroundColor: '#030508',
+    borderBottomColor: theme.surfaceBorder,
+    backgroundColor: theme.background,
   },
   tabButton: {
     flex: 1,
@@ -1353,43 +1390,43 @@ function useAppStyles() {
     borderBottomColor: 'transparent',
   },
   tabButtonActiveRadar: {
-    borderBottomColor: OLED_PALETTE.imperialGold,
-    backgroundColor: '#ffb70312',
+    borderBottomColor: isCivic ? theme.nurnbergRed : OLED_PALETTE.imperialGold,
+    backgroundColor: isCivic ? 'transparent' : '#ffb70312',
   },
   tabButtonActiveSos: {
-    borderBottomColor: OLED_PALETTE.nurnbergRed,
-    backgroundColor: '#d9042918',
+    borderBottomColor: isCivic ? theme.sosRed : OLED_PALETTE.nurnbergRed,
+    backgroundColor: isCivic ? 'transparent' : '#d9042918',
   },
   tabButtonActiveFamily: {
-    borderBottomColor: OLED_PALETTE.imperialGold,
-    backgroundColor: '#ffb70318',
+    borderBottomColor: isCivic ? theme.nurnbergRed : OLED_PALETTE.imperialGold,
+    backgroundColor: isCivic ? 'transparent' : '#ffb70318',
   },
   tabButtonActivePlaces: {
-    borderBottomColor: OLED_PALETTE.safeGreen,
-    backgroundColor: '#00e67612',
+    borderBottomColor: isCivic ? theme.nurnbergRed : OLED_PALETTE.safeGreen,
+    backgroundColor: isCivic ? 'transparent' : '#00e67612',
   },
   tabText: {
-    color: OLED_PALETTE.textMuted,
-    fontFamily: FONTS.displaySemiBold,
+    color: theme.textMuted,
+    fontFamily: isCivic ? FONTS.displayMedium : FONTS.displaySemiBold,
     fontSize: respFontSize(13, w),
   },
   tabTextActiveRadar: {
-    color: OLED_PALETTE.imperialGold,
+    color: isCivic ? theme.textPrimary : OLED_PALETTE.imperialGold,
     fontFamily: FONTS.displayBold,
     fontSize: respFontSize(13, w),
   },
   tabTextActiveSos: {
-    color: OLED_PALETTE.sosRed,
+    color: isCivic ? theme.textPrimary : OLED_PALETTE.sosRed,
     fontFamily: FONTS.displayBold,
     fontSize: respFontSize(13, w),
   },
   tabTextActiveFamily: {
-    color: OLED_PALETTE.imperialGold,
+    color: isCivic ? theme.textPrimary : OLED_PALETTE.imperialGold,
     fontFamily: FONTS.displayBold,
     fontSize: respFontSize(13, w),
   },
   tabTextActivePlaces: {
-    color: OLED_PALETTE.safeGreen,
+    color: isCivic ? theme.textPrimary : OLED_PALETTE.safeGreen,
     fontFamily: FONTS.displayBold,
     fontSize: respFontSize(13, w),
   },
@@ -1471,10 +1508,10 @@ function useAppStyles() {
     padding: respWidth(20, w),
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: OLED_PALETTE.kaiserburgCard,
-    borderRadius: respWidth(10, w),
-    borderWidth: 1.5,
-    borderColor: OLED_PALETTE.surfaceBorder,
+    backgroundColor: isCivic ? theme.surfaceCard : OLED_PALETTE.kaiserburgCard,
+    borderRadius: respWidth(isCivic ? 14 : 10, w),
+    borderWidth: isCivic ? 1 : 1.5,
+    borderColor: isCivic ? theme.surfaceBorder : OLED_PALETTE.surfaceBorder,
   },
   emptyStateIcon: {
     fontSize: respFontSize(34, w),
@@ -1495,10 +1532,10 @@ function useAppStyles() {
     textAlign: 'center'
   },
   tacticalNodeCard: {
-    backgroundColor: OLED_PALETTE.kaiserburgCard,
-    borderWidth: 1.5,
-    borderColor: OLED_PALETTE.hudBorderCyan,
-    borderRadius: respWidth(10, w),
+    backgroundColor: isCivic ? theme.surfaceCard : OLED_PALETTE.kaiserburgCard,
+    borderWidth: isCivic ? 1 : 1.5,
+    borderColor: isCivic ? theme.surfaceBorder : OLED_PALETTE.hudBorderCyan,
+    borderRadius: respWidth(isCivic ? 14 : 10, w),
     padding: respWidth(12, w),
   },
   tacticalCardHeader: {
@@ -1506,15 +1543,15 @@ function useAppStyles() {
     justifyContent: 'space-between',
     alignItems: 'center',
     borderBottomWidth: 1,
-    borderBottomColor: OLED_PALETTE.surfaceBorder,
+    borderBottomColor: theme.surfaceBorder,
     paddingBottom: respHeight(6, h),
     marginBottom: respHeight(8, h),
   },
   tacticalCardTitle: {
-    color: OLED_PALETTE.meshCyan,
+    color: isCivic ? theme.accentBlue : OLED_PALETTE.meshCyan,
     fontFamily: FONTS.displayBold,
     fontSize: respFontSize(13, w),
-    letterSpacing: respWidth(0.6, w),
+    letterSpacing: isCivic ? 0 : respWidth(0.6, w),
   },
   tacticalCardLiveBadge: {
     flexDirection: 'row',
@@ -1525,7 +1562,7 @@ function useAppStyles() {
     borderColor: OLED_PALETTE.safeGreen,
     paddingHorizontal: respWidth(7, w),
     paddingVertical: respHeight(2, h),
-    borderRadius: respWidth(4, w),
+    borderRadius: respWidth(isCivic ? 9999 : 4, w),
   },
   tacticalLiveDot: {
     width: respWidth(6, w),
@@ -1546,11 +1583,11 @@ function useAppStyles() {
   },
   tacticalGridItem: {
     width: '48%',
-    backgroundColor: OLED_PALETTE.surfaceCard,
+    backgroundColor: theme.surfaceCard,
     padding: respWidth(8, w),
-    borderRadius: respWidth(6, w),
+    borderRadius: respWidth(isCivic ? 8 : 6, w),
     borderWidth: 1,
-    borderColor: OLED_PALETTE.surfaceBorder,
+    borderColor: theme.surfaceBorder,
   },
   tacticalGridLabel: {
     color: OLED_PALETTE.textSecondary,
@@ -1583,32 +1620,32 @@ function useAppStyles() {
   },
   quickActionBtnSos: {
     flex: 1,
-    backgroundColor: '#1f070a',
-    borderWidth: 1.5,
-    borderColor: OLED_PALETTE.nurnbergRed,
+    backgroundColor: isCivic ? theme.surfaceCard : '#1f070a',
+    borderWidth: isCivic ? 1 : 1.5,
+    borderColor: isCivic ? theme.surfaceBorder : OLED_PALETTE.nurnbergRed,
     paddingVertical: respHeight(10, h),
     paddingHorizontal: respWidth(6, w),
-    borderRadius: respWidth(8, w),
+    borderRadius: respWidth(isCivic ? 12 : 8, w),
     alignItems: 'center',
   },
   quickActionBtnFam: {
     flex: 1,
-    backgroundColor: '#1f1604',
-    borderWidth: 1.5,
-    borderColor: OLED_PALETTE.imperialGold,
+    backgroundColor: isCivic ? theme.surfaceCard : '#1f1604',
+    borderWidth: isCivic ? 1 : 1.5,
+    borderColor: isCivic ? theme.surfaceBorder : OLED_PALETTE.imperialGold,
     paddingVertical: respHeight(10, h),
     paddingHorizontal: respWidth(6, w),
-    borderRadius: respWidth(8, w),
+    borderRadius: respWidth(isCivic ? 12 : 8, w),
     alignItems: 'center',
   },
   quickActionBtnPoi: {
     flex: 1,
-    backgroundColor: '#041d11',
-    borderWidth: 1.5,
-    borderColor: OLED_PALETTE.safeGreen,
+    backgroundColor: isCivic ? theme.surfaceCard : '#041d11',
+    borderWidth: isCivic ? 1 : 1.5,
+    borderColor: isCivic ? theme.surfaceBorder : OLED_PALETTE.safeGreen,
     paddingVertical: respHeight(10, h),
     paddingHorizontal: respWidth(6, w),
-    borderRadius: respWidth(8, w),
+    borderRadius: respWidth(isCivic ? 12 : 8, w),
     alignItems: 'center',
   },
   quickActionBtnText: {
@@ -1623,13 +1660,13 @@ function useAppStyles() {
     marginTop: respHeight(2, h),
   },
   familyBanner: {
-    backgroundColor: '#051b10',
+    backgroundColor: isCivic ? '#12251a' : '#051b10',
     borderWidth: 1,
-    borderColor: OLED_PALETTE.imperialGoldMuted,
+    borderColor: isCivic ? '#1f482d' : OLED_PALETTE.imperialGoldMuted,
     borderLeftWidth: respWidth(4, w),
-    borderLeftColor: OLED_PALETTE.imperialGold,
+    borderLeftColor: isCivic ? theme.safeGreen : OLED_PALETTE.imperialGold,
     padding: respWidth(12, w),
-    borderRadius: respWidth(8, w),
+    borderRadius: respWidth(isCivic ? 14 : 8, w),
     marginBottom: respHeight(12, h)
   },
   familyBannerHeader: {
@@ -1639,7 +1676,7 @@ function useAppStyles() {
     marginBottom: respHeight(4, h)
   },
   familyBannerTitle: {
-    color: OLED_PALETTE.imperialGold,
+    color: isCivic ? theme.safeGreen : OLED_PALETTE.imperialGold,
     fontFamily: FONTS.displayBold,
     fontSize: respFontSize(13, w),
     letterSpacing: 0.5
@@ -1650,7 +1687,7 @@ function useAppStyles() {
     borderColor: OLED_PALETTE.safeGreen,
     paddingHorizontal: respWidth(6, w),
     paddingVertical: respHeight(2, h),
-    borderRadius: respWidth(4, w),
+    borderRadius: respWidth(isCivic ? 9999 : 4, w),
   },
   familyBannerItem: {
     marginTop: respHeight(4, h)
@@ -1667,11 +1704,11 @@ function useAppStyles() {
     marginTop: respHeight(2, h)
   },
   packetCard: {
-    backgroundColor: OLED_PALETTE.kaiserburgCard,
-    borderWidth: 1.5,
-    borderColor: OLED_PALETTE.surfaceBorder,
+    backgroundColor: isCivic ? theme.surfaceCard : OLED_PALETTE.kaiserburgCard,
+    borderWidth: isCivic ? 1 : 1.5,
+    borderColor: isCivic ? theme.surfaceBorder : OLED_PALETTE.surfaceBorder,
     borderLeftWidth: respWidth(4, w),
-    borderRadius: respWidth(8, w),
+    borderRadius: respWidth(isCivic ? 14 : 8, w),
     padding: respWidth(12, w),
     marginBottom: respHeight(10, h)
   },
@@ -1687,11 +1724,11 @@ function useAppStyles() {
     gap: respWidth(8, w)
   },
   packetTypeBadge: {
-    fontFamily: FONTS.monoBold,
-    fontSize: respFontSize(11, w),
-    paddingHorizontal: respWidth(7, w),
+    fontFamily: isCivic ? FONTS.displayBold : FONTS.monoBold,
+    fontSize: respFontSize(isCivic ? 10.5 : 11, w),
+    paddingHorizontal: respWidth(isCivic ? 8 : 7, w),
     paddingVertical: respHeight(2, h),
-    borderRadius: respWidth(4, w),
+    borderRadius: respWidth(isCivic ? 9999 : 4, w),
     overflow: 'hidden'
   },
   packetSectorTag: {
@@ -1708,12 +1745,12 @@ function useAppStyles() {
     marginTop: respHeight(4, h)
   },
   sosAlertTitle: {
-    color: OLED_PALETTE.nurnbergRed,
+    color: isCivic ? theme.sosRed : OLED_PALETTE.nurnbergRed,
     fontFamily: FONTS.displayBold,
     fontSize: respFontSize(16, w)
   },
   safeSender: {
-    color: OLED_PALETTE.imperialGold,
+    color: isCivic ? theme.safeGreen : OLED_PALETTE.imperialGold,
     fontFamily: FONTS.displayBold,
     fontSize: respFontSize(14, w)
   },
@@ -1724,12 +1761,12 @@ function useAppStyles() {
     marginTop: respHeight(3, h)
   },
   hazardTitle: {
-    color: OLED_PALETTE.warningAmber,
+    color: isCivic ? theme.warningAmber : OLED_PALETTE.warningAmber,
     fontFamily: FONTS.displayBold,
     fontSize: respFontSize(15, w)
   },
   packetDesc: {
-    color: OLED_PALETTE.textPrimary,
+    color: theme.textPrimary,
     fontFamily: FONTS.displayMedium,
     fontSize: respFontSize(14, w),
     marginTop: respHeight(3, h)
@@ -1742,7 +1779,7 @@ function useAppStyles() {
   },
   mutedPacketCard: {
     borderLeftColor: OLED_PALETTE.textMuted,
-    backgroundColor: '#0a0a0a',
+    backgroundColor: isCivic ? theme.surfaceCard : '#0a0a0a',
     opacity: 0.7,
     paddingVertical: respHeight(8, h),
   },
@@ -1757,20 +1794,20 @@ function useAppStyles() {
     fontSize: respFontSize(12, w),
   },
   unmuteBtn: {
-    paddingHorizontal: respWidth(8, w),
+    paddingHorizontal: respWidth(isCivic ? 10 : 8, w),
     paddingVertical: respHeight(4, h),
-    backgroundColor: OLED_PALETTE.surfaceBorder,
-    borderRadius: respWidth(4, w),
+    backgroundColor: theme.surfaceBorder,
+    borderRadius: respWidth(isCivic ? 9999 : 4, w),
   },
   unmuteBtnText: {
-    color: OLED_PALETTE.meshCyan,
-    fontFamily: FONTS.monoBold,
+    color: isCivic ? theme.accentBlue : OLED_PALETTE.meshCyan,
+    fontFamily: isCivic ? FONTS.displayBold : FONTS.monoBold,
     fontSize: respFontSize(11, w),
   },
   witnessBadge: {
-    paddingHorizontal: respWidth(6, w),
+    paddingHorizontal: respWidth(isCivic ? 8 : 6, w),
     paddingVertical: respHeight(2, h),
-    borderRadius: respWidth(3, w),
+    borderRadius: respWidth(isCivic ? 9999 : 3, w),
     borderWidth: respWidth(1, w),
     marginLeft: respWidth(6, w),
   },
@@ -1783,8 +1820,8 @@ function useAppStyles() {
     borderColor: OLED_PALETTE.safeGreen,
   },
   witnessBadgeText: {
-    fontFamily: FONTS.monoBold,
-    fontSize: respFontSize(10, w),
+    fontFamily: isCivic ? FONTS.displayBold : FONTS.monoBold,
+    fontSize: respFontSize(isCivic ? 10.5 : 10, w),
   },
   witnessTextUnconfirmed: {
     color: OLED_PALETTE.warningAmber,
@@ -1800,31 +1837,31 @@ function useAppStyles() {
     marginTop: respHeight(8, h),
     paddingTop: respHeight(8, h),
     borderTopWidth: respWidth(1, w),
-    borderTopColor: OLED_PALETTE.surfaceBorder,
+    borderTopColor: theme.surfaceBorder,
   },
   vouchBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: respWidth(4, w),
-    paddingHorizontal: respWidth(10, w),
+    paddingHorizontal: respWidth(isCivic ? 10 : 8, w),
     paddingVertical: respHeight(4, h),
-    borderRadius: respWidth(4, w),
-    backgroundColor: 'rgba(34, 197, 94, 0.12)',
+    borderRadius: respWidth(isCivic ? 9999 : 4, w),
+    backgroundColor: isCivic ? '#10b98118' : 'rgba(34, 197, 94, 0.12)',
     borderWidth: respWidth(1, w),
-    borderColor: OLED_PALETTE.safeGreen,
+    borderColor: isCivic ? theme.safeGreen : OLED_PALETTE.safeGreen,
   },
   vouchBtnText: {
-    color: OLED_PALETTE.safeGreen,
-    fontFamily: FONTS.monoBold,
+    color: isCivic ? theme.safeGreen : OLED_PALETTE.safeGreen,
+    fontFamily: isCivic ? FONTS.displayBold : FONTS.monoBold,
     fontSize: respFontSize(11, w),
   },
   muteBtn: {
-    paddingHorizontal: respWidth(8, w),
+    paddingHorizontal: respWidth(isCivic ? 10 : 8, w),
     paddingVertical: respHeight(4, h),
-    borderRadius: respWidth(4, w),
-    backgroundColor: 'rgba(239, 68, 68, 0.08)',
+    borderRadius: respWidth(isCivic ? 9999 : 4, w),
+    backgroundColor: isCivic ? theme.surfaceCard : 'rgba(239, 68, 68, 0.08)',
     borderWidth: respWidth(1, w),
-    borderColor: 'rgba(239, 68, 68, 0.3)',
+    borderColor: isCivic ? theme.surfaceBorder : 'rgba(239, 68, 68, 0.3)',
   },
   muteBtnText: {
     color: OLED_PALETTE.textMuted,
@@ -1835,10 +1872,10 @@ function useAppStyles() {
     flexDirection: 'row',
     alignItems: 'center',
     gap: respWidth(10, w),
-    backgroundColor: 'rgba(255, 179, 0, 0.12)',
-    borderWidth: respWidth(1.5, w),
-    borderColor: OLED_PALETTE.warningAmber,
-    borderRadius: respWidth(8, w),
+    backgroundColor: isCivic ? '#241b0e' : 'rgba(255, 179, 0, 0.12)',
+    borderWidth: respWidth(1, w),
+    borderColor: isCivic ? '#5a3d12' : OLED_PALETTE.warningAmber,
+    borderRadius: respWidth(isCivic ? 12 : 8, w),
     padding: respWidth(12, w),
     marginBottom: respHeight(14, h),
   },
@@ -1896,11 +1933,11 @@ function useAppStyles() {
     borderColor: OLED_PALETTE.nurnbergRed,
     paddingHorizontal: respWidth(8, w),
     paddingVertical: respHeight(3, h),
-    borderRadius: respWidth(4, w)
+    borderRadius: respWidth(isCivic ? 9999 : 4, w)
   },
   katsBadgeText: {
     color: OLED_PALETTE.nurnbergRed,
-    fontFamily: FONTS.monoBold,
+    fontFamily: isCivic ? FONTS.displayBold : FONTS.monoBold,
     fontSize: respFontSize(11, w),
   },
   vaultTag: {
@@ -1909,11 +1946,11 @@ function useAppStyles() {
     borderColor: OLED_PALETTE.imperialGold,
     paddingHorizontal: respWidth(8, w),
     paddingVertical: respHeight(3, h),
-    borderRadius: respWidth(4, w)
+    borderRadius: respWidth(isCivic ? 9999 : 4, w)
   },
   vaultTagText: {
     color: OLED_PALETTE.imperialGold,
-    fontFamily: FONTS.monoBold,
+    fontFamily: isCivic ? FONTS.displayBold : FONTS.monoBold,
     fontSize: respFontSize(11, w),
   },
   formSubtitle: {
@@ -1923,11 +1960,11 @@ function useAppStyles() {
     marginBottom: respHeight(14, h)
   },
   tacticalSosCard: {
-    backgroundColor: OLED_PALETTE.surfaceCard,
-    borderWidth: 1.5,
-    borderColor: OLED_PALETTE.surfaceBorder,
-    borderLeftWidth: respWidth(5, w),
-    borderRadius: respWidth(8, w),
+    backgroundColor: isCivic ? theme.surfaceCard : OLED_PALETTE.surfaceCard,
+    borderWidth: isCivic ? 1 : 1.5,
+    borderColor: isCivic ? theme.surfaceBorder : OLED_PALETTE.surfaceBorder,
+    borderLeftWidth: respWidth(isCivic ? 4 : 5, w),
+    borderRadius: respWidth(isCivic ? 14 : 8, w),
     padding: respWidth(14, w),
     marginBottom: respHeight(12, h),
   },
@@ -1943,21 +1980,21 @@ function useAppStyles() {
   },
   tacticalKatsCode: {
     color: '#cbd5e1',
-    fontFamily: FONTS.monoBold,
+    fontFamily: isCivic ? FONTS.displayBold : FONTS.monoBold,
     fontSize: respFontSize(11.5, w),
-    letterSpacing: TRACKING.tactical,
+    letterSpacing: isCivic ? 0 : TRACKING.tactical,
     textTransform: 'uppercase',
   },
   tacticalBadgePill: {
-    paddingHorizontal: respWidth(7, w),
+    paddingHorizontal: respWidth(isCivic ? 8 : 7, w),
     paddingVertical: respHeight(2, h),
-    borderRadius: respWidth(4, w),
+    borderRadius: respWidth(isCivic ? 9999 : 4, w),
     borderWidth: 1,
   },
   tacticalBadgeText: {
-    fontFamily: FONTS.monoBold,
+    fontFamily: isCivic ? FONTS.displayBold : FONTS.monoBold,
     fontSize: respFontSize(11, w),
-    letterSpacing: TRACKING.tactical,
+    letterSpacing: isCivic ? 0 : TRACKING.tactical,
   },
   tacticalSosMainRow: {
     flexDirection: 'row',
@@ -1968,7 +2005,7 @@ function useAppStyles() {
   tacticalIconBox: {
     width: respWidth(38, w),
     height: respWidth(38, w),
-    borderRadius: respWidth(6, w),
+    borderRadius: respWidth(isCivic ? 10 : 6, w),
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
@@ -1977,20 +2014,20 @@ function useAppStyles() {
     flex: 1,
   },
   tacticalSosTitle: {
-    color: OLED_PALETTE.textPrimary,
+    color: theme.textPrimary,
     fontFamily: FONTS.displayBold,
     fontSize: respFontSize(16, w),
-    letterSpacing: TRACKING.standard,
+    letterSpacing: isCivic ? 0 : TRACKING.standard,
   },
   tacticalSosSubtag: {
-    color: OLED_PALETTE.textMuted,
-    fontFamily: FONTS.monoMedium,
+    color: theme.textMuted,
+    fontFamily: isCivic ? FONTS.displayMedium : FONTS.monoMedium,
     fontSize: respFontSize(10, w),
-    letterSpacing: TRACKING.condensed,
+    letterSpacing: isCivic ? 0 : TRACKING.condensed,
     marginTop: respHeight(1, h),
   },
   tacticalSosDesc: {
-    color: OLED_PALETTE.textSecondary,
+    color: theme.textSecondary,
     fontFamily: FONTS.displayRegular,
     fontSize: respFontSize(13, w),
     lineHeight: respHeight(17, h),
@@ -1998,21 +2035,21 @@ function useAppStyles() {
   },
   tacticalSosFooter: {
     borderTopWidth: 1,
-    borderTopColor: '#161d28',
+    borderTopColor: isCivic ? theme.surfaceBorder : '#161d28',
     paddingTop: respHeight(8, h),
   },
   tacticalDispatchBar: {
     borderWidth: 1,
-    paddingVertical: respHeight(8, h),
+    paddingVertical: respHeight(isCivic ? 10 : 8, h),
     paddingHorizontal: respWidth(10, w),
-    borderRadius: respWidth(5, w),
+    borderRadius: respWidth(isCivic ? 10 : 5, w),
     alignItems: 'center',
     justifyContent: 'center',
   },
   tacticalDispatchText: {
-    fontFamily: FONTS.monoBold,
+    fontFamily: isCivic ? FONTS.displayBold : FONTS.monoBold,
     fontSize: respFontSize(12, w),
-    letterSpacing: TRACKING.tactical,
+    letterSpacing: isCivic ? 0 : TRACKING.tactical,
   },
   sosCard: {
     backgroundColor: OLED_PALETTE.surfaceCard,
@@ -2089,11 +2126,11 @@ function useAppStyles() {
     marginTop: respHeight(3, h)
   },
   card: {
-    backgroundColor: OLED_PALETTE.surfaceCard,
-    borderWidth: 1.5,
-    borderColor: OLED_PALETTE.surfaceBorder,
+    backgroundColor: isCivic ? theme.surfaceCard : OLED_PALETTE.surfaceCard,
+    borderWidth: isCivic ? 1 : 1.5,
+    borderColor: isCivic ? theme.surfaceBorder : OLED_PALETTE.surfaceBorder,
     padding: respWidth(14, w),
-    borderRadius: respWidth(10, w)
+    borderRadius: respWidth(isCivic ? 14 : 10, w)
   },
   cardHeaderRow: {
     flexDirection: 'row',
@@ -2102,37 +2139,37 @@ function useAppStyles() {
     marginBottom: respHeight(8, h)
   },
   cardLabel: {
-    color: OLED_PALETTE.textPrimary,
+    color: theme.textPrimary,
     fontFamily: FONTS.displayBold,
     fontSize: respFontSize(15, w)
   },
   cipherLabel: {
-    color: OLED_PALETTE.imperialGold,
-    fontFamily: FONTS.monoBold,
+    color: isCivic ? theme.safeGreen : OLED_PALETTE.imperialGold,
+    fontFamily: isCivic ? FONTS.displayBold : FONTS.monoBold,
     fontSize: respFontSize(12, w),
   },
   input: {
-    backgroundColor: '#0c0f14',
-    borderWidth: 1.5,
-    borderColor: OLED_PALETTE.surfaceBorder,
-    color: OLED_PALETTE.textPrimary,
-    fontFamily: FONTS.monoMedium,
+    backgroundColor: isCivic ? '#1c2538' : '#0c0f14',
+    borderWidth: isCivic ? 1 : 1.5,
+    borderColor: isCivic ? theme.surfaceBorder : OLED_PALETTE.surfaceBorder,
+    color: theme.textPrimary,
+    fontFamily: isCivic ? FONTS.displayRegular : FONTS.monoMedium,
     paddingHorizontal: respWidth(12, w),
     paddingVertical: respHeight(10, h),
-    borderRadius: respWidth(6, w),
+    borderRadius: respWidth(isCivic ? 10 : 6, w),
     fontSize: respFontSize(14, w),
     marginBottom: respHeight(10, h)
   },
   actionButton: {
-    backgroundColor: OLED_PALETTE.meshCyan,
-    paddingVertical: respHeight(12, h),
-    borderRadius: respWidth(6, w),
+    backgroundColor: isCivic ? theme.safeGreen : OLED_PALETTE.meshCyan,
+    paddingVertical: respHeight(isCivic ? 14 : 12, h),
+    borderRadius: respWidth(isCivic ? 12 : 6, w),
     alignItems: 'center'
   },
   actionButtonGold: {
-    backgroundColor: OLED_PALETTE.imperialGold,
-    paddingVertical: respHeight(12, h),
-    borderRadius: respWidth(6, w),
+    backgroundColor: isCivic ? theme.nurnbergRed : OLED_PALETTE.imperialGold,
+    paddingVertical: respHeight(isCivic ? 14 : 12, h),
+    borderRadius: respWidth(isCivic ? 12 : 6, w),
     alignItems: 'center'
   },
   actionButtonText: {
@@ -2343,32 +2380,32 @@ function useAppStyles() {
   districtChip: {
     paddingHorizontal: respWidth(14, w),
     paddingVertical: respHeight(7, h),
-    borderRadius: respWidth(6, w),
-    backgroundColor: OLED_PALETTE.surfaceCard,
-    borderWidth: 1.5,
-    borderColor: OLED_PALETTE.surfaceBorder,
+    borderRadius: respWidth(isCivic ? 9999 : 6, w),
+    backgroundColor: isCivic ? theme.surfaceCard : OLED_PALETTE.surfaceCard,
+    borderWidth: isCivic ? 1 : 1.5,
+    borderColor: isCivic ? theme.surfaceBorder : OLED_PALETTE.surfaceBorder,
     marginRight: respWidth(8, w)
   },
   districtChipActive: {
-    borderColor: OLED_PALETTE.safeGreen,
-    backgroundColor: '#00e67618'
+    borderColor: isCivic ? theme.nurnbergRed : OLED_PALETTE.safeGreen,
+    backgroundColor: isCivic ? '#e11d4825' : '#00e67618'
   },
   districtChipText: {
-    color: OLED_PALETTE.textMuted,
+    color: theme.textMuted,
     fontFamily: FONTS.displaySemiBold,
     fontSize: respFontSize(13, w),
   },
   districtChipTextActive: {
-    color: OLED_PALETTE.safeGreen,
+    color: isCivic ? theme.textPrimary : OLED_PALETTE.safeGreen,
     fontFamily: FONTS.displayBold,
     fontSize: respFontSize(13, w)
   },
   poiCard: {
-    backgroundColor: OLED_PALETTE.kaiserburgCard,
-    borderWidth: 1.5,
-    borderColor: OLED_PALETTE.surfaceBorder,
+    backgroundColor: isCivic ? theme.surfaceCard : OLED_PALETTE.kaiserburgCard,
+    borderWidth: isCivic ? 1 : 1.5,
+    borderColor: isCivic ? theme.surfaceBorder : OLED_PALETTE.surfaceBorder,
     padding: respWidth(12, w),
-    borderRadius: respWidth(8, w),
+    borderRadius: respWidth(isCivic ? 14 : 8, w),
     marginBottom: respHeight(10, h)
   },
   poiHeader: {
@@ -2383,18 +2420,18 @@ function useAppStyles() {
     flex: 1,
   },
   poiName: {
-    color: OLED_PALETTE.textPrimary,
+    color: theme.textPrimary,
     fontFamily: FONTS.displayBold,
     fontSize: respFontSize(16, w),
     flex: 1
   },
   poiTag: {
-    fontFamily: FONTS.monoBold,
+    fontFamily: isCivic ? FONTS.displayBold : FONTS.monoBold,
     fontSize: respFontSize(11, w),
     borderWidth: 1,
-    paddingHorizontal: respWidth(7, w),
+    paddingHorizontal: respWidth(isCivic ? 9 : 7, w),
     paddingVertical: respHeight(2, h),
-    borderRadius: respWidth(4, w),
+    borderRadius: respWidth(isCivic ? 9999 : 4, w),
     marginLeft: respWidth(8, w)
   },
   poiMetaRow: {
@@ -2497,17 +2534,17 @@ function useAppStyles() {
     flexDirection: 'row',
     alignItems: 'center',
     gap: respWidth(8, w),
-    backgroundColor: '#0c0f14',
-    borderWidth: 1.5,
-    borderColor: OLED_PALETTE.surfaceBorder,
-    borderRadius: respWidth(6, w),
-    paddingHorizontal: respWidth(10, w),
+    backgroundColor: isCivic ? theme.surfaceCard : '#0c0f14',
+    borderWidth: isCivic ? 1 : 1.5,
+    borderColor: isCivic ? theme.surfaceBorder : OLED_PALETTE.surfaceBorder,
+    borderRadius: respWidth(isCivic ? 12 : 6, w),
+    paddingHorizontal: respWidth(12, w),
     marginBottom: respHeight(8, h),
   },
   searchInput: {
     flex: 1,
-    color: OLED_PALETTE.textPrimary,
-    fontFamily: FONTS.monoMedium,
+    color: theme.textPrimary,
+    fontFamily: isCivic ? FONTS.displayRegular : FONTS.monoMedium,
     paddingVertical: respHeight(10, h),
     fontSize: respFontSize(14, w),
   },
@@ -2534,7 +2571,7 @@ function useAppStyles() {
     marginTop: respHeight(3, h),
   },
   }),
-    [w, h]
+    [w, h, themeMode, theme, isCivic]
   );
 }
 
@@ -2559,6 +2596,10 @@ const PacketCard = React.memo(({
 }: PacketCardProps) => {
   const styles = useAppStyles();
   const { width: w } = useWindowDimensions();
+  const themeMode = useMeshStore((state) => state.themeMode);
+  const isCivic = themeMode === 'civic';
+  const language = useMeshStore((state) => state.language);
+
   if (packet.type === 'ATTEST') {
     return null;
   }
@@ -2569,7 +2610,7 @@ const PacketCard = React.memo(({
       <View style={[styles.packetCard, styles.mutedPacketCard]}>
         <View style={styles.mutedSenderRow}>
           <Text style={styles.mutedSenderText}>
-            {t.feed.mutedTag} {t.feed.sender}: {sId.slice(0, 10)}...
+            {isCivic ? (language === 'de' ? 'Stumm' : 'Muted') : t.feed.mutedTag} {t.feed.sender}: {sId.slice(0, 10)}...
           </Text>
           <TouchableOpacity
             style={styles.unmuteBtn}
@@ -2613,7 +2654,11 @@ const PacketCard = React.memo(({
                   isAttested ? styles.witnessTextVerified : styles.witnessTextUnconfirmed,
                 ]}
               >
-                {t.feed.attestedBadge(witnessCount)}
+                {isCivic
+                  ? (isAttested
+                      ? (language === 'de' ? `Bestätigt (${witnessCount})` : `Verified (${witnessCount})`)
+                      : (language === 'de' ? `Unbestätigt (${witnessCount})` : `Unconfirmed (${witnessCount})`))
+                  : t.feed.attestedBadge(witnessCount)}
               </Text>
             </View>
           )}
@@ -2627,7 +2672,11 @@ const PacketCard = React.memo(({
         <View style={styles.packetBody}>
           <View style={styles.packetBodyRow}>
             <AlertTriangleIcon size={respWidth(16, w)} color={OLED_PALETTE.sosRed} />
-            <Text style={styles.sosAlertTitle}>[SOS] {t.feed.categoryLabel}: {(packet as any).category}</Text>
+            <Text style={styles.sosAlertTitle}>
+              {isCivic
+                ? `${(packet as any).category}`
+                : `[SOS] ${t.feed.categoryLabel}: ${(packet as any).category}`}
+            </Text>
           </View>
           <Text style={styles.packetDesc}>{(packet as any).notes || 'Help requested'}</Text>
           <View style={styles.gpsRow}>
@@ -2643,10 +2692,16 @@ const PacketCard = React.memo(({
         <View style={styles.packetBody}>
           <View style={styles.packetBodyRow}>
             <ShieldCheckIcon size={respWidth(16, w)} color={OLED_PALETTE.imperialGold} />
-            <Text style={styles.safeSender}>[SICHER] {t.feed.sender}: {(packet as any).sender_alias || t.feed.anonymous}</Text>
+            <Text style={styles.safeSender}>
+              {isCivic
+                ? `${t.feed.sender}: ${(packet as any).sender_alias || t.feed.anonymous}`
+                : `[SICHER] ${t.feed.sender}: ${(packet as any).sender_alias || t.feed.anonymous}`}
+            </Text>
           </View>
           <Text style={styles.encryptedPayload}>
-            {t.feed.encryptedCiphertext}{(packet as any).encrypted_payload.slice(0, 24)}...]
+            {isCivic
+              ? `${language === 'de' ? 'Verschlüsselt' : 'Encrypted'} • ${(packet as any).encrypted_payload.slice(0, 24)}...`
+              : `${t.feed.encryptedCiphertext}${(packet as any).encrypted_payload.slice(0, 24)}...]`}
           </Text>
         </View>
       )}
@@ -2655,7 +2710,11 @@ const PacketCard = React.memo(({
         <View style={styles.packetBody}>
           <View style={styles.packetBodyRow}>
             <AlertOctagonIcon size={respWidth(16, w)} color={OLED_PALETTE.warningAmber} />
-            <Text style={styles.hazardTitle}>[GEFAHR] {t.feed.hazardLabel}: {(packet as any).hazard_type}</Text>
+            <Text style={styles.hazardTitle}>
+              {isCivic
+                ? `${(packet as any).hazard_type}`
+                : `[GEFAHR] ${t.feed.hazardLabel}: ${(packet as any).hazard_type}`}
+            </Text>
           </View>
           <Text style={styles.packetDesc}>{(packet as any).description}</Text>
         </View>
@@ -2689,6 +2748,8 @@ const PacketCard = React.memo(({
 const PoiCard = React.memo(({ poi, t }: { poi: NurnbergEmergencyPoi; t: ReturnType<typeof getTranslations> }) => {
   const styles = useAppStyles();
   const { width: w } = useWindowDimensions();
+  const themeMode = useMeshStore((state) => state.themeMode);
+  const isCivic = themeMode === 'civic';
   const isHospital = poi.category === 'HOSPITAL';
   const isWater = poi.category === 'WATER';
   const isShelter = poi.category === 'SHELTER';
@@ -2730,7 +2791,7 @@ const PoiCard = React.memo(({ poi, t }: { poi: NurnbergEmergencyPoi; t: ReturnTy
         </Text>
       </View>
       <View style={styles.poiMetaRow}>
-        <Text style={styles.poiDistrictBadge}>[{poi.district}]</Text>
+        <Text style={styles.poiDistrictBadge}>{isCivic ? poi.district : `[${poi.district}]`}</Text>
         <View style={styles.poiDistanceRow}>
           <MapPinIcon size={respWidth(12, w)} color={OLED_PALETTE.textMuted} />
           <Text style={styles.poiDistanceChip}>{distance} zum Hauptmarkt</Text>

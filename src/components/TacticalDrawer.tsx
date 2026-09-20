@@ -15,6 +15,7 @@ import {
   respHeight,
   respFontSize,
   FONTS,
+  ThemeMode,
 } from '../ui/responsive';
 import { getTranslations, Language } from '../i18n/translations';
 import {
@@ -52,6 +53,10 @@ interface TacticalDrawerProps {
   language: Language;
   /** Callback to switch the app language. Updates `language` state in App. */
   onSelectLanguage: (lang: Language) => void;
+  /** Active design theme mode ('civic' or 'tactical'). */
+  themeMode?: ThemeMode;
+  /** Callback to switch theme mode. */
+  onSelectThemeMode?: (mode: ThemeMode) => void;
   /** Callback to open the EmergencyGuideModal from within the drawer. */
   onOpenGuide: () => void;
   /** This node's anonymised mesh ID (e.g. `anon_4f2a`). Displayed in telemetry panel. */
@@ -87,6 +92,8 @@ export const TacticalDrawer: React.FC<TacticalDrawerProps> = React.memo(({
   onClose,
   language,
   onSelectLanguage,
+  themeMode = 'civic',
+  onSelectThemeMode,
   onOpenGuide,
   nodeId,
   isRadioActive,
@@ -355,6 +362,66 @@ export const TacticalDrawer: React.FC<TacticalDrawerProps> = React.memo(({
         langBtnItemTextActive: {
           color: OLED_PALETTE.textInverse,
         },
+        themeSwitchRow: {
+          backgroundColor: OLED_PALETTE.sinwellSlate,
+          padding: respWidth(12, width),
+          borderRadius: respWidth(8, width),
+          marginTop: respHeight(10, height),
+        },
+        themeLabel: {
+          color: OLED_PALETTE.textPrimary,
+          fontFamily: FONTS.displayBold,
+          fontSize: respFontSize(14, width),
+          marginBottom: respHeight(8, height),
+        },
+        themeOptionsRow: {
+          flexDirection: 'row',
+          gap: respWidth(8, width),
+        },
+        themeRadioItem: {
+          flex: 1,
+          flexDirection: 'row',
+          alignItems: 'center',
+          paddingVertical: respHeight(8, height),
+          paddingHorizontal: respWidth(8, width),
+          borderRadius: respWidth(6, width),
+          backgroundColor: OLED_PALETTE.surfaceBorder,
+          borderWidth: 1,
+          borderColor: 'transparent',
+        },
+        themeRadioItemActive: {
+          backgroundColor: '#162a36',
+          borderColor: OLED_PALETTE.meshCyan,
+        },
+        radioCircleOuter: {
+          width: respWidth(16, width),
+          height: respWidth(16, width),
+          borderRadius: respWidth(8, width),
+          borderWidth: 1.5,
+          borderColor: OLED_PALETTE.textMuted,
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginRight: respWidth(6, width),
+        },
+        radioCircleOuterActive: {
+          borderColor: OLED_PALETTE.meshCyan,
+        },
+        radioCircleInner: {
+          width: respWidth(8, width),
+          height: respWidth(8, width),
+          borderRadius: respWidth(4, width),
+          backgroundColor: OLED_PALETTE.meshCyan,
+        },
+        themeRadioText: {
+          color: OLED_PALETTE.textSecondary,
+          fontFamily: FONTS.displaySemiBold,
+          fontSize: respFontSize(12, width),
+          flexShrink: 1,
+        },
+        themeRadioTextActive: {
+          color: OLED_PALETTE.textPrimary,
+          fontFamily: FONTS.displayBold,
+        },
       }),
     [width, height]
   );
@@ -449,6 +516,46 @@ export const TacticalDrawer: React.FC<TacticalDrawerProps> = React.memo(({
                     ]}
                   >
                     English
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Theme / Appearance Selection (Radio Toggle) */}
+            <View style={styles.themeSwitchRow}>
+              <Text style={styles.themeLabel}>{t.drawer.themeLabel || 'Design & Erscheinungsbild'}</Text>
+              <View style={styles.themeOptionsRow}>
+                <TouchableOpacity
+                  style={[
+                    styles.themeRadioItem,
+                    themeMode === 'civic' && styles.themeRadioItemActive,
+                  ]}
+                  onPress={() => onSelectThemeMode?.('civic')}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: themeMode === 'civic' }}
+                >
+                  <View style={[styles.radioCircleOuter, themeMode === 'civic' && styles.radioCircleOuterActive]}>
+                    {themeMode === 'civic' && <View style={styles.radioCircleInner} />}
+                  </View>
+                  <Text style={[styles.themeRadioText, themeMode === 'civic' && styles.themeRadioTextActive]}>
+                    {t.drawer.themeCivic || 'Bürgernetz'}
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.themeRadioItem,
+                    themeMode === 'tactical' && styles.themeRadioItemActive,
+                  ]}
+                  onPress={() => onSelectThemeMode?.('tactical')}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: themeMode === 'tactical' }}
+                >
+                  <View style={[styles.radioCircleOuter, themeMode === 'tactical' && styles.radioCircleOuterActive]}>
+                    {themeMode === 'tactical' && <View style={styles.radioCircleInner} />}
+                  </View>
+                  <Text style={[styles.themeRadioText, themeMode === 'tactical' && styles.themeRadioTextActive]}>
+                    {t.drawer.themeTactical || 'Taktisch'}
                   </Text>
                 </TouchableOpacity>
               </View>
