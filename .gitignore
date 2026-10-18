@@ -2,6 +2,17 @@ node_modules/
 dist/
 *.log
 .DS_Store
+
+# Secrets / local env
+.env
+.env.*
+!.env.example
+*.pem
+*.p12
+id_rsa
+serviceAccount*.json
+KEYSTORE_CREDENTIALS.txt
+
 android/.gradle/
 android/.idea/
 android/app/build/
@@ -11,7 +22,6 @@ android/local.properties
 *.apk
 *.keystore
 !android/app/debug.keystore
-KEYSTORE_CREDENTIALS.txt
 android/app/release/
 
 # Secrets / local env
