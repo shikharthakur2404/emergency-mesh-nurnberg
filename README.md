@@ -128,3 +128,9 @@ PHASE 5: Nürnberg Offline Geospatial Layer (Static POI bundle & render)
 - **DisasterMesh (Android Kotlin):** `raviprasad794063/disaster_mesh` (BLE + Wi-Fi Direct multi-hop reference)
 - **LYF SOS:** `lyfmail-official/lyf-sos-android` (Zero-knowledge ephemeral keys & mesh relay)
 - **Raw BLE GATT Server / Peripheral:** `petrbela/react-native-peripheral`, `munim-bluetooth`
+
+---
+
+Copyright © 2026 Shikhar Thakur.
+
+Released under the MIT License — see [LICENSE](LICENSE).
